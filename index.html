@@ -652,7 +652,7 @@
       </div>
       <div>
         <div class="stat-num">4×</div>
-        <div class="stat-label">Project Awards From Competitions</div>
+        <div class="stat-label">Hackathon + Competition Wins</div>
       </div>
     </div>
   </div>
@@ -722,7 +722,7 @@
       <div class="resume-item-date">Sep. 2024 – Present</div>
       <ul class="resume-bullets">
         <li>Tutored <strong>10+ students</strong>, improving average grades by <strong>15–25%</strong> by breaking down complex concepts.</li>
-        <li>Assisted students in debugging code in <strong>Python and C/C++</strong>, improving problem-solving confidence and coding efficiency.</li>
+        <li>Taught foundational Python and C/C++ concepts, guiding students through practical coding logic and error-handling</li>
       </ul>
     </div>
 
@@ -776,7 +776,7 @@
       <div class="project-body">
         <div class="project-body-inner">
           <div>
-            <p class="project-desc">A wearable sleep apnea risk detection system tracking respiratory depth and rate in real time, streaming data to a mobile app and triggering automated alerts on anomaly detection. Hardware was conceived by reverse-engineering a retractable badge reel.</p>
+            <p class="project-desc">A wearable sleep apnea risk detection system tracking respiratory depth and rate in real time, streaming data to a mobile app and triggering automated alerts on anomaly detection.</p>
             <div class="p-label">How It Works</div>
             <ul class="p-points">
               <li>A <strong>custom spring-loaded housing</strong> for a potentiometer translates chest expansion into variable voltage signals.</li>
@@ -795,7 +795,7 @@
             <ul class="p-points">
               <li>No MacOS support for QNX required environment workarounds mid-hackathon.</li>
               <li>Missing kit hardware and 3D printing issues resolved on the fly during the event.</li>
-              <li>Planned: machine learning layer to adapt thresholds to each individual's breathing patterns.</li>
+              <li>Next Steps: Machine learning layer to adapt thresholds to each individual's breathing patterns.</li>
             </ul>
           </div>
           <!-- ══════════════════════════════════════
@@ -840,19 +840,27 @@
       <div class="project-body">
         <div class="project-body-inner">
           <div>
-            <p class="project-desc">An autonomous robot assistant that bridges AI reasoning with physical manipulation. Voice-activated, visually aware, and capable of interacting with real-world objects — built as a complete hardware-software integration project.</p>
-            <div class="p-label">Architecture</div>
+            <p class="project-desc">An autonomous robot assistant that bridges AI reasoning with physical manipulation. Voice-activated, visually aware, and capable of interacting with real-world objects </p>
+            <div class="p-label">How it Works</div>
             <ul class="p-points">
               <li><strong>Body:</strong> Tracked rover chassis driven by Raspberry Pi 5 and L289N motor driver.</li>
               <li><strong>Arm:</strong> Fully 3D-printed 6-axis robotic arm with Arduino servo control and inverse kinematics for precision positioning. Ultrasonic sensors for obstacle detection.</li>
               <li><strong>Brain:</strong> Gemini 2.5 Flash for scene reasoning · Whisper ASR for voice input · ElevenLabs for speech output.</li>
               <li><strong>Vision:</strong> Dual-camera system running YOLO11 for real-time object detection and spatial awareness.</li>
             </ul>
-            <div class="p-label">My Contributions</div>
+            <div class="p-label">Personal Contributions</div>
             <ul class="p-points">
               <li>Conceived the concept, designed and 3D-printed all physical components, planned and soldered all circuitry.</li>
               <li>Diagnosed and resolved motor power distribution failure hours before the submission deadline.</li>
               <li>Wrote robotic arm firmware in C++ on Arduino, learning and implementing inverse kinematics within the hackathon window.</li>
+            </ul>
+          
+          <div class="p-label">Challenges and Next steps</div>
+            <ul class="p-points">
+              <li>We had to transition from a direct solder configuration where all six motor power and ground wires were powered through the Arduino to an external power supply and breadboard distribution to meet high current demands and ensure stable torque.</li>
+              <li> Learning to develop and implemented robotic arm control logic and firmware within the last couple hours of the competition</li>
+              <li>Navigated emerging OpenClaw documentation through manual troubleshooting and independent study, as the library was too recent for standard AI/LLM assistance.</li>
+              <li>Next Steps: Moving forward, we aim to synchronize all DeskClaw functions to transition from individual operation to a fully integrated, unified robotic system.</li>
             </ul>
           </div>
           <!-- ══════════════════════════════════════
@@ -887,6 +895,7 @@
           </div>
         </div>
         <div class="project-right">
+          <span class="project-award">School Project</span>
           <svg class="chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
       </div>
@@ -898,7 +907,7 @@
             <ul class="p-points">
               <li>Modeled an offshore turbine in <strong>Fusion 360</strong>, optimizing blade geometry for aerodynamic efficiency and 3D printability.</li>
               <li>Designed and printed a full nacelle and rotor assembly in <strong>PLA</strong>, housing a DC generator.</li>
-              <li>Successfully converted rotational kinetic energy into electrical output — verified by illuminating an LED.</li>
+              <li>Successfully converted rotational kinetic energy into electrical output, verified by illuminating an LED.</li>
             </ul>
           </div>
           <!-- ══════════════════════════════════════
@@ -940,19 +949,37 @@
         <div class="project-body-inner">
           <div>
             <p class="project-desc">Engineered two complementary subsystems to address contaminated water: Column A treats, decontaminates, and allows flow — Column B fully impedes all contaminated water from passing through.</p>
-            <div class="p-label">Column A — Filtration &amp; Treatment</div>
+            <div class="p-label">Column A — Filtration &amp; Treatment (Top to botom)</div>
             <ul class="p-points">
-              <li><strong>Gravel + Fine Sand</strong> layers block large and small physical impurities.</li>
-              <li><strong>Biochar + GAC (Granular Activated Carbon)</strong> remove chemical contaminants.</li>
-              <li><strong>Resin layer</strong> reduces electrical conductivity by stripping dissolved salts (magnesium).</li>
-              <li><strong>Green Sand + Cotton Balls</strong> absorb and trap remaining micro-impurities before a wet mesh cloth outlet.</li>
+              <li><strong>Drainage Gravel:</strong> Blocks larger physical impurities.</li>
+              <li><strong>Sand:</strong> Filters out finer particles.</li>
+              <li><strong>Sand + Biochar:</strong> Biochar is less effective when in dirrect contact with dirt, so we add a saftey layer before.</li>
+              <li><strong>Biochar: </strong> Sustainble compound used to manage nutrients in waste water abd acted as a filteration medium, removing both inorganic and organic contamients.</li>
+              <li><strong>GAC (Granular Activated Carbon): </strong> Acts through a process called absorptions, where the carbons large surface area + large pores absorb/trap contaminents and polutants.</li>
+              <li><strong>Resin: </strong> This was specifically a cation ion exchange resin, which reduced the electrical conductivity by dissolving harness ions such as Carbon,Magnesium, and salts.</li>
+              <li><strong>Green Sand: </strong> Utilized to deal with any remaining ions from the resin filteration, by taking the disolved ions and turning them into solids that remain trapped in the filteration media.</li>
+              <li><strong>Sand: </strong> Acted as a stable base for the previous layers.</li>
+              <li><strong>Cotton Balls:</strong> Presoaked so they could act as a final purification layer without absorbing too much water.</li>
+              <li><strong>Mesh Cloth:</strong> Prevents cotton balls bits from draining out with the filtered water.</li>
+           
             </ul>
-            <div class="p-label">Column B — Flow Prevention</div>
+            <div class="p-label">Column B — Flow Prevention (Top to Bottom)</div>
             <ul class="p-points">
-              <li><strong>Gravel dispersal layer</strong> distributes force of incoming water to protect clay barrier below.</li>
-              <li><strong>Clay layer</strong> acts as the primary water-impermeable barrier.</li>
-              <li><strong>6× Sponges</strong> (60ml each) serve as an absorbent failsafe for any bypass seepage.</li>
-              <li><strong>Hydrophobic cloth</strong> at the base provides a secondary barrier when dry.</li>
+              <li><strong>Gravel:</strong> distributes force of incoming water to protect clay barrier below.</li>
+              <li><strong>Sand:</strong> distributes force of incoming water to protect clay barrier below.</li>
+              <li><strong>Clay layer:</strong> acts as the primary water-impermeable barrier.</li>
+              <li><strong>6× Sponges:</strong> (60ml each) serve as an absorbent failsafe if water were to manage to get past the initial barrier.</li>
+              <li><strong>Hydrophobic cloth:</strong> Final fail safe covering the hole at the bottom of the column</li>
+            </ul>
+          </div>
+
+           <div class="p-label">Challenges</div>
+            <ul class="p-points">
+              <li><strong>Gravel:</strong> distributes force of incoming water to protect clay barrier below.</li>
+              <li><strong>Sand:</strong> distributes force of incoming water to protect clay barrier below.</li>
+              <li><strong>Clay layer:</strong> acts as the primary water-impermeable barrier.</li>
+              <li><strong>6× Sponges:</strong> (60ml each) serve as an absorbent failsafe if water were to manage to get past the initial barrier.</li>
+              <li><strong>Hydrophobic cloth:</strong> Final fail safe covering the hole at the bottom of the column</li>
             </ul>
           </div>
           <!-- ══════════════════════════════════════
@@ -984,7 +1011,8 @@
             <span class="project-tag">C#</span><span class="project-tag">Fusion 360</span>
           </div>
         </div>
-        <div class="project-right">
+       <div class="project-right">
+          <span class="project-award">Personal Project</span>
           <svg class="chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
       </div>
