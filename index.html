@@ -444,8 +444,6 @@
     gap: 28px;
     padding-top: 22px;
   }
-  @media (max-width: 768px) { .project-body-inner { grid-template-columns: 1fr; } }
-
   .project-desc {
     font-size: 14px;
     color: var(--text-muted);
@@ -531,7 +529,6 @@
     gap: 14px;
     max-width: 700px;
   }
-  @media (max-width: 640px) { .contact-grid { grid-template-columns: 1fr; } }
 
   .contact-card {
     background: var(--panel);
@@ -594,12 +591,123 @@
   }
   .reveal.visible { opacity: 1; transform: translateY(0); }
 
+  /* ── HAMBURGER BUTTON (hidden on desktop) ── */
+  .hamburger {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    z-index: 110;
+  }
+  .hamburger span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: var(--text);
+    border-radius: 2px;
+    transition: transform 0.3s, opacity 0.3s;
+  }
+  .hamburger.active span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .hamburger.active span:nth-child(2) { opacity: 0; }
+  .hamburger.active span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+  /* ── TABLET ── */
+  @media (max-width: 1024px) {
+    nav { padding: 0 28px; }
+    #home { padding: 100px 28px 80px; }
+    .page-section { padding: 80px 28px; }
+    .footer { padding: 36px 28px; }
+    .section-title { font-size: 40px; }
+    .project-body-inner { grid-template-columns: 1fr 260px; gap: 20px; }
+    .contact-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  /* ── MOBILE NAV + GENERAL ── */
+  @media (max-width: 768px) {
+    .hamburger { display: flex; }
+
+    .nav-links {
+      position: fixed;
+      top: 64px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0;
+      background: rgba(6,13,26,0.97);
+      backdrop-filter: blur(20px);
+      padding: 24px 28px;
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+    }
+    .nav-links.open { transform: translateX(0); }
+    .nav-links li { border-bottom: 1px solid var(--border); }
+    .nav-links a {
+      display: flex;
+      padding: 16px 0;
+      font-size: 13px;
+    }
+
+    #home { padding: 100px 24px 60px; }
+    .page-section { padding: 60px 24px; }
+    .footer { padding: 28px 24px; }
+
+    .section-title { font-size: 36px; }
+    .section-header { margin-bottom: 32px; }
+
+    .hero-stats { gap: 28px; flex-wrap: wrap; }
+
+    .project-body-inner { grid-template-columns: 1fr; }
+    .project-header { gap: 10px; }
+    .project-right { flex-wrap: wrap; gap: 6px; }
+    .project-award { font-size: 9px; padding: 3px 7px; }
+
+    .skill-row { flex-direction: column; gap: 8px; }
+    .skill-row-label { min-width: unset; }
+
+    .contact-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ── SMALL MOBILE ── */
   @media (max-width: 640px) {
-    nav { padding: 0 20px; }
-    #home, .page-section { padding-left: 20px; padding-right: 20px; }
-    .nav-links a { padding: 6px 9px; font-size: 11px; }
-    .project-header { grid-template-columns: 22px 1fr; }
+    nav { padding: 0 16px; }
+    #home { padding: 90px 16px 50px; }
+    .page-section { padding: 50px 16px; }
+    .footer { padding: 24px 16px; }
+
+    h1.hero-name { margin-bottom: 4px; }
+    .hero-role { font-size: 11px; margin-bottom: 24px; }
+    .hero-bio { font-size: 14px; }
+    .hero-cta { padding: 11px 22px; font-size: 11px; }
+
+    .section-title { font-size: 30px; }
+
+    .resume-item { grid-template-columns: 1fr; }
+    .resume-item-date { justify-self: start; margin-top: 2px; }
+
+    .project-header { grid-template-columns: 22px 1fr; padding: 16px; }
     .project-right { display: none; }
+    .project-name { font-size: 14px; }
+    .project-body { padding: 0 16px 16px; }
+
+    .hero-stats { gap: 20px; margin-top: 40px; padding-top: 24px; }
+    .stat-num { font-size: 28px; }
+    .stat-label { font-size: 9px; }
+  }
+
+  /* ── EXTRA SMALL ── */
+  @media (max-width: 400px) {
+    .hero-stats { flex-direction: column; gap: 16px; }
+    .project-tags { gap: 3px; }
+    .project-tag { font-size: 9px; padding: 2px 6px; }
+    .skill-pills { gap: 4px; }
+    .skill-pill { font-size: 10px; padding: 2px 7px; }
+    .contact-card { padding: 14px; gap: 10px; }
   }
 </style>
 </head>
@@ -608,11 +716,14 @@
 <!-- ══════════ NAVBAR ══════════ -->
 <nav>
   <a href="#home" class="nav-logo">T.<span>M</span></a>
+  <button class="hamburger" onclick="toggleMenu()" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
   <ul class="nav-links">
-    <li><a href="#home">Home</a></li>
-    <li><a href="#resume">Resume</a></li>
-    <li><a href="#projects">Projects</a></li>
-    <li><a href="#contact">Contact</a></li>
+    <li><a href="#home" onclick="closeMenu()">Home</a></li>
+    <li><a href="#resume" onclick="closeMenu()">Resume</a></li>
+    <li><a href="#projects" onclick="closeMenu()">Projects</a></li>
+    <li><a href="#contact" onclick="closeMenu()">Contact</a></li>
     <li>
       <a href="https://www.linkedin.com/in/taliamekhayche/" target="_blank">
         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -1099,6 +1210,18 @@
     const isOpen = card.classList.contains('open');
     document.querySelectorAll('.project-card.open').forEach(c => c.classList.remove('open'));
     if (!isOpen) card.classList.add('open');
+  }
+
+  function toggleMenu() {
+    document.querySelector('.hamburger').classList.toggle('active');
+    document.querySelector('.nav-links').classList.toggle('open');
+    document.body.style.overflow = document.querySelector('.nav-links').classList.contains('open') ? 'hidden' : '';
+  }
+
+  function closeMenu() {
+    document.querySelector('.hamburger').classList.remove('active');
+    document.querySelector('.nav-links').classList.remove('open');
+    document.body.style.overflow = '';
   }
 
   const observer = new IntersectionObserver((entries) => {
