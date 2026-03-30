@@ -631,19 +631,19 @@
     .hamburger { display: flex; }
 
     .nav-links {
-      position: fixed;
+      position: absolute;
       top: 64px;
       left: 0;
       right: 0;
-      bottom: 0;
+      height: calc(100vh - 64px);
       flex-direction: column;
       align-items: stretch;
       gap: 0;
-      background: rgba(6,13,26,0.97);
-      backdrop-filter: blur(20px);
+      background: var(--navy);
       padding: 24px 28px;
       transform: translateX(100%);
       transition: transform 0.3s ease;
+      overflow-y: auto;
     }
     .nav-links.open { transform: translateX(0); }
     .nav-links li { border-bottom: 1px solid var(--border); }
