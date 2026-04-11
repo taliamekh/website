@@ -70,6 +70,21 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease, visibility 0s linear 0s;
+  }
+  body.sr-spocket-immersive nav {
+    transform: translateY(-100%);
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.28s ease, visibility 0s linear 0.32s;
+  }
+  body.sr-spocket-immersive.sr-spocket-immersive-nav-open nav {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+    visibility: visible;
+    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.28s ease, visibility 0s linear 0s;
   }
 
   .nav-logo {
@@ -110,6 +125,33 @@
     color: var(--cyan);
     border-color: var(--cyan);
     background: rgba(0,212,255,0.06);
+  }
+
+  /* Spocket Study mode: site menu toggle portaled into the real nav */
+  #sr-spocket-nav-toggle-host {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    margin: 0 0 0 10px;
+    padding: 0;
+  }
+  .sr-spocket-nav-site-toggle {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 7px 12px;
+    border-radius: 4px;
+    border: 1px solid rgba(0, 212, 255, 0.35);
+    background: rgba(0, 212, 255, 0.08);
+    color: var(--cyan);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .sr-spocket-nav-site-toggle:hover {
+    border-color: var(--cyan);
+    background: rgba(0, 212, 255, 0.14);
   }
 
   .hamburger {
@@ -1078,6 +1120,7 @@
     visibility: visible;
     pointer-events: auto;
     transition:
+      top 0.35s cubic-bezier(0.22, 1, 0.36, 1),
       opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1),
       visibility 0s linear 0s,
       backdrop-filter 0.45s ease;
@@ -1100,9 +1143,23 @@
     border-radius: 8px;
     padding: 32px 28px;
     box-shadow: 0 24px 48px rgba(0,0,0,0.45);
-    transition: opacity 0.4s ease;
+    transform-origin: center center;
+    transition:
+      transform 0.55s cubic-bezier(0.3, 0.8, 0.4, 1),
+      opacity 0.48s ease;
+  }
+  /* Spocket first-visit intro: same “pushed off” motion as the original MiniCard */
+  .lock-card.spocket-lock-pushed {
+    transform: translate(130%, -12%) rotate(12deg);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .lock-card:not(.spocket-lock-pushed) {
+    transform: translate(0, 0) rotate(0deg);
+    opacity: 1;
   }
   /* Spocket layer: fixed below site nav, outside lock-overlay so it stays visible when unlocked */
+  /* Pass-through by default; Spocket sets pointer-events: auto only on real controls (see SpocketOnboarding.jsx). */
   #spocket-root {
     position: fixed;
     top: 64px;
@@ -1111,16 +1168,29 @@
     bottom: 0;
     pointer-events: none;
     z-index: 435;
+    transition: top 0.35s cubic-bezier(0.22, 1, 0.36, 1);
   }
-  #spocket-root > * {
-    pointer-events: auto;
+  body.sr-spocket-immersive #spocket-root {
+    top: 0;
+  }
+  body.sr-spocket-immersive.sr-spocket-immersive-nav-open #spocket-root {
+    top: 64px;
+  }
+  body.sr-spocket-immersive .lock-overlay {
+    top: 0;
+  }
+  body.sr-spocket-immersive.sr-spocket-immersive-nav-open .lock-overlay {
+    top: 64px;
   }
   .lock-card h1 {
     font-family: 'Bebas Neue', sans-serif;
     font-size: 32px;
     color: var(--white);
     letter-spacing: 0.06em;
-    margin-bottom: 8px;
+    margin: 0 0 12px 0;
+    padding-top: 0;
+    text-align: center;
+    line-height: 1.15;
   }
   .lock-card p {
     font-size: 14px;
@@ -1420,13 +1490,14 @@
     <li><a href="../index.html#resume" onclick="closeMenu()">Resume</a></li>
     <li><a href="../index.html#contact" onclick="closeMenu()">Contact</a></li>
     <li><a href="./" aria-current="page" onclick="closeMenu()">Student Resources</a></li>
+    <li id="sr-spocket-nav-toggle-host" class="sr-spocket-nav-toggle-host" aria-hidden="true"></li>
   </ul>
 </nav>
 
 <div id="lock-overlay" class="lock-overlay" aria-hidden="false">
   <div id="lock-card" class="lock-card" role="dialog" aria-labelledby="lock-title" aria-modal="true">
-    <h1 id="lock-title">Student Resources</h1>
-    <p>These student resources are only for students in my courses. If you should have access, enter the password you were given. If you cannot get in, use <strong>Request Access</strong> for directions to the Contact page, or use the Contact link in the main site navigation.</p>
+    <h1 id="lock-title">Student resources are locked</h1>
+    <p>This page is for my students to access my course content. Spocket is still available here for access questions and how the workspace is meant to work.</p>
     <form id="unlock-form" autocomplete="off">
       <label for="notes-pass">Password</label>
       <div class="lock-pass-wrap">
@@ -1448,7 +1519,7 @@
 <div id="spocket-root"></div>
 
 <div id="tm-access-toast" class="tm-access-toast" hidden role="status" aria-live="polite">
-  <p class="tm-access-toast-msg">To request access to these notes, please use the <a href="../index.html#contact">Contact</a> section on the main site and send a message there.</p>
+  <p class="tm-access-toast-msg">Use <strong>Spocket</strong> on this page for scripted guidance on access and the notes area. If you&rsquo;re one of my students and you&rsquo;re having trouble signing in, <a href="../index.html#contact">contact me directly</a> and I&rsquo;ll help you out.</p>
   <button type="button" class="tm-access-toast-dismiss" id="tm-access-toast-dismiss" aria-label="Dismiss">×</button>
 </div>
 
@@ -1685,7 +1756,7 @@
   /** If the URL contains this (e.g. shared link), the formula panel opens automatically after unlock. */
   var FORMULA_VIEW_HREF = '?view=formula';
   /** Local script that draws the floating toolbar and tools inside the notes iframe. Bump ?v= after edits so fetches are not stuck on an old cached copy. */
-  var WORKSPACE_IFRAME_URL = 'workspace-iframe.js?v=4';
+  var WORKSPACE_IFRAME_URL = 'workspace-iframe.js?v=6';
   var overlay = document.getElementById('lock-overlay');
   var main = document.getElementById('main-content');
   var form = document.getElementById('unlock-form');
@@ -3110,11 +3181,21 @@
   }
 
   function showLock() {
+    try {
+      sessionStorage.removeItem(STORAGE_KEY);
+    } catch (e) { /* ignore */ }
     document.body.classList.remove('sr-auth-unlocked');
     overlay.removeAttribute('inert');
     overlay.setAttribute('aria-hidden', 'false');
     passInput.focus();
+    try {
+      window.dispatchEvent(new CustomEvent('sr-notes-locked'));
+    } catch (e) { /* ignore */ }
   }
+
+  window.addEventListener('sr-notes-lock-request', function () {
+    showLock();
+  });
 
   function applyNotesColumnPct(pct) {
     if (!notesColumnInner) return;
@@ -4181,6 +4262,35 @@
     else openFormulaDock();
   }
 
+  /** Spocket / parent helpers — open or close the formula dock without clicking the big button */
+  window.tmOpenFormulaDock = openFormulaDock;
+  window.tmCloseFormulaDock = closeFormulaDock;
+
+  /**
+   * Resolves when the formula iframe has finished loading workspace HTML (or immediately if already done).
+   * Used before Spocket find posts into #formula-frame so search runs on the real sheet, not a blank frame.
+   */
+  window.tmEnsureFormulaSheetReady = function () {
+    return new Promise(function (resolve) {
+      if (_formulaSheetLoadState === 'done') {
+        resolve();
+        return;
+      }
+      ensureFormulaSheetInDockLoaded();
+      var n = 0;
+      var id = setInterval(function () {
+        n++;
+        if (_formulaSheetLoadState === 'done') {
+          clearInterval(id);
+          resolve();
+        } else if (n >= 600) {
+          clearInterval(id);
+          resolve();
+        }
+      }, 50);
+    });
+  };
+
   /** Clears the previous temporary iframe URL (see _tmNotesBlobUrl). */
   function _tmRevokeNotesBlob() {
     try {
@@ -4361,6 +4471,7 @@
       .then(function (pair) {
         var html = prepareHtmlWithWorkspace(pair[0], pair[1]);
         assignFrameFromProcessedHtml(html, 'ECOR 2050 complete learning notes');
+        ensureFormulaSheetInDockLoaded();
       })
       .catch(function () {
         frameStatus.textContent =

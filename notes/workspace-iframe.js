@@ -1091,8 +1091,210 @@
       'input[type="color"].tm-ws-color{width:36px;height:32px;padding:0;border:none;border-radius:8px;cursor:pointer}' +
       '.tm-dash-row button{font:inherit;font-size:11px;padding:4px 8px;margin-right:4px;border-radius:6px;' +
       'border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:var(--txd);cursor:pointer}' +
-      '.tm-dash-row button.on{border-color:var(--ac);color:var(--ac)}';
+      '.tm-dash-row button.on{border-color:var(--ac);color:var(--ac)}' +
+      'mark.tm-spocket-find-mark{background:#ff2da0!important;color:#0a0f1a!important;font-weight:600!important;box-shadow:0 0 0 3px #ff1493,0 0 20px rgba(255,20,147,.55)!important;border-radius:4px}' +
+      'mark.tm-spocket-find-mark.tm-spocket-find-active{box-shadow:0 0 0 4px #fff,0 0 26px rgba(255,20,147,.9)!important}' +
+      '.tm-spocket-find-outline{animation:tmSpocketFindPulse 2.5s ease-in-out infinite;outline:3px solid rgba(255,45,160,.65)!important;outline-offset:3px;box-shadow:0 0 0 1px rgba(255,255,255,.25)}' +
+      '.tm-spocket-find-outline.tm-spocket-find-active{outline-color:#ff2da0!important;outline-width:4px!important;box-shadow:0 0 0 2px rgba(255,255,255,.45),0 0 22px rgba(255,45,160,.7)}' +
+      '@keyframes tmSpocketFindPulse{0%,100%{opacity:1}50%{opacity:.78}}';
     document.head.appendChild(st);
+  }
+
+  var spocketFindEntries = [];
+  var spocketFindMatchEls = [];
+  var spocketFindActiveIndex = 0;
+
+  function clearSpocketFindHighlights() {
+    spocketFindMatchEls.forEach(function (el) {
+      try {
+        el.classList.remove('tm-spocket-find-active');
+      } catch (e0) {}
+    });
+    spocketFindMatchEls = [];
+    spocketFindActiveIndex = 0;
+    spocketFindEntries.forEach(function (entry) {
+      try {
+        if (entry.type === 'outline' && entry.el) {
+          entry.el.classList.remove('tm-spocket-find-outline', 'tm-spocket-find-active');
+        } else if (entry.type === 'mark' && entry.node && entry.node.parentNode) {
+          var m = entry.node;
+          var p = m.parentNode;
+          while (m.firstChild) p.insertBefore(m.firstChild, m);
+          p.removeChild(m);
+          p.normalize();
+        }
+      } catch (e) {}
+    });
+    spocketFindEntries = [];
+  }
+
+  function postSpocketFindResult(ok, message, extras) {
+    extras = extras || {};
+    try {
+      window.parent.postMessage(
+        {
+          type: 'tm_spocket_find_result',
+          ok: !!ok,
+          message: String(message || ''),
+          matchCount: typeof extras.matchCount === 'number' ? extras.matchCount : 0
+        },
+        '*'
+      );
+    } catch (e) {}
+  }
+
+  function spocketFindApplyActiveVisual() {
+    for (var i = 0; i < spocketFindMatchEls.length; i++) {
+      try {
+        spocketFindMatchEls[i].classList.toggle('tm-spocket-find-active', i === spocketFindActiveIndex);
+      } catch (e) {}
+    }
+  }
+
+  function spocketFindAdvance(delta) {
+    var n = spocketFindMatchEls.length;
+    if (!n) return;
+    var d = typeof delta === 'number' ? delta : parseInt(delta, 10);
+    if (!isFinite(d)) d = 0;
+    spocketFindActiveIndex = (spocketFindActiveIndex + d + n) % n;
+    spocketFindApplyActiveVisual();
+    try {
+      spocketFindMatchEls[spocketFindActiveIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } catch (e2) {}
+  }
+
+  var SPOCKET_FIND_WALK_CHUNK = 1800;
+
+  function spocketFindTreeWalkerFilter(node) {
+    if (!node.nodeValue || !/\S/.test(node.nodeValue)) return NodeFilter.FILTER_REJECT;
+    var p = node.parentElement;
+    if (!p) return NodeFilter.FILTER_REJECT;
+    var tag = p.tagName;
+    if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'NOSCRIPT') return NodeFilter.FILTER_REJECT;
+    if (p.closest && (p.closest('#hl-bar') || p.closest('#tm-annotations-fixed') || p.closest('#tm-ws-host') || p.closest('.tm-ws-chrome')))
+      return NodeFilter.FILTER_REJECT;
+    return NodeFilter.FILTER_ACCEPT;
+  }
+
+  function collectSpocketFindCandidatesChunked(qLower, words, onDone) {
+    var candidates = [];
+    var tw;
+    try {
+      tw = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, { acceptNode: spocketFindTreeWalkerFilter });
+    } catch (eInit) {
+      postSpocketFindResult(false, 'Search failed', { matchCount: 0 });
+      return;
+    }
+    var walkSteps = 0;
+    function chunk() {
+      var node;
+      try {
+        while ((node = tw.nextNode())) {
+          var t = node.nodeValue.toLowerCase();
+          var score = 0;
+          if (t.indexOf(qLower) >= 0) score += 200 + Math.min(qLower.length, 100);
+          for (var wi = 0; wi < words.length; wi++) {
+            if (words[wi] && t.indexOf(words[wi]) >= 0) score += 12;
+          }
+          if (score > 0 && node.parentElement) candidates.push({ textNode: node, score: score, el: node.parentElement });
+          walkSteps++;
+          if (walkSteps % SPOCKET_FIND_WALK_CHUNK === 0) {
+            setTimeout(chunk, 0);
+            return;
+          }
+        }
+      } catch (e2) {
+        postSpocketFindResult(false, 'Search failed', { matchCount: 0 });
+        return;
+      }
+      onDone(candidates);
+    }
+    setTimeout(chunk, 0);
+  }
+
+  function applySpocketFindHighlights(q, qLower, candidates) {
+    if (!candidates.length) {
+      postSpocketFindResult(false, 'No match in this notes page', { matchCount: 0 });
+      return;
+    }
+    candidates.sort(function (a, b) {
+      return b.score - a.score;
+    });
+    var BLOCK_SEL = 'p,li,td,th,h1,h2,h3,h4,h5,h6,section,article,blockquote,pre,table,dd,dt,figure';
+    var byBlock = new Map();
+    for (var ci = 0; ci < candidates.length; ci++) {
+      var c = candidates[ci];
+      var block = c.el.closest && c.el.closest(BLOCK_SEL) ? c.el.closest(BLOCK_SEL) : c.el;
+      var prev = byBlock.get(block);
+      if (!prev || prev.score < c.score) byBlock.set(block, { block: block, score: c.score, textNode: c.textNode, el: c.el });
+    }
+    var blockList = Array.from(byBlock.values()).sort(function (a, b) {
+      return b.score - a.score;
+    });
+    var maxBlocks = 6;
+    var usedTextForMark = false;
+    for (var bi = 0; bi < blockList.length && spocketFindMatchEls.length < maxBlocks; bi++) {
+      var item = blockList[bi];
+      var textNode = item.textNode;
+      var el = item.el;
+      var idx = textNode && textNode.nodeValue ? textNode.nodeValue.toLowerCase().indexOf(qLower) : -1;
+      var didMark = false;
+      if (!usedTextForMark && idx >= 0 && textNode.nodeValue && textNode.nodeValue.length >= idx + q.length) {
+        try {
+          var range = document.createRange();
+          range.setStart(textNode, idx);
+          range.setEnd(textNode, idx + q.length);
+          var mark = document.createElement('mark');
+          mark.className = 'tm-spocket-find-mark';
+          range.surroundContents(mark);
+          spocketFindEntries.push({ type: 'mark', node: mark });
+          spocketFindMatchEls.push(mark);
+          usedTextForMark = true;
+          didMark = true;
+        } catch (e3) {
+          /* range crosses element boundary */
+        }
+      }
+      if (!didMark) {
+        var target = item.block;
+        try {
+          target.classList.add('tm-spocket-find-outline');
+          spocketFindEntries.push({ type: 'outline', el: target });
+          spocketFindMatchEls.push(target);
+        } catch (e4) {}
+      }
+    }
+    if (!spocketFindMatchEls.length) {
+      postSpocketFindResult(false, 'No usable highlights', { matchCount: 0 });
+      return;
+    }
+    spocketFindActiveIndex = 0;
+    spocketFindApplyActiveVisual();
+    try {
+      spocketFindMatchEls[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } catch (e5) {}
+    postSpocketFindResult(true, 'Matches highlighted', { matchCount: spocketFindMatchEls.length });
+  }
+
+  function runSpocketFindQuery(rawQuery) {
+    clearSpocketFindHighlights();
+    var q = (rawQuery && String(rawQuery).trim()) || '';
+    if (!q) {
+      postSpocketFindResult(false, 'Empty search', { matchCount: 0 });
+      return;
+    }
+    var qLower = q.toLowerCase();
+    var words = qLower.split(/\s+/).filter(function (w) {
+      return w.length > 1;
+    });
+    if (words.length === 0) words = [qLower];
+    collectSpocketFindCandidatesChunked(qLower, words, function (candidates) {
+      try {
+        applySpocketFindHighlights(q, qLower, candidates);
+      } catch (eApply) {
+        postSpocketFindResult(false, eApply && eApply.message ? String(eApply.message) : 'Search error', { matchCount: 0 });
+      }
+    });
   }
   function hideColorManagePop() {
     if (popColorManage) {
@@ -1262,6 +1464,24 @@
           }
         }
         if (typeof window.TM_refreshColorRecentUI === 'function') window.TM_refreshColorRecentUI();
+      }
+      if (ev.data.type === 'tm_spocket_find') {
+        try {
+          runSpocketFindQuery(ev.data.query);
+        } catch (eFind) {
+          postSpocketFindResult(false, eFind && eFind.message ? String(eFind.message) : 'Search error', {
+            matchCount: 0
+          });
+        }
+        return;
+      }
+      if (ev.data.type === 'tm_spocket_find_step') {
+        spocketFindAdvance(ev.data.delta);
+        return;
+      }
+      if (ev.data.type === 'tm_spocket_find_clear') {
+        clearSpocketFindHighlights();
+        return;
       }
     });
 

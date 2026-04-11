@@ -1,4 +1,82 @@
-const { useState, useEffect, useRef, useCallback } = React;
+const { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } = React;
+const SpocketReactDOM = typeof window !== "undefined" && window.ReactDOM ? window.ReactDOM : null;
+
+/** True if postMessage came from the iframe root or a direct child frame (nested embed). */
+function tmSpocketFindSourceMatchesFrame(frameContentWindow, source) {
+  if (!frameContentWindow || !source) return false;
+  if (source === frameContentWindow) return true;
+  try {
+    const n = frameContentWindow.length;
+    if (typeof n === "number" && n > 0) {
+      for (let i = 0; i < n; i++) {
+        try {
+          if (frameContentWindow[i] === source) return true;
+        } catch (e) {
+          /* cross-origin subframe */
+        }
+      }
+    }
+  } catch (e2) {
+    /* access to .length can throw in some embed configurations */
+  }
+  return false;
+}
+
+const SPOCKET_TYPING_MS = 20;
+const SPOCKET_MOUTH_MS = 80;
+const LS_SPOCKET_DISPLAY_NAME = "spocket_student_display_name_v1";
+const LS_SPOCKET_SPACE_TIP = "spocket_space_skip_tip_dismissed_v1";
+const LS_SPOCKET_NAME_SKIP = "spocket_name_prompt_skip_v1";
+
+function applySpocketPlaceholders(msg, displayName) {
+  const n = (displayName && String(displayName).trim()) || "";
+  return String(msg || "").replace(/\{name\}/g, n || "there");
+}
+
+function spocketPlainFromRaw(raw) {
+  return String(raw || "").replace(/\*\*(.+?)\*\*/g, "$1");
+}
+
+function spocketBubbleRichNodes(raw, visiblePlainLen) {
+  const limit = visiblePlainLen == null || visiblePlainLen === Infinity ? Infinity : Math.max(0, visiblePlainLen);
+  const segs = [];
+  const s = String(raw || "");
+  const re = /\*\*(.+?)\*\*/g;
+  let last = 0;
+  let m;
+  while ((m = re.exec(s)) !== null) {
+    if (m.index > last) segs.push({ bold: false, text: s.slice(last, m.index) });
+    segs.push({ bold: true, text: m[1] });
+    last = m.lastIndex;
+  }
+  if (last < s.length) segs.push({ bold: false, text: s.slice(last) });
+  if (!segs.length) segs.push({ bold: false, text: s });
+  let used = 0;
+  const nodes = [];
+  let key = 0;
+  for (let si = 0; si < segs.length; si++) {
+    const seg = segs[si];
+    const take = Math.min(seg.text.length, Math.max(0, limit - used));
+    if (take > 0) {
+      const piece = seg.text.slice(0, take);
+      if (seg.bold) {
+        nodes.push(
+          <strong key={key++} style={{ fontWeight: 700, color: "#f1f5f9" }}>
+            {piece}
+          </strong>
+        );
+      } else {
+        nodes.push(piece);
+      }
+    }
+    used += take;
+    if (used >= limit) break;
+  }
+  return nodes.length ? nodes : [""];
+}
+
+const SPOCKET_FIND_INTRO_RAW =
+  "What do you want to know? Type a short question or words you remember from your notes or formula sheet. **I will highlight related spots, then a pink bar at the top will appear with arrows to jump between them and switch workspaces — tap Done on that bar when you are finished.** This finder is still in beta.";
 
 /* ═══════════════════════════════════════════
    DIALOGUE TREE
@@ -6,11 +84,11 @@ const { useState, useEffect, useRef, useCallback } = React;
 
 /* Random welcome-back messages for returning users */
 const WELCOME_BACKS = [
-  "Welcome back! Have a great study sesh!",
-  "Oh hey, you're back! Go crush those notes!",
-  "Look who it is! Good luck studying!",
-  "Welcome back! I saved your spot... just kidding, I can't do that yet.",
-  "Hey again! Ready to hit the books?",
+  "Welcome back. Pick up where you left off in the workspace whenever you are ready.",
+  "Back again—use the menu if you need workspace help or Find in notes.",
+  "Welcome back. Your local notes data is still in this browser unless you cleared it.",
+  "Hi again. If anything in the study guide changed, skim the help topics from the corner menu.",
+  "Welcome back. Timers and session history are in Study mode if you use that.",
 ];
 
 const TREE = {
@@ -20,16 +98,247 @@ const TREE = {
     eyes: "happy",
     options: [{ label: "Thanks Spocket!", next: "_exit" }],
   },
-  
-  /* ── FIRST-TIME USER FLOW ── */
+
+  /* ── FIRST-TIME USER FLOW (visitor unknown to Spocket) ── */
   start: {
-    msg: "Hey! I noticed this is your first time here... are you a student of mine?",
+    msg: "I don't recognize you. What are you doing here?",
     eyes: "curious",
     options: [
-      { label: "Nope!", next: "not_student" },
-      { label: "Yes, but I cleared my cookies", next: "cleared_cookies" },
-      { label: "I have ALL the cookies, you don't recognize me?", next: "all_cookies" },
+      { label: "Who are you?", next: "who_spocket" },
+      { label: "I'm one of Talia's students", next: "student_claim" },
+      { label: "PLEASE I NEED A TUTOR!!!", next: "tutor_me" },
+      { label: "Just looking around", next: "just_browsing" },
+    ],
+  },
+  /* Same choices as start, after detours */
+  start_repeat: {
+    msg: "So I still don't know you. What's your story?",
+    eyes: "curious",
+    options: [
+      { label: "Who are you?", next: "who_spocket" },
+      { label: "I'm one of Talia's students", next: "student_claim" },
+      { label: "I'm trying to get to the notes", next: "here_for_notes" },
+      { label: "PLEASE I NEED A TUTOR!!!", next: "tutor_me" },
+      { label: "Just looking around", next: "just_browsing" },
+      { label: "…I brought cookies?", next: "all_cookies" },
       { label: "I don't care, you're wasting my time", next: "end_convo" },
+    ],
+  },
+  unlock_name_entry: {
+    msg: "So — **what's your name?** Now that we are getting a little familiar, I'd like something to call you. **Same as always: it stays only in this browser on your device** — not uploaded to a class server from here.",
+    eyes: "curious",
+    captureName: true,
+    options: [{ label: "Skip for now", next: "_unlock_name_dismiss" }],
+  },
+  unlock_name_saved_ack: {
+    msg: "Got it — I'll call you **{name}** here. Use the corner menu if you need workspace help or Find in notes.",
+    eyes: "happy",
+    options: [{ label: "Sounds good", next: "_parked_dismiss" }],
+  },
+  here_for_notes: {
+    msg: "This area is locked for Talia's students. If you are supposed to be in there, use the password on the card, or request a temporary one from her.",
+    eyes: "happy",
+    options: [
+      { label: "How do I get access?", next: "recruiter" },
+      { label: "Who are you?", next: "who_spocket" },
+      { label: "Other replies…", next: "start_repeat" },
+    ],
+  },
+  student_claim: {
+    msg: "If you are in her class, you are in the right neighborhood. I still need you to unlock with the password or a temp code she emailed you.",
+    eyes: "happy",
+    options: [
+      { label: "I have the password", next: "has_password" },
+      { label: "I need to request access", next: "no_password" },
+      { label: "Back", next: "start_repeat" },
+    ],
+  },
+  just_browsing: {
+    msg: "Fair enough, the internet is a big place. You are still outside a locked study lounge though. What do you want from it?",
+    eyes: "curious",
+    options: [
+      { label: "I'm trying to get to the notes", next: "here_for_notes" },
+      { label: "Could you tutor me?", next: "tutor_me" },
+      { label: "I'm recruiting / hiring", next: "recruiter" },
+      { label: "Nothing, bye", next: "end_convo" },
+    ],
+  },
+  who_spocket: {
+    msg: "I'm Spocket, the in-page assistant for Talia's Student Resources. **I am not course content: I route people through unlock, explain how the notes workspace behaves, and after unlock I stay in a fixed corner shell.** From there you can open Roam (interactive scene), Study (timers, reminders, session log), structured help for the study guide / formula views, or Find in notes (beta), which posts search steps into the embedded iframes so related passages highlight in sync.",
+    eyes: "happy",
+    options: [
+      { label: "What will you be doing here?", next: "what_spocket_does" },
+      { label: "What you are / how you work", next: "ask_spocket_start" },
+      { label: "Okay, back to your question", next: "start_repeat" },
+    ],
+  },
+  what_spocket_does: {
+    msg: "Before unlock I run the scripted onboarding tree (access paths, what is locked, where to request a code). **After unlock the same React layer adds a parked UI: Roam and Study are separate layouts with optional full-width chrome; the dialogue hub documents toolbar tools, persistence, and shortcuts, or dispatches tm_spocket_find* messages into the workspace frames for cross-document search.** The site nav can be toggled from Roam/Study so the iframe column stays readable.",
+    eyes: "happy",
+    options: [
+      { label: "Who are you?", next: "who_spocket" },
+      { label: "What you are / how you work", next: "ask_spocket_start" },
+      { label: "Okay, back to your question", next: "start_repeat" },
+    ],
+  },
+  ask_spocket_start: {
+    msg: "Quick technical FAQ—everything here is hand-authored dialogue plus a few hooks into the page. Pick a topic.",
+    eyes: "curious",
+    options: [
+      { label: "Why a robot?", next: "sq_why_robot" },
+      { label: "Are you AI / \"real\"?", next: "sq_ai_real" },
+      { label: "What can you actually do here?", next: "sq_can_do" },
+      { label: "Where did you come from?", next: "sq_origin" },
+      { label: "That's enough about you", next: "start_repeat" },
+    ],
+  },
+  sq_why_robot: {
+    msg: "The robot look is just a consistent visual anchor: students get a single recognizable control for help, immersive modes, and find-in-notes instead of hunting for a generic FAQ link. The face is an SVG component with expression props tied to dialogue nodes.",
+    eyes: "happy",
+    options: [
+      { label: "Another question", next: "ask_spocket_start" },
+      { label: "Back to your question", next: "start_repeat" },
+    ],
+  },
+  sq_ai_real: {
+    msg: "No large language model: I am a branching state machine (plain objects in this file), React state for UI modes, and imperative bits for timers and postMessage bridges. If an answer is wrong, it is a content bug—tell Talia.",
+    eyes: "nervous",
+    options: [
+      { label: "Another question", next: "ask_spocket_start" },
+      { label: "Back to your question", next: "start_repeat" },
+    ],
+  },
+  sq_can_do: {
+    msg: "On this page: scripted onboarding, access routing, embedded forms, and this FAQ. After unlock: Roam/Study experiences, reminder scheduling, the structured notes-help tree, and Find in notes (beta) that walks iframe content via typed window messages. Idle motion is CSS + timed state on the SVG puppet—no backend calls.",
+    eyes: "happy",
+    options: [
+      { label: "Another question", next: "ask_spocket_start" },
+      { label: "Back to your question", next: "start_repeat" },
+    ],
+  },
+  sq_origin: {
+    msg: "Authored for this site as a JSX bundle (Babel in-browser on Student Resources) mounting into #spocket-root, alongside the lock overlay and dual iframes for the study guide. Styling mixes inline layout objects with the page CSS. Iterations add features (immersive modes, find bridge) without changing the hosting model.",
+    eyes: "happy",
+    options: [
+      { label: "Another question", next: "ask_spocket_start" },
+      { label: "Back to your question", next: "start_repeat" },
+    ],
+  },
+  /* Post-unlock corner menu — same Q&A, dismiss returns to parked without lock-card theatrics */
+  ask_spocket_unlocked: {
+    msg: "Workspace FAQ—same scripted tree as before unlock, plus notes topics and Find in notes. Pick one; I will keep it short.",
+    eyes: "curious",
+    options: [
+      { label: "Why a robot?", next: "sq_why_robot_p" },
+      { label: "Are you AI / \"real\"?", next: "sq_ai_real_p" },
+      { label: "What can you actually do here?", next: "sq_can_do_p" },
+      { label: "Where did you come from?", next: "sq_origin_p" },
+      { label: "How do the notes tools work?", next: "notes_help_hub" },
+      { label: "Find text in my notes (beta)", next: "_find_in_notes" },
+      { label: "Done for now", next: "_parked_dismiss" },
+    ],
+  },
+  sq_why_robot_p: {
+    msg: "The robot look is just a consistent visual anchor: students get a single recognizable control for help, immersive modes, and find-in-notes instead of hunting for a generic FAQ link. The face is an SVG component with expression props tied to dialogue nodes.",
+    eyes: "happy",
+    options: [
+      { label: "Another question", next: "ask_spocket_unlocked" },
+      { label: "Done for now", next: "_parked_dismiss" },
+    ],
+  },
+  sq_ai_real_p: {
+    msg: "No large language model: I am a branching state machine (plain objects in this file), React state for UI modes, and imperative bits for timers and postMessage bridges. If an answer is wrong, it is a content bug—tell Talia.",
+    eyes: "nervous",
+    options: [
+      { label: "Another question", next: "ask_spocket_unlocked" },
+      { label: "Done for now", next: "_parked_dismiss" },
+    ],
+  },
+  sq_can_do_p: {
+    msg: "Locked: onboarding + access paths only. Unlocked: Roam/Study layouts, reminders, structured notes help, and Find in notes (beta) that issues tm_spocket_find / step / clear messages into both workspace frames so highlights stay aligned while you navigate. Roam/Study expose a control to collapse site nav for a wider iframe. Motion is local React/CSS state only.",
+    eyes: "happy",
+    options: [
+      { label: "Another question", next: "ask_spocket_unlocked" },
+      { label: "Done for now", next: "_parked_dismiss" },
+    ],
+  },
+  sq_origin_p: {
+    msg: "Authored for this site as a JSX bundle (Babel in-browser on Student Resources) mounting into #spocket-root, alongside the lock overlay and dual iframes for the study guide. Styling mixes inline layout objects with the page CSS. Iterations add features (immersive modes, find bridge) without changing the hosting model.",
+    eyes: "happy",
+    options: [
+      { label: "Another question", next: "ask_spocket_unlocked" },
+      { label: "Done for now", next: "_parked_dismiss" },
+    ],
+  },
+  notes_help_hub: {
+    msg: "Notes workspace in short: the study guide lives in a frame with a floating toolbar on top. You can highlight, sketch, drop stickies, paste images, widen the column, all that. There is a big help panel on the page with a question mark for the full manual. From my corner menu you can also try Find in notes (beta): you say what you want to know, I highlight related spots in the guide and formula sheet. What should I explain?",
+    eyes: "happy",
+    options: [
+      { label: "Toolbar and tools", next: "nh_toolbar" },
+      { label: "Sticky notes and images", next: "nh_stickies" },
+      { label: "Highlights and drawings", next: "nh_highlights" },
+      { label: "Expand the notes column", next: "nh_expand" },
+      { label: "Keyboard shortcuts", next: "nh_keys" },
+      { label: "Where is my stuff saved?", next: "nh_save" },
+      { label: "Formula sheet vs study guide", next: "nh_formula" },
+      { label: "Back to assistant FAQ", next: "ask_spocket_unlocked" },
+      { label: "Done", next: "_parked_dismiss" },
+    ],
+  },
+  nh_toolbar: {
+    msg: "The toolbar starts as a small pill with undo and redo. Expand it for pointer, highlighter, eraser, arrow, shapes, sticky notes, images, style presets, and clear. On the study guide there is a control to widen the notes column on this page. Clear notes removes stickies only. Clear canvas wipes drawings and highlights in that frame.",
+    eyes: "happy",
+    options: [
+      { label: "More topics", next: "notes_help_hub" },
+      { label: "Done", next: "_parked_dismiss" },
+    ],
+  },
+  nh_stickies: {
+    msg: "Sticky notes and workspace images sit on top of the guide and usually scroll with the page. Right click a sticky for delete, copy, duplicate, edit fonts or borders, or pin to screen so it stays put while you scroll. Right click an image for delete or edit crop and mask.",
+    eyes: "happy",
+    options: [
+      { label: "More topics", next: "notes_help_hub" },
+      { label: "Done", next: "_parked_dismiss" },
+    ],
+  },
+  nh_highlights: {
+    msg: "Turn the highlighter on and drag to select text in the guide or formula page. Eraser removes one mark at a time. In pointer mode, right click a drawn shape for line style, color, copy, and paste. Undo and redo only affect drawings.",
+    eyes: "happy",
+    options: [
+      { label: "More topics", next: "notes_help_hub" },
+      { label: "Done", next: "_parked_dismiss" },
+    ],
+  },
+  nh_expand: {
+    msg: "Use expand layout on the toolbar to give the notes column more width on a wide screen. If the page shows a gutter on the right edge of the notes panel, you can drag it to resize.",
+    eyes: "happy",
+    options: [
+      { label: "More topics", next: "notes_help_hub" },
+      { label: "Done", next: "_parked_dismiss" },
+    ],
+  },
+  nh_keys: {
+    msg: "While you are not typing in a field: Ctrl H toggles the highlighter, Ctrl Shift S asks for a new sticky on the study guide, Ctrl A toggles the arrow pen, Ctrl Z undoes a drawing and Ctrl Y or Ctrl Shift Z redoes, and Ctrl C or Ctrl V copies a selected shape in pointer mode. On Mac use Cmd where you read Ctrl.",
+    eyes: "happy",
+    options: [
+      { label: "More topics", next: "notes_help_hub" },
+      { label: "Done", next: "_parked_dismiss" },
+    ],
+  },
+  nh_save: {
+    msg: "Highlights, drawings, sticky text, image placements, preset colors, pin state, anchors, toolbar position, and each page's highlight bucket live in local storage in this browser. Clearing site data for this site will wipe them.",
+    eyes: "happy",
+    options: [
+      { label: "More topics", next: "notes_help_hub" },
+      { label: "Done", next: "_parked_dismiss" },
+    ],
+  },
+  nh_formula: {
+    msg: "Opening the full formula sheet hides the study guide until you close it. Formula uses the same kind of toolbar but without the widen column control. Click variables in equations for definitions when they are wired up. On the nomenclature tab, matching symbols can be double clicked to jump to uses on the formula tab.",
+    eyes: "happy",
+    options: [
+      { label: "More topics", next: "notes_help_hub" },
+      { label: "Done", next: "_parked_dismiss" },
     ],
   },
   not_student: {
@@ -73,13 +382,6 @@ const TREE = {
     eyes: "happy",
     showForm: true,
     options: [{ label: "Actually, never mind", next: "end_convo" }],
-  },
-  cleared_cookies: {
-    msg: "Oh no, that's so sad! Here, have some of mine!",
-    eyes: "sad",
-    returnCard: true,
-    animation: "give_cookies",
-    options: [{ label: "Thanks Spocket!", next: "_exit" }],
   },
   all_cookies: {
     msg: "ALL of them?! Another one can't hurt right? Here, take a cookie on the house!",
@@ -147,9 +449,15 @@ function Robot({ eyes = "happy", mouthOpen = false, scale = 1, style = {}, wavin
   if (idleAnim === "sleep") { armL = "rotate(15deg)"; armR = "rotate(-15deg)"; }
 
   // ── COLOR PALETTE ──
-  // m1=lightest pink, m2=main pink, m3=mid shadow, m4=dark accent, m5=darkest
-  // cop=copper highlight, copD=copper dark
-  const m1="#e8c0c8",m2="#dba8b2",m3="#c9909c",m4="#a87080",m5="#8a5a68",cop="#caa090",copD="#a88070";
+  // m1–m4 = warm chassis pink; sil* = shared silvery rose-metal (limbs, trim, treads)
+  const m1="#e8c0c8",m2="#dba8b2",m3="#c9909c",m4="#a87080";
+  const silD="#453a40",silM="#6e5e66",silLM="#a8949c",silL="#e8dce2",silHi="#f6eef2";
+  const armPipeBg=`linear-gradient(90deg,${silD},${silM} 18%,${silLM} 38%,${silL} 49%,${silHi} 50%,${silL} 51%,${silLM} 62%,${silM} 82%,${silD})`;
+  const armPipeSh="inset 1px 0 2px rgba(255,252,255,0.5),inset -2px 0 4px rgba(35,22,30,0.35),inset 0 1px 0 rgba(255,210,225,0.25)";
+  const neckBg=`linear-gradient(to bottom,${silLM},${silM} 52%,${silD})`;
+  const neckSh="inset 0 1px 2px rgba(255,248,250,0.45),inset 0 -2px 3px rgba(25,18,22,0.4)";
+  const silBall=`radial-gradient(circle at 38% 30%,${silHi},${silL} 42%,${silLM} 72%,${silM})`;
+  const silBallSh="inset 2px 2px 3px rgba(255,252,255,0.4),inset -2px -2px 3px rgba(30,22,28,0.35)";
 
   const renderEyes = () => {
     const g="#7fdbca",glow=`drop-shadow(0 0 10px ${g}) drop-shadow(0 0 22px ${g}40)`,glowS="drop-shadow(0 0 10px #6ba3ff) drop-shadow(0 0 22px #6ba3ff40)";
@@ -281,7 +589,7 @@ function Robot({ eyes = "happy", mouthOpen = false, scale = 1, style = {}, wavin
       <div style={{position:"absolute",top:-4,left:"50%",transform:`translateX(${facing==="side"?"-25%":"-50%"})`,zIndex:5}}>
         {studyMode ? (
           <svg width="24" height="36" viewBox="0 0 24 36">
-            <path d="M12 36 L12 4" fill="none" stroke={m3} strokeWidth="2.5" strokeLinecap="round"/>
+            <path d="M12 36 L12 4" fill="none" stroke={silM} strokeWidth="2.5" strokeLinecap="round"/>
             <circle cx="12" cy="4" r="5" fill="#4ad4a0">
               <animate attributeName="opacity" values="0.6;1;0.6" dur="1.5s" repeatCount="indefinite"/>
             </circle>
@@ -295,7 +603,7 @@ function Robot({ eyes = "happy", mouthOpen = false, scale = 1, style = {}, wavin
             </circle>
           </svg>
         ) : (
-          <svg width="24" height="32" viewBox="0 0 24 32"><path d="M12 32 L12 16 Q12 6 18 4" fill="none" stroke={m3} strokeWidth="2.5" strokeLinecap="round"/><circle cx="19" cy="4" r="4" fill="#7fdbca"><animate attributeName="opacity" values="0.5;1;0.5" dur="2s" repeatCount="indefinite"/></circle><circle cx="19" cy="4" r="7" fill="none" stroke="#7fdbca20" strokeWidth="1"><animate attributeName="r" values="5;9;5" dur="2s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.3;0;0.3" dur="2s" repeatCount="indefinite"/></circle></svg>
+          <svg width="24" height="32" viewBox="0 0 24 32"><path d="M12 32 L12 16 Q12 6 18 4" fill="none" stroke={silM} strokeWidth="2.5" strokeLinecap="round"/><circle cx="19" cy="4" r="4" fill="#7fdbca"><animate attributeName="opacity" values="0.5;1;0.5" dur="2s" repeatCount="indefinite"/></circle><circle cx="19" cy="4" r="7" fill="none" stroke="#7fdbca20" strokeWidth="1"><animate attributeName="r" values="5;9;5" dur="2s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.3;0;0.3" dur="2s" repeatCount="indefinite"/></circle></svg>
         )}
       </div>
       {/* Head */}
@@ -308,14 +616,14 @@ function Robot({ eyes = "happy", mouthOpen = false, scale = 1, style = {}, wavin
       {idleAnim==="sleep"&&<div style={{position:"absolute",top:18,right:-4,fontSize:14,animation:"floatUpSlow 2s ease-in-out infinite",color:"#7fdbca80",zIndex:10}}>💤</div>}
       {idleAnim==="music"&&<div style={{position:"absolute",top:14,right:-10,fontSize:12,animation:"floatUpSlow 1.5s ease-in-out infinite",color:"#7fdbca"}}>♪♫</div>}
       {/* Neck */}
-      <div style={{position:"absolute",top:81,left:"50%",transform:`translateX(${facing==="side"?"-30%":"-50%"})`,width:20,height:10,background:`linear-gradient(to bottom,${cop},${copD})`,borderRadius:3,zIndex:1}}/>
+      <div style={{position:"absolute",top:81,left:"50%",transform:`translateX(${facing==="side"?"-30%":"-50%"})`,width:20,height:10,background:neckBg,boxShadow:neckSh,border:`1px solid ${silD}`,borderRadius:3,zIndex:1}}/>
       {/* Body */}
-      <div style={{position:"absolute",top:88,left:"50%",transform:`translateX(${facing==="side"?"-30%":"-50%"})`,width:facing==="side"?52:76,height:58,borderRadius:facing==="side"?"12px 18px 16px 10px":"12px 12px 16px 16px",background:`linear-gradient(160deg,${m1},${m2} 30%,${m3} 60%,${m4})`,boxShadow:`inset 3px 3px 8px rgba(255,220,230,0.3),inset -2px -3px 6px rgba(0,0,0,0.15),0 6px 16px rgba(0,0,0,0.25)`,border:`1.5px solid ${m4}`,zIndex:2}}>
-        <div style={{position:"absolute",top:5,left:"50%",transform:"translateX(-50%)",fontFamily:"'Courier New',monospace",fontSize:7,color:m5,letterSpacing:2,fontWeight:"bold"}}>SPOCKET</div>
-        <div style={{position:"absolute",bottom:5,left:"50%",transform:"translateX(-50%)",width:30,height:28,borderRadius:6,background:"#0a0f18",border:`1.5px solid ${m4}`,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"inset 0 1px 3px rgba(0,0,0,0.4)"}}>
-          {showCookie?<span style={{fontSize:16,animation:"cookiePop 0.4s ease"}}>🍪</span>:showIpad?<span style={{fontSize:14,animation:"cookiePop 0.4s ease"}}>📱</span>:<div style={{width:7,height:7,borderRadius:"50%",background:m4}}/>}
+      <div style={{position:"absolute",top:88,left:"50%",transform:`translateX(${facing==="side"?"-30%":"-50%"})`,width:facing==="side"?52:76,height:58,borderRadius:facing==="side"?"12px 18px 16px 10px":"12px 12px 16px 16px",background:`linear-gradient(160deg,${m1},${m2} 30%,${m3} 60%,${m4})`,boxShadow:`inset 3px 3px 8px rgba(255,220,230,0.3),inset -2px -3px 6px rgba(0,0,0,0.15),0 6px 16px rgba(0,0,0,0.25)`,border:`1.5px solid ${silM}`,zIndex:2}}>
+        <div style={{position:"absolute",top:5,left:"50%",transform:"translateX(-50%)",fontFamily:"'Courier New',monospace",fontSize:7,color:silD,letterSpacing:2,fontWeight:"bold"}}>SPOCKET</div>
+        <div style={{position:"absolute",bottom:5,left:"50%",transform:"translateX(-50%)",width:30,height:28,borderRadius:6,background:"#0a0f18",border:`1.5px solid ${silD}`,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"inset 0 1px 3px rgba(0,0,0,0.4)"}}>
+          {showCookie?<span style={{fontSize:16,animation:"cookiePop 0.4s ease"}}>🍪</span>:showIpad?<span style={{fontSize:14,animation:"cookiePop 0.4s ease"}}>📱</span>:<div style={{width:7,height:7,borderRadius:"50%",background:silM}}/>}
         </div>
-        {(facing!=="side"?[[5,4],[65,4],[5,48],[65,48]]:[[4,4],[42,4]]).map(([l,t],i)=><div key={i} style={{position:"absolute",left:l,top:t,width:5,height:5,borderRadius:"50%",background:`radial-gradient(circle at 35% 35%,${m1},${m4})`}}/>)}
+        {(facing!=="side"?[[5,4],[65,4],[5,48],[65,48]]:[[4,4],[42,4]]).map(([l,t],i)=><div key={i} style={{position:"absolute",left:l,top:t,width:5,height:5,borderRadius:"50%",background:`radial-gradient(circle at 35% 35%,${silHi},${silLM} 55%,${silD})`,boxShadow:`inset 0 1px 1px rgba(255,255,255,0.35),0 0 0 0.5px ${silD}60`}}/>)}
         {idleAnim==="build"&&<div style={{position:"absolute",top:-12,right:-12,fontSize:11,animation:"sparkle 0.8s ease-in-out infinite"}}>⚡🔧</div>}
       </div>
       {/* ══ ARMS ══
@@ -330,43 +638,43 @@ function Robot({ eyes = "happy", mouthOpen = false, scale = 1, style = {}, wavin
         {/* ── LEFT ARM ── left:19, shoulder center = 19 + (26/2) = 32 = body left edge */}
         <div style={{position:"absolute",top:96,left:19,width:26,height:48,transform:armL,transformOrigin:"13px 6px",transition:"transform 0.4s",zIndex:3}}>
           {/* Shoulder ball: 12px circle, centered in 26px container */}
-          <div style={{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",width:12,height:12,borderRadius:"50%",background:`radial-gradient(circle at 40% 35%,${m1},${m3})`,border:`1.5px solid ${m4}`}}/>
+          <div style={{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",width:12,height:12,borderRadius:"50%",background:silBall,boxShadow:silBallSh,border:`1.5px solid ${silD}`}}/>
           {/* Arm pipe: 10px wide cylinder, 20px tall. Adjust height to change arm length */}
-          <div style={{position:"absolute",top:10,left:"50%",transform:"translateX(-50%)",width:10,height:20,background:`linear-gradient(90deg,${copD},${cop} 40%,${cop} 60%,${copD})`,borderRadius:5}}/>
+          <div style={{position:"absolute",top:10,left:"50%",transform:"translateX(-50%)",width:10,height:20,background:armPipeBg,borderRadius:5,boxShadow:armPipeSh,border:`1px solid ${silD}`}}/>
           {/* Claw: 24x20 SVG. top:28 = shoulder(12) + pipe(20) - overlap(4). Adjust top to move claw up/down */}
           <svg width="24" height="20" viewBox="0 0 24 20" style={{position:"absolute",top:28,left:"50%",transform:"translateX(-50%)",animation:"clawHinge 3s ease-in-out infinite",transformOrigin:"top center"}}>
             {/* Wrist base rectangle */}
-            <rect x="8" y="0" width="8" height="4" rx="1.5" fill={m3} stroke={m4} strokeWidth="1"/>
+            <rect x="8" y="0" width="8" height="4" rx="1.5" fill={silLM} stroke={silD} strokeWidth="1"/>
             {/* Pivot bolts at wrist */}
-            <circle cx="9" cy="4" r="1.8" fill={m3} stroke={m4} strokeWidth="0.8"/>
-            <circle cx="15" cy="4" r="1.8" fill={m3} stroke={m4} strokeWidth="0.8"/>
+            <circle cx="9" cy="4" r="1.8" fill={silLM} stroke={silD} strokeWidth="0.8"/>
+            <circle cx="15" cy="4" r="1.8" fill={silLM} stroke={silD} strokeWidth="0.8"/>
             {/* Left pincer: upper segment (9,5)→(4,11), lower segment (4,11)→(7,17) */}
-            <line x1="9" y1="5" x2="4" y2="11" stroke={m4} strokeWidth="3" strokeLinecap="round"/>
-            <line x1="4" y1="11" x2="7" y2="17" stroke={m4} strokeWidth="3" strokeLinecap="round"/>
-            <circle cx="4" cy="11" r="1.8" fill={m3} stroke={m4} strokeWidth="0.7"/>
+            <line x1="9" y1="5" x2="4" y2="11" stroke={silM} strokeWidth="3" strokeLinecap="round"/>
+            <line x1="4" y1="11" x2="7" y2="17" stroke={silM} strokeWidth="3" strokeLinecap="round"/>
+            <circle cx="4" cy="11" r="1.8" fill={silLM} stroke={silD} strokeWidth="0.7"/>
             {/* Right pincer: upper segment (15,5)→(20,11), lower segment (20,11)→(17,17) */}
-            <line x1="15" y1="5" x2="20" y2="11" stroke={m4} strokeWidth="3" strokeLinecap="round"/>
-            <line x1="20" y1="11" x2="17" y2="17" stroke={m4} strokeWidth="3" strokeLinecap="round"/>
-            <circle cx="20" cy="11" r="1.8" fill={m3} stroke={m4} strokeWidth="0.7"/>
+            <line x1="15" y1="5" x2="20" y2="11" stroke={silM} strokeWidth="3" strokeLinecap="round"/>
+            <line x1="20" y1="11" x2="17" y2="17" stroke={silM} strokeWidth="3" strokeLinecap="round"/>
+            <circle cx="20" cy="11" r="1.8" fill={silLM} stroke={silD} strokeWidth="0.7"/>
           </svg>
         </div>
         {/* ── RIGHT ARM ── left:95, shoulder center = 95 + 13 = 108 = body right edge */}
         <div style={{position:"absolute",top:96,left:95,width:26,height:48,transform:armR,transformOrigin:"13px 6px",transition:"transform 0.4s",zIndex:3}}>
           {/* Shoulder ball */}
-          <div style={{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",width:12,height:12,borderRadius:"50%",background:`radial-gradient(circle at 40% 35%,${m1},${m3})`,border:`1.5px solid ${m4}`}}/>
+          <div style={{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",width:12,height:12,borderRadius:"50%",background:silBall,boxShadow:silBallSh,border:`1.5px solid ${silD}`}}/>
           {/* Arm pipe */}
-          <div style={{position:"absolute",top:10,left:"50%",transform:"translateX(-50%)",width:10,height:20,background:`linear-gradient(90deg,${copD},${cop} 40%,${cop} 60%,${copD})`,borderRadius:5}}/>
+          <div style={{position:"absolute",top:10,left:"50%",transform:"translateX(-50%)",width:10,height:20,background:armPipeBg,borderRadius:5,boxShadow:armPipeSh,border:`1px solid ${silD}`}}/>
           {/* Claw (same structure as left arm, offset 0.5s for natural feel) */}
           <svg width="24" height="20" viewBox="0 0 24 20" style={{position:"absolute",top:28,left:"50%",transform:"translateX(-50%)",animation:"clawHinge 3s ease-in-out infinite 0.5s",transformOrigin:"top center"}}>
-            <rect x="8" y="0" width="8" height="4" rx="1.5" fill={m3} stroke={m4} strokeWidth="1"/>
-            <circle cx="9" cy="4" r="1.8" fill={m3} stroke={m4} strokeWidth="0.8"/>
-            <circle cx="15" cy="4" r="1.8" fill={m3} stroke={m4} strokeWidth="0.8"/>
-            <line x1="9" y1="5" x2="4" y2="11" stroke={m4} strokeWidth="3" strokeLinecap="round"/>
-            <line x1="4" y1="11" x2="7" y2="17" stroke={m4} strokeWidth="3" strokeLinecap="round"/>
-            <circle cx="4" cy="11" r="1.8" fill={m3} stroke={m4} strokeWidth="0.7"/>
-            <line x1="15" y1="5" x2="20" y2="11" stroke={m4} strokeWidth="3" strokeLinecap="round"/>
-            <line x1="20" y1="11" x2="17" y2="17" stroke={m4} strokeWidth="3" strokeLinecap="round"/>
-            <circle cx="20" cy="11" r="1.8" fill={m3} stroke={m4} strokeWidth="0.7"/>
+            <rect x="8" y="0" width="8" height="4" rx="1.5" fill={silLM} stroke={silD} strokeWidth="1"/>
+            <circle cx="9" cy="4" r="1.8" fill={silLM} stroke={silD} strokeWidth="0.8"/>
+            <circle cx="15" cy="4" r="1.8" fill={silLM} stroke={silD} strokeWidth="0.8"/>
+            <line x1="9" y1="5" x2="4" y2="11" stroke={silM} strokeWidth="3" strokeLinecap="round"/>
+            <line x1="4" y1="11" x2="7" y2="17" stroke={silM} strokeWidth="3" strokeLinecap="round"/>
+            <circle cx="4" cy="11" r="1.8" fill={silLM} stroke={silD} strokeWidth="0.7"/>
+            <line x1="15" y1="5" x2="20" y2="11" stroke={silM} strokeWidth="3" strokeLinecap="round"/>
+            <line x1="20" y1="11" x2="17" y2="17" stroke={silM} strokeWidth="3" strokeLinecap="round"/>
+            <circle cx="20" cy="11" r="1.8" fill={silLM} stroke={silD} strokeWidth="0.7"/>
           </svg>
         </div>
       </>):(
@@ -374,33 +682,88 @@ function Robot({ eyes = "happy", mouthOpen = false, scale = 1, style = {}, wavin
            Body in side profile: 52px wide, translateX(-30%) from left:50%
            Body right edge ≈ pixel 106. Arm left:93, center at 106. */
         <div style={{position:"absolute",top:100,left:93,width:26,height:46,transform:"rotate(-30deg)",transformOrigin:"13px 6px",zIndex:3}}>
-          <div style={{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",width:12,height:12,borderRadius:"50%",background:`radial-gradient(circle at 40% 35%,${m1},${m3})`,border:`1.5px solid ${m4}`}}/>
-          <div style={{position:"absolute",top:10,left:"50%",transform:"translateX(-50%)",width:10,height:18,background:`linear-gradient(90deg,${copD},${cop} 40%,${cop} 60%,${copD})`,borderRadius:5}}/>
+          <div style={{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",width:12,height:12,borderRadius:"50%",background:silBall,boxShadow:silBallSh,border:`1.5px solid ${silD}`}}/>
+          <div style={{position:"absolute",top:10,left:"50%",transform:"translateX(-50%)",width:10,height:18,background:armPipeBg,borderRadius:5,boxShadow:armPipeSh,border:`1px solid ${silD}`}}/>
           <svg width="24" height="20" viewBox="0 0 24 20" style={{position:"absolute",top:26,left:"50%",transform:"translateX(-50%)"}}>
-            <rect x="8" y="0" width="8" height="4" rx="1.5" fill={m3} stroke={m4} strokeWidth="1"/>
-            <circle cx="9" cy="4" r="1.8" fill={m3} stroke={m4} strokeWidth="0.8"/>
-            <circle cx="15" cy="4" r="1.8" fill={m3} stroke={m4} strokeWidth="0.8"/>
-            <line x1="9" y1="5" x2="4" y2="11" stroke={m4} strokeWidth="3" strokeLinecap="round"/>
-            <line x1="4" y1="11" x2="7" y2="17" stroke={m4} strokeWidth="3" strokeLinecap="round"/>
-            <circle cx="4" cy="11" r="1.8" fill={m3} stroke={m4} strokeWidth="0.7"/>
-            <line x1="15" y1="5" x2="20" y2="11" stroke={m4} strokeWidth="3" strokeLinecap="round"/>
-            <line x1="20" y1="11" x2="17" y2="17" stroke={m4} strokeWidth="3" strokeLinecap="round"/>
-            <circle cx="20" cy="11" r="1.8" fill={m3} stroke={m4} strokeWidth="0.7"/>
+            <rect x="8" y="0" width="8" height="4" rx="1.5" fill={silLM} stroke={silD} strokeWidth="1"/>
+            <circle cx="9" cy="4" r="1.8" fill={silLM} stroke={silD} strokeWidth="0.8"/>
+            <circle cx="15" cy="4" r="1.8" fill={silLM} stroke={silD} strokeWidth="0.8"/>
+            <line x1="9" y1="5" x2="4" y2="11" stroke={silM} strokeWidth="3" strokeLinecap="round"/>
+            <line x1="4" y1="11" x2="7" y2="17" stroke={silM} strokeWidth="3" strokeLinecap="round"/>
+            <circle cx="4" cy="11" r="1.8" fill={silLM} stroke={silD} strokeWidth="0.7"/>
+            <line x1="15" y1="5" x2="20" y2="11" stroke={silM} strokeWidth="3" strokeLinecap="round"/>
+            <line x1="20" y1="11" x2="17" y2="17" stroke={silM} strokeWidth="3" strokeLinecap="round"/>
+            <circle cx="20" cy="11" r="1.8" fill={silLM} stroke={silD} strokeWidth="0.7"/>
           </svg>
         </div>
       )}
       {/* Treads */}
-      <div style={{position:"absolute",top:148,left:"50%",transform:`translateX(${facing==="side"?"-30%":"-50%"})`,width:facing==="side"?52:68,height:16,background:`linear-gradient(to bottom,${m4},${m5})`,borderRadius:"4px 4px 10px 10px",zIndex:2,boxShadow:"0 3px 8px rgba(0,0,0,0.3)"}}>
-        {[0,1].map(s=><div key={s} style={{position:"absolute",bottom:-5,[s===0?"left":"right"]:-3,width:facing==="side"?22:28,height:16,borderRadius:8,background:"#3a2a2e",border:`2px solid ${m5}`}}>{[0,1,2].map(i=><div key={i} style={{position:"absolute",top:3+i*4,left:2,right:2,height:1.5,background:`${m5}40`}}/>)}</div>)}
+      <div style={{position:"absolute",top:148,left:"50%",transform:`translateX(${facing==="side"?"-30%":"-50%"})`,width:facing==="side"?52:68,height:16,background:`linear-gradient(to bottom,${silLM},${silM} 45%,${silD})`,borderRadius:"4px 4px 10px 10px",zIndex:2,boxShadow:`0 3px 8px rgba(0,0,0,0.3),inset 0 1px 0 rgba(255,248,250,0.25)`,border:`1px solid ${silD}`}}>
+        {[0,1].map(s=><div key={s} style={{position:"absolute",bottom:-5,[s===0?"left":"right"]:-3,width:facing==="side"?22:28,height:16,borderRadius:8,background:"#2c2629",border:`2px solid ${silD}`,boxShadow:"inset 0 1px 0 rgba(255,255,255,0.06)"}}>{[0,1,2].map(i=><div key={i} style={{position:"absolute",top:3+i*4,left:2,right:2,height:1.5,background:`${silM}55`}}/>)}</div>)}
       </div>
       {startled&&(<><div style={{position:"absolute",top:10,left:-15,fontSize:10,animation:"partFly1 0.6s ease-out forwards"}}>⚙️</div><div style={{position:"absolute",top:30,right:-18,fontSize:8,animation:"partFly2 0.7s ease-out forwards"}}>🔩</div><div style={{position:"absolute",top:5,right:-10,fontSize:9,animation:"partFly3 0.5s ease-out forwards"}}>💨</div><div style={{position:"absolute",top:50,left:-12,fontSize:7,animation:"partFly2 0.8s ease-out forwards"}}>🔧</div></>)}
     </div>
   );
 }
 
-/* ── Bubble ── */
-function Bubble({text,isTyping,tiny,onSkip}){
-  return(<div style={{position:"relative",display:"inline-block"}}><div style={{background:"linear-gradient(135deg,#1a2538,#0f172a)",border:"1px solid #7fdbca30",borderRadius:18,padding:tiny?"10px 16px":"18px 24px",minWidth:240,maxWidth:420,fontFamily:"'JetBrains Mono',monospace",fontSize:tiny?11:14,color:tiny?"#7fdbca50":"#c8d6e5",lineHeight:1.65,boxShadow:"0 6px 24px rgba(0,0,0,0.3)"}}>{text}{isTyping&&<span style={{animation:"blink 0.8s infinite",marginLeft:2}}>▊</span>}{isTyping&&onSkip&&<div onClick={onSkip} style={{marginTop:10,fontSize:9,color:"#7fdbca30",cursor:"pointer",fontFamily:"monospace"}} onMouseOver={e=>e.target.style.color="#7fdbca70"} onMouseOut={e=>e.target.style.color="#7fdbca30"}>[click to skip]</div>}</div><svg width="20" height="14" viewBox="0 0 20 14" style={{position:"absolute",bottom:-13,left:28}}><path d="M0 0 L10 14 L20 0" fill="#0f172a"/></svg></div>);
+/* ── Bubble ──
+   tail: "bottom" (default, tail under bubble) | "right" (tail on right edge, points toward robot to the right) */
+function Bubble({ rawMsg, textPlain, text, isTyping, tiny, onSkip, tail = "bottom" }) {
+  const raw = rawMsg != null ? rawMsg : text != null ? text : "";
+  const plainLen = isTyping ? (textPlain != null ? textPlain.length : text != null ? text.length : 0) : null;
+  const bodyNodes = spocketBubbleRichNodes(raw, plainLen);
+  const box = (
+    <div
+      style={{
+        backgroundColor: "#0f172a",
+        backgroundImage: "linear-gradient(135deg,#1a2538,#121a2e)",
+        border: "1px solid #7fdbca30",
+        borderRadius: 18,
+        padding: tiny ? (tail === "right" ? "10px 18px 10px 14px" : "10px 16px") : tail === "right" ? "18px 26px 18px 22px" : "18px 24px",
+        minWidth: 240,
+        maxWidth: 420,
+        fontFamily: "'JetBrains Mono',monospace",
+        fontSize: tiny ? 11 : 14,
+        color: tiny ? "#7fdbca50" : "#c8d6e5",
+        lineHeight: 1.65,
+        boxShadow: "0 6px 24px rgba(0,0,0,0.45)",
+        isolation: "isolate",
+      }}
+    >
+      {bodyNodes}
+      {isTyping && <span style={{ animation: "blink 0.8s infinite", marginLeft: 2 }}>▊</span>}
+      {isTyping && onSkip && (
+        <div
+          onClick={onSkip}
+          style={{ marginTop: 10, fontSize: 9, color: "#7fdbca30", cursor: "pointer", fontFamily: "monospace" }}
+          onMouseOver={(e) => (e.target.style.color = "#7fdbca70")}
+          onMouseOut={(e) => (e.target.style.color = "#7fdbca30")}
+        >
+          [click or Space to skip]
+        </div>
+      )}
+    </div>
+  );
+  return (
+    <div style={{ position: "relative", display: "inline-block" }}>
+      {box}
+      {tail === "right" ? (
+        <svg
+          width="14"
+          height="22"
+          viewBox="0 0 14 22"
+          style={{ position: "absolute", right: -11, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}
+          aria-hidden="true"
+        >
+          <path d="M0 5 L14 11 L0 17 Z" fill="#121a2e" />
+        </svg>
+      ) : (
+        <svg width="20" height="14" viewBox="0 0 20 14" style={{ position: "absolute", bottom: -13, left: 28 }} aria-hidden="true">
+          <path d="M0 0 L10 14 L20 0" fill="#121a2e" />
+        </svg>
+      )}
+    </div>
+  );
 }
 
 function IpadForm(){
@@ -455,9 +818,6 @@ function EmailForm({onSubmit}){
     </div>
   );
 }
-
-function MiniCard(){return(<div style={{width:340,padding:24,background:"linear-gradient(145deg,#1a2332,#0d1520)",border:"1px solid #7fdbca20",borderRadius:14,boxShadow:"0 8px 32px rgba(0,0,0,0.4)"}}><div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:18,fontWeight:700,color:"#e2e8f0",textTransform:"uppercase",letterSpacing:3,marginBottom:16}}>Student Resources</div><p style={{fontSize:12,color:"#94a3b8",lineHeight:1.6,margin:"0 0 16px 0",fontFamily:"'JetBrains Mono',monospace"}}>These student resources are only for students in my courses. Enter the password you were given.</p><div style={{fontSize:10,color:"#7fdbca80",textTransform:"uppercase",letterSpacing:2,marginBottom:6,fontFamily:"monospace"}}>Password</div><div style={{width:"100%",padding:"10px 14px",background:"#0a0f18",border:"1px solid #7fdbca30",borderRadius:8,color:"#475569",fontSize:12,fontFamily:"monospace",marginBottom:12,boxSizing:"border-box"}}>Enter password</div><div style={{display:"flex",gap:10}}><div style={{padding:"8px 20px",border:"1px solid #7fdbca",borderRadius:6,color:"#7fdbca",fontSize:10,textTransform:"uppercase",letterSpacing:2,fontFamily:"monospace"}}>Unlock</div><div style={{padding:"8px 20px",border:"1px solid #475569",borderRadius:6,color:"#94a3b8",fontSize:10,textTransform:"uppercase",letterSpacing:2,fontFamily:"monospace"}}>Request Access</div></div></div>);}
-
 
 /* ═══════════════════════════════════════════
    ROAM MODE — Spocket's Full House & Yard
@@ -662,7 +1022,175 @@ function DraggableWidget({children,initX,initY,initW,initH}){
   );
 }
 
-function StudyPanel({onClose}){
+const IMMERSIVE_CHROME_H = 36;
+
+function SpocketImmersiveChrome({
+  label,
+  siteNavOpen,
+  onToggleSiteNav,
+  dockToggleInNav = false,
+  hideImmersiveTopBar = false,
+}) {
+  const S = { fontFamily: "'JetBrains Mono', monospace" };
+  const navHost =
+    typeof document !== "undefined" && dockToggleInNav ? document.getElementById("sr-spocket-nav-toggle-host") : null;
+
+  const roamBarToggle = (
+    <button
+      type="button"
+      onClick={onToggleSiteNav}
+      style={{
+        ...S,
+        fontSize: 9,
+        padding: "5px 11px",
+        borderRadius: 8,
+        border: siteNavOpen ? "1px solid rgba(127,219,202,0.45)" : "1px solid rgba(127,219,202,0.22)",
+        background: siteNavOpen ? "rgba(127,219,202,0.12)" : "rgba(15,23,42,0.55)",
+        color: "#7fdbca",
+        cursor: "pointer",
+      }}
+    >
+      {siteNavOpen ? "Hide site menu" : "Show site menu"}
+    </button>
+  );
+
+  const studyNavToggle = (
+    <button type="button" className="sr-spocket-nav-site-toggle" onClick={onToggleSiteNav} aria-pressed={siteNavOpen}>
+      {siteNavOpen ? "Hide site menu" : "Show site menu"}
+    </button>
+  );
+
+  const barInner = (
+    <div
+      style={{
+        height: IMMERSIVE_CHROME_H,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "0 10px 0 12px",
+        background: "linear-gradient(180deg, #0f172af2, #0a0f18ee)",
+        borderBottom: "1px solid rgba(127,219,202,0.12)",
+        boxShadow: "0 1px 0 rgba(0,0,0,0.25)",
+        pointerEvents: "auto",
+      }}
+    >
+      <span style={{ fontSize: 10, color: "#64748b", letterSpacing: "0.02em", ...S }}>{label}</span>
+      {!dockToggleInNav ? roamBarToggle : null}
+    </div>
+  );
+
+  const floatShowSiteMenu =
+    dockToggleInNav && !siteNavOpen && typeof document !== "undefined" ? (
+      <button
+        type="button"
+        onClick={onToggleSiteNav}
+        style={{
+          position: "fixed",
+          bottom: 16,
+          left: "50%",
+          transform: "translateX(-50%)",
+          zIndex: 570,
+          ...S,
+          fontSize: 10,
+          padding: "9px 20px",
+          borderRadius: 999,
+          border: "1px solid rgba(127,219,202,0.55)",
+          background: "rgba(10,15,28,0.96)",
+          color: "#7fdbca",
+          cursor: "pointer",
+          boxShadow: "0 6px 28px rgba(0,0,0,0.55)",
+          pointerEvents: "auto",
+        }}
+      >
+        Show site menu
+      </button>
+    ) : null;
+
+  const floatHideLegacy =
+    siteNavOpen && !dockToggleInNav && typeof document !== "undefined" ? (
+      <button
+        type="button"
+        onClick={onToggleSiteNav}
+        style={{
+          position: "fixed",
+          bottom: 16,
+          left: "50%",
+          transform: "translateX(-50%)",
+          zIndex: 570,
+          ...S,
+          fontSize: 10,
+          padding: "9px 20px",
+          borderRadius: 999,
+          border: "1px solid rgba(127,219,202,0.55)",
+          background: "rgba(10,15,28,0.96)",
+          color: "#7fdbca",
+          cursor: "pointer",
+          boxShadow: "0 6px 28px rgba(0,0,0,0.55)",
+          pointerEvents: "auto",
+        }}
+      >
+        Hide site menu
+      </button>
+    ) : null;
+
+  const fixedChrome =
+    !hideImmersiveTopBar ? (
+      <div
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 560,
+          pointerEvents: "none",
+        }}
+      >
+        {barInner}
+      </div>
+    ) : null;
+
+  const portaledBody =
+    typeof document !== "undefined" && SpocketReactDOM && typeof SpocketReactDOM.createPortal === "function"
+      ? SpocketReactDOM.createPortal(
+          <>
+            {fixedChrome}
+            {floatShowSiteMenu}
+            {floatHideLegacy}
+          </>,
+          document.body
+        )
+      : null;
+
+  const portaledNav =
+    dockToggleInNav &&
+    navHost &&
+    SpocketReactDOM &&
+    typeof SpocketReactDOM.createPortal === "function"
+      ? SpocketReactDOM.createPortal(studyNavToggle, navHost)
+      : null;
+
+  if (portaledBody || portaledNav) {
+    return (
+      <>
+        <div
+          style={{ flexShrink: 0, height: hideImmersiveTopBar ? 0 : IMMERSIVE_CHROME_H, width: "100%" }}
+          aria-hidden={hideImmersiveTopBar}
+        />
+        {portaledBody}
+        {portaledNav}
+      </>
+    );
+  }
+  return (
+    <>
+      <div style={{ flexShrink: 0, zIndex: 60, pointerEvents: "auto" }}>{barInner}</div>
+      {floatShowSiteMenu}
+      {floatHideLegacy}
+    </>
+  );
+}
+
+function StudyPanel({ onClose, siteNavOpen = false, onToggleSiteNav = () => {}, embedded = false }) {
   const S={fontFamily:"'JetBrains Mono',monospace"};
   const[light,setLight]=useState(false);
   const T=light?{bg:"#f4f0e8",bg2:"#e8e0d4",text:"#1a1a2e",text2:"#4a4a5a",accent:"#3a3028",border:"#c8b8a0",line:"#c8b8a050"}
@@ -674,6 +1202,10 @@ function StudyPanel({onClose}){
   const[timerSec,setTimerSec]=useState(25*60);const[running,setRunning]=useState(false);const[repeat,setRepeat]=useState(false);
   const[initialSec,setInitialSec]=useState(25*60);const[repCount,setRepCount]=useState(0);
   const[history,setHistory]=useState([]);const[linkedTask,setLinkedTask]=useState(null);
+  const initialSecRef=useRef(initialSec);
+  const linkedTaskRef=useRef(linkedTask);
+  useEffect(()=>{initialSecRef.current=initialSec;},[initialSec]);
+  useEffect(()=>{linkedTaskRef.current=linkedTask;},[linkedTask]);
   const tRef=useRef(null);
   // Timer tick
   useEffect(()=>{
@@ -682,17 +1214,26 @@ function StudyPanel({onClose}){
     tRef.current=setInterval(()=>{
       setTimerSec(prev=>{
         if(prev<=1){
-          setHistory(h=>[{dur:initialSec,time:new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}),task:linkedTask},...h.slice(0,19)]);
-          if(repeat){setRepCount(c=>c+1);return initialSec;}
+          const dur=initialSecRef.current;
+          const taskSnap=linkedTaskRef.current;
+          setHistory(h=>[{dur,time:new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}),task:taskSnap},...h.slice(0,19)]);
+          if(repeat){setRepCount(c=>c+1);return initialSecRef.current;}
           setRunning(false);return 0;
         }
         return prev-1;
       });
     },1000);
     return()=>{if(tRef.current){clearInterval(tRef.current);tRef.current=null;}};
-  },[running,repeat,initialSec,linkedTask]);
+  },[running,repeat]);
   const fmt=s=>{const m=Math.floor(s/60);return`${String(m).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;};
   const setTimer=(m,taskName)=>{setTimerSec(m*60);setInitialSec(m*60);setRunning(false);setRepCount(0);setLinkedTask(taskName||null)};
+  const[timerCustomMin,setTimerCustomMin]=useState("");
+  const applyCustomTimer=()=>{
+    const v=parseInt(String(timerCustomMin).trim(),10);
+    if(!Number.isFinite(v)||v<1||v>999)return;
+    setTimer(v,null);
+    setTimerCustomMin("");
+  };
   const linkTask=(t)=>{setTimer(t.mins,t.text)};
   // Todos
   const[todos,setTodos]=useState([]);const[input,setInput]=useState("");const[timeInput,setTimeInput]=useState(25);
@@ -803,23 +1344,35 @@ function StudyPanel({onClose}){
   // Session persistence
   const[pastSessions,setPastSessions]=useState([]);
   const sessionStart=useRef(new Date());
+  useEffect(()=>{sessionStart.current=new Date();},[]);
   useEffect(()=>{
     const load=()=>{try{const r=localStorage.getItem("spocket_study_sessions");if(r)setPastSessions(JSON.parse(r));}catch(e){}};
     load();
   },[]);
   const saveSession=()=>{
+    const now=new Date();
     const session={date:sessionStart.current.toLocaleDateString(),startTime:sessionStart.current.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}),
-      duration:Math.floor((new Date()-sessionStart.current)/1000),timerCycles:repCount,tasksTotal:todos.length,tasksDone:todos.filter(t=>t.done).length,
-      lockedInTime:totalLocked+(lockedIn&&lockStart?Math.floor((new Date()-lockStart)/1000):0),
+      duration:Math.floor((now-sessionStart.current)/1000),timerCycles:repCount,tasksTotal:todos.length,tasksDone:todos.filter(t=>t.done).length,
+      lockedInTime:totalLocked+(lockedIn&&lockStart?Math.floor((now-lockStart)/1000):0),
       timerHistory:history.slice(0,5).map(h=>({dur:h.dur,task:h.task||""}))};
-    const updated=[session,...pastSessions].slice(0,20);
-    setPastSessions(updated);
-    try{localStorage.setItem("spocket_study_sessions",JSON.stringify(updated));}catch(e){}
+    setPastSessions((past)=>{
+      const updated=[session,...past].slice(0,20);
+      try{localStorage.setItem("spocket_study_sessions",JSON.stringify(updated));}catch(e){}
+      return updated;
+    });
   };
   const handleClose=()=>{saveSession();stopAmbient();onClose();};
 
   return(
-    <div style={{position:"fixed",inset:0,zIndex:50,overflow:"hidden"}}>
+    <div style={{position:embedded?"absolute":"fixed",inset:0,zIndex:embedded?56:50,paddingTop:embedded?0:64,overflow:"hidden",pointerEvents:"auto",display:"flex",flexDirection:"column"}}>
+      <SpocketImmersiveChrome
+        label="Spocket · Study"
+        siteNavOpen={siteNavOpen}
+        onToggleSiteNav={onToggleSiteNav}
+        dockToggleInNav={!embedded}
+        hideImmersiveTopBar={!embedded}
+      />
+      <div style={{flex:1,minHeight:0,position:"relative",overflow:"hidden"}}>
       {/* Library background — user's image */}
       <div style={{position:"absolute",inset:0,background:"#1a1208"}}>
         <div style={{position:"absolute",inset:0,backgroundImage:`url(${LIBRARY_BG})`,backgroundSize:"cover",backgroundPosition:"center",backgroundRepeat:"no-repeat"}}/>
@@ -840,7 +1393,7 @@ function StudyPanel({onClose}){
       )}
 
       {/* Controls */}
-      <div style={{position:"absolute",top:12,left:12,display:"flex",gap:8,zIndex:40,flexWrap:"wrap",alignItems:"center"}}>
+      <div style={{position:"absolute",top:embedded?12:76,left:12,display:"flex",gap:8,zIndex:40,flexWrap:"wrap",alignItems:"center"}}>
         <button onClick={handleClose} style={{padding:"6px 14px",background:"#1a253880",border:"1px solid #ff6b6b30",borderRadius:12,color:"#ff6b6b80",fontSize:10,...S,cursor:"pointer",backdropFilter:"blur(4px)"}}>← Leave</button>
         <button onClick={()=>setLight(!light)} style={{padding:"6px 14px",background:light?"#1a253880":"#e8e0d480",border:"1px solid #ffffff20",borderRadius:12,color:light?"#e2e8f0":"#1a1a2e",fontSize:10,...S,cursor:"pointer",backdropFilter:"blur(4px)"}}>{light?"🌙 Dark":"☀️ Light"}</button>
         <button onClick={toggleLock} style={{padding:"6px 14px",background:lockedIn?"#4ad4a025":"#1a253880",border:`1px solid ${lockedIn?"#4ad4a060":"#ffffff20"}`,borderRadius:12,color:lockedIn?"#4ad4a0":"#94a3b8",fontSize:10,...S,cursor:"pointer",backdropFilter:"blur(4px)",fontWeight:lockedIn?700:400}}>{lockedIn?"🔒 Locked In":"🔓 Not Locked In"}</button>
@@ -907,7 +1460,7 @@ function StudyPanel({onClose}){
           return(
             <div style={{width:"100%",height:"100%",background:light?"linear-gradient(145deg,#e8e0d4,#d8d0c4)":"linear-gradient(145deg,#1a1a2e,#12121e)",borderRadius:Math.max(16,sz.h*0.14),border:light?"3px solid #a8a098":"3px solid #2a2a3e",boxShadow:light?"0 4px 16px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.3)":"0 4px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",overflow:"hidden",position:"relative"}}>
               {/* Screen glare */}
-              <div style={{position:"absolute",inset:8,borderRadius:Math.max(10,sz.h*0.1),background:light?"linear-gradient(135deg,rgba(255,255,255,0.15),transparent 50%)":"linear-gradient(135deg,rgba(255,255,255,0.03),transparent 50%)"}}/>
+              <div style={{position:"absolute",inset:8,borderRadius:Math.max(10,sz.h*0.1),background:light?"linear-gradient(135deg,rgba(255,255,255,0.15),transparent 50%)":"linear-gradient(135deg,rgba(255,255,255,0.03),transparent 50%)",pointerEvents:"none"}}/>
               {/* Buttons on top */}
               <div style={{position:"absolute",top:-1,right:sz.w*0.15,display:"flex",gap:4}}>
                 {[0,1,2,3].map(i=><div key={i} style={{width:6*scale,height:3,background:light?"#a8a098":"#2a2a3e",borderRadius:"0 0 2px 2px"}}/>)}
@@ -931,7 +1484,7 @@ function StudyPanel({onClose}){
           const bp=`${Math.max(6,9*scale)}px ${Math.max(12,18*scale)}px`; // button padding
           return(
             <div style={{width:"100%",height:"100%",background:light?"linear-gradient(145deg,#e8e0d4,#d8d0c4)":"linear-gradient(145deg,#1a1a2e,#12121e)",borderRadius:Math.max(14,sz.h*0.12),border:light?"3px solid #a8a098":"3px solid #2a2a3e",boxShadow:light?"0 4px 16px rgba(0,0,0,0.15),inset 0 1px 0 rgba(255,255,255,0.3)":"0 4px 16px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.05)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:Math.max(4,7*scale),overflow:"hidden",position:"relative",padding:Math.max(8,14*scale),...S}}>
-              <div style={{position:"absolute",inset:8,borderRadius:Math.max(8,sz.h*0.08),background:light?"linear-gradient(135deg,rgba(255,255,255,0.12),transparent 50%)":"linear-gradient(135deg,rgba(255,255,255,0.02),transparent 50%)"}}/>
+              <div style={{position:"absolute",inset:8,borderRadius:Math.max(8,sz.h*0.08),background:light?"linear-gradient(135deg,rgba(255,255,255,0.12),transparent 50%)":"linear-gradient(135deg,rgba(255,255,255,0.02),transparent 50%)",pointerEvents:"none"}}/>
               {/* Label + linked task */}
               <div style={{textAlign:"center"}}>
                 <div style={{fontSize:Math.max(8,10*scale),color:light?"#8a8a9a":"#94a3b8",textTransform:"uppercase",letterSpacing:Math.max(1,2*scale)}}>Study Timer</div>
@@ -951,10 +1504,13 @@ function StudyPanel({onClose}){
               {/* Presets — bigger */}
               <div style={{display:"flex",gap:Math.max(3,5*scale),flexWrap:"wrap",justifyContent:"center",alignItems:"center"}}>
                 {[5,10,15,25,45,60].map(m=><button key={m} onMouseDown={e=>e.stopPropagation()} onClick={()=>setTimer(m)} style={{position:"relative",zIndex:35,padding:`${Math.max(4,6*scale)}px ${Math.max(8,12*scale)}px`,background:initialSec===m*60?(light?"#88b8e835":"#88b8e825"):"transparent",border:`1.5px solid ${initialSec===m*60?"#88b8e860":light?"#00000015":"#ffffff15"}`,borderRadius:Math.max(6,8*scale),color:initialSec===m*60?"#88b8e8":light?"#8a8a9a":"#94a3b8",fontSize:Math.max(9,11*scale),fontWeight:600,cursor:"pointer",...S}}>{m}m</button>)}
-                {/* Custom input */}
-                <div style={{display:"flex",alignItems:"center",gap:3}}>
-                  <input type="number" min={1} max={999} placeholder="custom" onMouseDown={e=>e.stopPropagation()} onKeyDown={e=>{if(e.key==="Enter"&&e.target.value){setTimer(+e.target.value);e.target.value=""}}} style={{width:Math.max(45,55*scale),padding:`${Math.max(4,6*scale)}px 4px`,background:"transparent",border:`1.5px solid ${light?"#88b8e850":"#88b8e830"}`,borderRadius:Math.max(6,8*scale),color:light?"#1a1a2e":"#e2e8f0",fontSize:Math.max(9,10*scale),textAlign:"center",...S}}/>
-                  <span style={{fontSize:Math.max(8,10*scale),color:light?"#8a8a9a":"#94a3b860"}}>min</span>
+                {/* Custom input — isolate pointer events so drag/resize chrome never eats clicks */}
+                <div
+                  style={{display:"flex",alignItems:"center",gap:4,position:"relative",zIndex:45,pointerEvents:"auto"}}
+                  onPointerDown={e=>e.stopPropagation()}
+                >
+                  <input type="number" min={1} max={999} placeholder="min" value={timerCustomMin} onChange={e=>setTimerCustomMin(e.target.value)} onMouseDown={e=>e.stopPropagation()} onClick={e=>e.stopPropagation()} onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();e.stopPropagation();applyCustomTimer();}}} style={{width:Math.max(40,48*scale),padding:`${Math.max(4,6*scale)}px 4px`,background:light?"#fffef8":"#0a0f18",border:`1.5px solid ${light?"#88b8e850":"#88b8e830"}`,borderRadius:Math.max(6,8*scale),color:light?"#1a1a2e":"#e2e8f0",fontSize:Math.max(9,10*scale),textAlign:"center",position:"relative",zIndex:46,...S}}/>
+                  <button type="button" onMouseDown={e=>e.stopPropagation()} onClick={e=>{e.stopPropagation();applyCustomTimer();}} style={{padding:`${Math.max(3,5*scale)}px ${Math.max(6,8*scale)}px`,background:light?"#88b8e820":"#88b8e818",border:`1px solid ${light?"#88b8e860":"#88b8e850"}`,borderRadius:Math.max(6,8*scale),color:"#88b8e8",fontSize:Math.max(8,9*scale),fontWeight:600,cursor:"pointer",position:"relative",zIndex:46,...S}}>Set</button>
                 </div>
               </div>
               {/* Repeat toggle — bigger */}
@@ -965,7 +1521,7 @@ function StudyPanel({onClose}){
                   <div style={{fontSize:Math.max(7,8*scale),color:light?"#8a8a9a":"#94a3b8",textTransform:"uppercase",letterSpacing:1,marginBottom:3,opacity:0.6}}>Session History</div>
                   {history.slice(0,5).map((h,i)=>(
                     <div key={i} style={{fontSize:Math.max(8,9*scale),color:light?"#6a6a7a":"#94a3b8",display:"flex",justifyContent:"space-between",gap:8}}>
-                      <span>{fmt(h.dur)}{h.task?` — ${h.task}`:""}</span><span style={{opacity:0.4}}>{h.time}</span>
+                      <span>{fmt(h.dur)}{h.task?` · ${h.task}`:""}</span><span style={{opacity:0.4}}>{h.time}</span>
                     </div>
                   ))}
                 </div>
@@ -1107,16 +1663,16 @@ function StudyPanel({onClose}){
       {/* ── GUIDED TOUR OVERLAY ── */}
       {tourStep>=0&&(()=>{
         const TOUR=[
-          {title:"Welcome to the Study Library! 📚",msg:"This is your personal study space with Spocket! Let me show you around. I'll be here studying with you, giving you reminders, and keeping you company.",pos:"center"},
+          {title:"Welcome to the Study Library! 📚",msg:"This is the Study layout: timers, planner, ambient audio, and reminders around the same assistant shell as the rest of Student Resources. The tour below walks each widget.",pos:"center"},
           {title:"📋 Study Planner",msg:"This is your notebook! Add tasks with time allocations, check them off as you go, and click the ⏱ icon on any task to link it to your timer. Drag it from the top bar and resize from any edge.",pos:"left"},
-          {title:"🕐 Clock",msg:"Your live digital clock. Shows the current time, seconds, and date. Drag it anywhere and resize it — the text scales to fit!",pos:"right"},
-          {title:"⏱ Study Timer",msg:"Set a countdown with presets (5m, 10m, 25m...) or type a custom time. Hit Start to begin! Turn on Repeat for pomodoro-style cycles — it tracks how many cycles you've done and logs your session history.",pos:"right"},
+          {title:"🕐 Clock",msg:"Your live digital clock. Shows the current time, seconds, and date. Drag it anywhere and resize it. The text scales to fit.",pos:"right"},
+          {title:"⏱ Study Timer",msg:"Set a countdown with presets (5m, 10m, 25m...) or type a custom time. Hit Start to begin! Turn on Repeat for pomodoro-style cycles. It tracks how many cycles you have done and logs your session history.",pos:"right"},
           {title:"🎧 Ambient Radio",msg:"Click the boombox at the bottom to open the sound radio. Choose from 11 ambient sounds across 4 categories: Rain, Water, Nature, and Focus. Volume slider included! These sounds are generated so they're still being improved.",pos:"bottom"},
           {title:"🔒 Lock-In Tracking",msg:"Hit the Lock-In button at the top to start tracking your focused time. It logs when you lock in and out, and your total locked time is saved with your session data.",pos:"top"},
-          {title:"📊 Session History",msg:"Every time you leave the library, your session is saved — duration, locked-in time, tasks completed, and timer cycles. Click the History button to see all your past sessions!",pos:"top"},
+          {title:"📊 Session History",msg:"Every time you leave the library, your session is saved: duration, locked-in time, tasks completed, and timer cycles. Click the History button to see all your past sessions!",pos:"top"},
           {title:"⚙️ Settings",msg:"Customize Spocket's blinking, toggle reminders on/off, choose which types of reminders you want (water, stretch, snack...), and set how often they appear.",pos:"top"},
           {title:"☀️ Light & Dark Mode",msg:"Toggle between dark and light themes for your widgets. The library stays cozy either way!",pos:"top"},
-          {title:"That's everything! 🤖",msg:"I'll be right here studying with you. I blink, I think, and I'll remind you to take care of yourself. Now go crush that study session!",pos:"center"},
+          {title:"That's everything! 🤖",msg:"Spocket stays in the corner if you need workspace FAQ or Find in notes after you close this tour. Reminder cadence and motion are configurable in Settings.",pos:"center"},
         ];
         const step=TOUR[tourStep];
         const isLast=tourStep===TOUR.length-1;
@@ -1174,17 +1730,23 @@ function StudyPanel({onClose}){
                 <span>📋 {s.tasksDone}/{s.tasksTotal}</span>
                 {s.timerCycles>0&&<span>🔁 ×{s.timerCycles}</span>}
               </div>
+              {Array.isArray(s.timerHistory)&&s.timerHistory.length>0&&(
+                <div style={{fontSize:9,color:"#64748b",marginTop:6,lineHeight:1.4}}>
+                  Timer completions: {s.timerHistory.map((h,j)=>`${fmt(h.dur)}${h.task?" ("+h.task+")":""}`).join(" · ")}
+                </div>
+              )}
             </div>
           ))}
           {pastSessions.length>0&&<button onClick={()=>{setPastSessions([]);try{localStorage.removeItem("spocket_study_sessions")}catch(e){}}} style={{width:"100%",padding:"8px",background:"transparent",border:"1px solid #ff6b6b20",borderRadius:8,color:"#ff6b6b60",fontSize:9,cursor:"pointer",...S,marginTop:4}}>Clear History</button>}
         </div>
       )}
     </div>
+    </div>
   );
 }
 
 
-function RoamMode({onExit}){
+function RoamMode({ onExit, siteNavOpen, onToggleSiteNav }) {
   const[activeItem,setActiveItem]=useState(null);const[spocketX,setSpocketX]=useState(0.5);const[spocketY,setSpocketY]=useState(0.4);
   const[statusText,setStatusText]=useState("Hmm, where should I go...");const[floatingEmoji,setFloatingEmoji]=useState(null);
   const[spocketEyes,setSpocketEyes]=useState("happy");const[specialAnim,setSpecialAnim]=useState(null);
@@ -1196,7 +1758,7 @@ function RoamMode({onExit}){
   useEffect(()=>{
     const measure=()=>{if(containerRef.current){const r=containerRef.current.getBoundingClientRect();setDims({w:r.width,h:r.height})}};
     measure();window.addEventListener("resize",measure);return()=>window.removeEventListener("resize",measure);
-  },[]);
+  },[studyMode]);
 
   // Nighttime check — auto-sleep between 10pm and 6am
   const isNighttime=()=>{const h=new Date().getHours();return h>=22||h<6;};
@@ -1273,7 +1835,10 @@ function RoamMode({onExit}){
   },2000);return()=>{if(timerRef.current)clearTimeout(timerRef.current)};},[]);
 
   return(
-    <div ref={containerRef} style={{position:"absolute",inset:0,zIndex:15,background:"linear-gradient(180deg,#1a3a20,#142a18 40%,#102015)",overflow:"hidden"}}>
+    <div style={{position:"absolute",inset:0,zIndex:15,display:"flex",flexDirection:"column",overflow:"hidden",pointerEvents:"auto"}}>
+      {!studyMode&&<SpocketImmersiveChrome label="Spocket · Roam" siteNavOpen={siteNavOpen} onToggleSiteNav={onToggleSiteNav} />}
+      {!studyMode?(
+      <div ref={containerRef} style={{flex:1,minHeight:0,position:"relative",overflow:"hidden",background:"linear-gradient(180deg,#1a3a20,#142a18 40%,#102015)"}}>
       <div style={{position:"absolute",inset:0,opacity:0.06,background:"radial-gradient(circle at 15% 20%,rgba(100,200,100,0.4),transparent 30%),radial-gradient(circle at 85% 80%,rgba(100,200,100,0.3),transparent 25%),radial-gradient(circle at 50% 50%,rgba(80,160,80,0.2),transparent 40%)"}}/>
       {[[0.03,0.08,"🌻",12],[0.06,0.22,"🌿",9],[0.94,0.06,"🌷",10],[0.92,0.25,"🌱",8],[0.04,0.75,"🌺",9],[0.96,0.72,"🌿",9],[0.02,0.45,"🌳",16],[0.97,0.45,"🌳",16],[0.15,0.05,"🌼",8],[0.85,0.05,"🌻",8],[0.5,0.04,"🌳",14]].map(([x,y,e,s],i)=>
         <div key={i} style={{position:"absolute",left:`${x*100}%`,top:`${y*100}%`,fontSize:s,opacity:0.3}}>{e}</div>
@@ -1346,24 +1911,207 @@ function RoamMode({onExit}){
         </div>
       </div>)}
 
-      {/* Study mode panel */}
-      {studyMode&&<StudyPanel onClose={()=>{setStudyMode(false);setStatusText("Study break!");timerRef.current=setTimeout(pickNext,8000);}}/>}
-
       <div style={{position:"absolute",bottom:4,left:"50%",transform:"translateX(-50%)",fontFamily:"'JetBrains Mono',monospace",fontSize:8,color:"#4aaa6020"}}>Click any item to send Spocket there • 📞 to call her home</div>
+    </div>
+      ):(
+      <div style={{flex:1,minHeight:0,position:"relative",overflow:"hidden"}}>
+        <StudyPanel embedded onClose={()=>{setStudyMode(false);setStatusText("Study break!");timerRef.current=setTimeout(pickNext,8000);}} siteNavOpen={siteNavOpen} onToggleSiteNav={onToggleSiteNav} />
+      </div>
+      )}
     </div>
   );
 }
 
-function ParkedRobot({onRestartNew,onRestartReturning,onRoam,onStudy}){const[h,setH]=useState(false);const[joke,setJ]=useState(IDLE_JOKES[0]);const[idle,setI]=useState("none");useEffect(()=>{const a=["sleep","music","build","none"];let i=0;const iv=setInterval(()=>{i=(i+1)%a.length;if(!h)setI(a[i])},4500);return()=>clearInterval(iv)},[h]);useEffect(()=>{if(h){setI("none");setJ(IDLE_JOKES[Math.floor(Math.random()*IDLE_JOKES.length)])}},[h]);return(<div onMouseEnter={()=>setH(true)} onMouseLeave={()=>setH(false)} style={{position:"fixed",bottom:4,right:6,zIndex:30,animation:"fadeInUp 0.6s ease",cursor:"pointer",padding:22}}>{h&&(<div style={{position:"absolute",bottom:"calc(100% - 14px)",right:-8,background:"linear-gradient(135deg,#1a2538,#0f172a)",border:"1px solid #7fdbca30",borderRadius:14,padding:"14px 18px",width:260,animation:"fadeInUp 0.2s ease",boxShadow:"0 8px 24px rgba(0,0,0,0.5)",zIndex:40}}>
-          <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:11,color:"#c8d6e5",lineHeight:1.6,marginBottom:12}}>{joke}</div>
-          <div style={{display:"flex",flexDirection:"column",gap:6}}>
-            <button onClick={e=>{e.stopPropagation();onRestartNew()}} style={{padding:"8px 14px",background:"#7fdbca18",border:"1px solid #7fdbca50",borderRadius:14,color:"#7fdbca",fontSize:10,fontFamily:"'JetBrains Mono',monospace",cursor:"pointer",letterSpacing:1,textTransform:"uppercase",width:"100%"}} onMouseOver={e=>e.target.style.background="#7fdbca30"} onMouseOut={e=>e.target.style.background="#7fdbca18"}>🆕 Test as new user</button>
-            <button onClick={e=>{e.stopPropagation();onRestartReturning()}} style={{padding:"8px 14px",background:"#c48b9418",border:"1px solid #c48b9450",borderRadius:14,color:"#c48b94",fontSize:10,fontFamily:"'JetBrains Mono',monospace",cursor:"pointer",letterSpacing:1,textTransform:"uppercase",width:"100%"}} onMouseOver={e=>e.target.style.background="#c48b9430"} onMouseOut={e=>e.target.style.background="#c48b9418"}>🔄 Test as returning user</button>
-            <button onClick={e=>{e.stopPropagation();onRoam()}} style={{padding:"8px 14px",background:"#ffd70018",border:"1px solid #ffd70050",borderRadius:14,color:"#ffd700",fontSize:10,fontFamily:"'JetBrains Mono',monospace",cursor:"pointer",letterSpacing:1,textTransform:"uppercase",width:"100%"}} onMouseOver={e=>e.target.style.background="#ffd70030"} onMouseOut={e=>e.target.style.background="#ffd70018"}>🎮 Let Spocket roam</button>
-            <button onClick={e=>{e.stopPropagation();onStudy()}} style={{padding:"8px 14px",background:"#88b8e818",border:"1px solid #88b8e850",borderRadius:14,color:"#88b8e8",fontSize:10,fontFamily:"'JetBrains Mono',monospace",cursor:"pointer",letterSpacing:1,textTransform:"uppercase",width:"100%"}} onMouseOver={e=>e.target.style.background="#88b8e830"} onMouseOut={e=>e.target.style.background="#88b8e818"}>📚 Study with Spocket</button>
+function ParkedRobot({
+  onRestartNew,
+  onRestartReturning,
+  onRoam,
+  onStudy,
+  hideTestUserButtons,
+  showUnlockedExtras = false,
+  onAskAboutMe = () => {},
+  onNotesHelp = () => {},
+  onFindInNotes = () => {},
+  onLogOut = () => {},
+}) {
+  const [h, setH] = useState(false);
+  const [joke, setJ] = useState(IDLE_JOKES[0]);
+  const [idle, setI] = useState("none");
+  useEffect(() => {
+    const a = ["sleep", "music", "build", "none"];
+    let i = 0;
+    const iv = setInterval(() => {
+      i = (i + 1) % a.length;
+      if (!h) setI(a[i]);
+    }, 4500);
+    return () => clearInterval(iv);
+  }, [h]);
+  useEffect(() => {
+    if (h) {
+      setI("none");
+      setJ(IDLE_JOKES[Math.floor(Math.random() * IDLE_JOKES.length)]);
+    }
+  }, [h]);
+  const btn = {
+    padding: "8px 14px",
+    borderRadius: 14,
+    fontSize: 10,
+    fontFamily: "'JetBrains Mono',monospace",
+    cursor: "pointer",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+    width: "100%",
+  };
+  return (
+    <div
+      onMouseEnter={() => setH(true)}
+      onMouseLeave={() => setH(false)}
+      style={{
+        position: "fixed",
+        bottom: 4,
+        right: 6,
+        zIndex: 30,
+        animation: "fadeInUp 0.6s ease",
+        cursor: "pointer",
+        padding: 22,
+        pointerEvents: "auto",
+      }}
+    >
+      {h && (
+        <div
+          style={{
+            position: "absolute",
+            bottom: "calc(100% - 14px)",
+            right: -8,
+            background: "linear-gradient(135deg,#1a2538,#0f172a)",
+            border: "1px solid #7fdbca30",
+            borderRadius: 14,
+            padding: "14px 18px",
+            width: 260,
+            animation: "fadeInUp 0.2s ease",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
+            zIndex: 40,
+          }}
+        >
+          <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: "#c8d6e5", lineHeight: 1.6, marginBottom: 12 }}>{joke}</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {!hideTestUserButtons && (
+              <>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRestartNew();
+                  }}
+                  style={{ ...btn, background: "#7fdbca18", border: "1px solid #7fdbca50", color: "#7fdbca" }}
+                  onMouseOver={(e) => (e.target.style.background = "#7fdbca30")}
+                  onMouseOut={(e) => (e.target.style.background = "#7fdbca18")}
+                >
+                  🆕 Test as new user
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRestartReturning();
+                  }}
+                  style={{ ...btn, background: "#c48b9418", border: "1px solid #c48b9450", color: "#c48b94" }}
+                  onMouseOver={(e) => (e.target.style.background = "#c48b9430")}
+                  onMouseOut={(e) => (e.target.style.background = "#c48b9418")}
+                >
+                  🔄 Test as returning user
+                </button>
+              </>
+            )}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onRoam();
+              }}
+              style={{ ...btn, background: "#ffd70018", border: "1px solid #ffd70050", color: "#ffd700" }}
+              onMouseOver={(e) => (e.target.style.background = "#ffd70030")}
+              onMouseOut={(e) => (e.target.style.background = "#ffd70018")}
+            >
+              🎮 Let Spocket roam
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onStudy();
+              }}
+              style={{ ...btn, background: "#88b8e818", border: "1px solid #88b8e850", color: "#88b8e8" }}
+              onMouseOver={(e) => (e.target.style.background = "#88b8e830")}
+              onMouseOut={(e) => (e.target.style.background = "#88b8e818")}
+            >
+              📚 Study with Spocket
+            </button>
+            {showUnlockedExtras && (
+              <>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAskAboutMe();
+                  }}
+                  style={{ ...btn, background: "#7fdbca12", border: "1px solid #7fdbca35", color: "#94d4c4" }}
+                  onMouseOver={(e) => (e.target.style.background = "#7fdbca22")}
+                  onMouseOut={(e) => (e.target.style.background = "#7fdbca12")}
+                >
+                  💬 Assistant FAQ
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onNotesHelp();
+                  }}
+                  style={{ ...btn, background: "#a78bfa12", border: "1px solid #a78bfa40", color: "#c4b5fd" }}
+                  onMouseOver={(e) => (e.target.style.background = "#a78bfa24")}
+                  onMouseOut={(e) => (e.target.style.background = "#a78bfa12")}
+                >
+                  📓 How do I use these notes?
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onFindInNotes();
+                  }}
+                  style={{ ...btn, background: "#38bdf812", border: "1px solid #38bdf840", color: "#7dd3fc" }}
+                  onMouseOver={(e) => (e.target.style.background = "#38bdf824")}
+                  onMouseOut={(e) => (e.target.style.background = "#38bdf812")}
+                >
+                  🔎 What do you want to know? (beta)
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onLogOut();
+                  }}
+                  style={{ ...btn, background: "#ff6b6b10", border: "1px solid #ff6b6b35", color: "#fca5a5" }}
+                  onMouseOver={(e) => (e.target.style.background = "#ff6b6b22")}
+                  onMouseOut={(e) => (e.target.style.background = "#ff6b6b10")}
+                >
+                  🚪 Log out
+                </button>
+              </>
+            )}
           </div>
-          <svg width="16" height="10" viewBox="0 0 16 10" style={{position:"absolute",bottom:-9,right:32}}><path d="M0 0 L8 10 L16 0" fill="#0f172a"/></svg>
-        </div>)}<div style={{animation:h?"none":idle==="sleep"?"sleepBob 3s ease-in-out infinite":"idleBob 3s ease-in-out infinite"}}><Robot eyes={h?"startled":"happy"} scale={0.4} startled={h} idleAnim={h?"none":idle}/></div><div style={{textAlign:"center",marginTop:-6,fontSize:7,color:"#7fdbca35",fontFamily:"monospace"}}>SPOCKET</div></div>);}
+          <svg width="16" height="10" viewBox="0 0 16 10" style={{ position: "absolute", bottom: -9, right: 32 }} aria-hidden="true">
+            <path d="M0 0 L8 10 L16 0" fill="#0f172a" />
+          </svg>
+        </div>
+      )}
+      <div style={{ animation: h ? "none" : idle === "sleep" ? "sleepBob 3s ease-in-out infinite" : "idleBob 3s ease-in-out infinite" }}>
+        <Robot eyes={h ? "startled" : "happy"} scale={0.4} startled={h} idleAnim={h ? "none" : idle} />
+      </div>
+      <div style={{ textAlign: "center", marginTop: -6, fontSize: 7, color: "#7fdbca35", fontFamily: "monospace" }}>SPOCKET</div>
+    </div>
+  );
+}
 
 /* ═══════════════════════════════════════════
    MAIN — robot & card at same height, collision-based push
@@ -1374,7 +2122,9 @@ const ROBOT_SCALE = 1.5;
 const ROBOT_RENDER_W = 140 * ROBOT_SCALE; // 210px — robot body width on screen
 const ARM_EXTEND = 40;                     // ~40px arm sticks out beyond body in side profile
 const ROBOT_TOTAL_W = ROBOT_RENDER_W + ARM_EXTEND; // 250px — rightmost point of robot (arm tip)
-const CARD_W = 340;                        // Student Resources card width
+const CARD_W = 340;                        // Fallback width if #lock-card is not measurable
+/* Robot.jsx layout box height 200; head block ends at y≈84. Scale origin is bottom-center, so lift bubble by this much to align bubble bottom with head bottom. */
+const CORNER_CHAT_BUBBLE_LIFT = Math.round((200 - 84) * ROBOT_SCALE);
 
 function App() {
   const [phase, setPhase] = useState("idle");
@@ -1398,6 +2148,35 @@ function App() {
   const [storageChecked, setStorageChecked] = useState(false);
   const [roaming, setRoaming] = useState(false);
   const [studyActive, setStudyActive] = useState(false);
+  const [immersiveSiteNavOpen, setImmersiveSiteNavOpen] = useState(false);
+  const [parkedQaOpen, setParkedQaOpen] = useState(false);
+  const [parkedNotesHelpOpen, setParkedNotesHelpOpen] = useState(false);
+  const [findNotesActive, setFindNotesActive] = useState(false);
+  const [findNotesQuery, setFindNotesQuery] = useState("");
+  const [findNotesBusy, setFindNotesBusy] = useState(false);
+  const [findExploreOn, setFindExploreOn] = useState(false);
+  const [findMatchNotes, setFindMatchNotes] = useState(null);
+  const [findMatchFormula, setFindMatchFormula] = useState(null);
+  const [findWorkspace, setFindWorkspace] = useState("notes");
+  const [findBetaBannerVisible, setFindBetaBannerVisible] = useState(false);
+  const [findDockOpen, setFindDockOpen] = useState(false);
+  const [findDockQuery, setFindDockQuery] = useState("");
+  const [studentDisplayName, setStudentDisplayName] = useState(() => {
+    try {
+      return typeof localStorage !== "undefined" ? localStorage.getItem(LS_SPOCKET_DISPLAY_NAME) || "" : "";
+    } catch (e) {
+      return "";
+    }
+  });
+  const [nameDraft, setNameDraft] = useState("");
+  const [spaceSkipTipOpen, setSpaceSkipTipOpen] = useState(false);
+  const findNotesActiveRef = useRef(false);
+  const findDockOpenRef = useRef(false);
+  const findNotesBusyRef = useRef(false);
+  const findSubmittedQueryRef = useRef("");
+  const findBarRef = useRef({ notesDone: true, formulaDone: true });
+  const findBusyGenRef = useRef(0);
+  const findSessionGenRef = useRef(0);
   const [notesUnlocked, setNotesUnlocked] = useState(() => {
     try {
       return typeof document !== "undefined" && document.body.classList.contains("sr-auth-unlocked");
@@ -1407,8 +2186,47 @@ function App() {
   });
 
   const tt=useRef(null);const mt=useRef(null);const timers=useRef([]);const fullRef=useRef("");
+  useEffect(() => {
+    findNotesActiveRef.current = findNotesActive;
+  }, [findNotesActive]);
+  useEffect(() => {
+    findDockOpenRef.current = findDockOpen;
+  }, [findDockOpen]);
+  useEffect(() => {
+    findNotesBusyRef.current = findNotesBusy;
+  }, [findNotesBusy]);
+  const mainLayoutRef = useRef(null);
+  const lockCardMetricsRef = useRef({ left: 0, centerY: null, width: CARD_W });
+  const [robotAnchorY, setRobotAnchorY] = useState(null);
   const later=(fn,ms)=>{const t=setTimeout(fn,ms);timers.current.push(t)};
   const clearAll=useCallback(()=>{clearInterval(tt.current);clearInterval(mt.current);timers.current.forEach(clearTimeout);timers.current=[]},[]);
+
+  const clearFindHighlightsBoth = useCallback(() => {
+    try {
+      ["notes-frame", "formula-frame"].forEach((id) => {
+        const fr = document.getElementById(id);
+        fr?.contentWindow?.postMessage({ type: "tm_spocket_find_clear" }, "*");
+      });
+    } catch (e) {}
+  }, []);
+
+  const measureLockCardForArena = useCallback(() => {
+    try {
+      const root = mainLayoutRef.current;
+      const lock = document.getElementById("lock-card");
+      if (!root || !lock) return null;
+      const rr = root.getBoundingClientRect();
+      const lr = lock.getBoundingClientRect();
+      if (lr.width < 8 || lr.height < 8) return null;
+      return {
+        left: lr.left - rr.left,
+        centerY: lr.top - rr.top + lr.height / 2,
+        width: lr.width,
+      };
+    } catch (e) {
+      return null;
+    }
+  }, []);
 
   const snapToParkedIdle = useCallback(() => {
     clearAll();
@@ -1430,33 +2248,537 @@ function App() {
     setBalloon(false);
     setFollowUp(null);
     setFacing("front");
+    setRobotAnchorY(null);
+    setImmersiveSiteNavOpen(false);
+    setParkedQaOpen(false);
+    setParkedNotesHelpOpen(false);
+    clearFindHighlightsBoth();
+    findSessionGenRef.current += 1;
+    findDockOpenRef.current = false;
+    findNotesBusyRef.current = false;
+    setFindNotesBusy(false);
+    setFindNotesActive(false);
+    setFindExploreOn(false);
+    setFindMatchNotes(null);
+    setFindMatchFormula(null);
+    setFindWorkspace("notes");
+    setFindBetaBannerVisible(false);
+    setFindDockOpen(false);
+    setFindDockQuery("");
+    findSubmittedQueryRef.current = "";
+  }, [clearAll, clearFindHighlightsBoth]);
+
+  const startParkedQa = useCallback(() => {
+    clearAll();
+    clearFindHighlightsBoth();
+    findSessionGenRef.current += 1;
+    findDockOpenRef.current = false;
+    findNotesBusyRef.current = false;
+    setFindNotesBusy(false);
+    setFindNotesActive(false);
+    setFindExploreOn(false);
+    setFindMatchNotes(null);
+    setFindMatchFormula(null);
+    setFindWorkspace("notes");
+    setFindBetaBannerVisible(false);
+    setFindDockOpen(false);
+    setFindDockQuery("");
+    findSubmittedQueryRef.current = "";
+    setParkedQaOpen(true);
+    setParkedNotesHelpOpen(false);
+    setParked(true);
+    setPhase("talking");
+    setNode("ask_spocket_unlocked");
+    setCardGone(true);
+    setCardBack(false);
+    setCryExit(false);
+    setShowForm(false);
+    setShowIpad(false);
+    setShowCookie(false);
+    setCookiePopup(false);
+    setBalloon(false);
+    setFollowUp(null);
+    setFacing("front");
+    setTxt("");
+    setTyping(false);
+    setMouth(false);
+  }, [clearAll, clearFindHighlightsBoth]);
+
+  const startNotesHelp = useCallback(() => {
+    clearAll();
+    clearFindHighlightsBoth();
+    findSessionGenRef.current += 1;
+    findDockOpenRef.current = false;
+    findNotesBusyRef.current = false;
+    setFindNotesBusy(false);
+    setFindNotesActive(false);
+    setFindExploreOn(false);
+    setFindMatchNotes(null);
+    setFindMatchFormula(null);
+    setFindWorkspace("notes");
+    setFindBetaBannerVisible(false);
+    setFindDockOpen(false);
+    setFindDockQuery("");
+    findSubmittedQueryRef.current = "";
+    setParkedNotesHelpOpen(true);
+    setParkedQaOpen(false);
+    setParked(true);
+    setPhase("talking");
+    setNode("notes_help_hub");
+    setCardGone(true);
+    setCardBack(false);
+    setCryExit(false);
+    setShowForm(false);
+    setShowIpad(false);
+    setShowCookie(false);
+    setCookiePopup(false);
+    setBalloon(false);
+    setFollowUp(null);
+    setFacing("front");
+    setTxt("");
+    setTyping(false);
+    setMouth(false);
+  }, [clearAll, clearFindHighlightsBoth]);
+
+  const dismissParkedQa = useCallback(() => {
+    clearAll();
+    clearFindHighlightsBoth();
+    findSessionGenRef.current += 1;
+    findDockOpenRef.current = false;
+    findNotesBusyRef.current = false;
+    setFindNotesActive(false);
+    setFindExploreOn(false);
+    setFindMatchNotes(null);
+    setFindMatchFormula(null);
+    setFindWorkspace("notes");
+    setFindBetaBannerVisible(false);
+    setFindDockOpen(false);
+    setFindDockQuery("");
+    findSubmittedQueryRef.current = "";
+    setFindNotesBusy(false);
+    setParkedQaOpen(false);
+    setParkedNotesHelpOpen(false);
+    setPhase("parked");
+    setParked(true);
+    setNode(null);
+    setTxt("");
+    setTyping(false);
+    setMouth(false);
+    setShowForm(false);
+    setShowIpad(false);
+    setShowCookie(false);
+    setFollowUp(null);
+    setBalloon(false);
+    setCryExit(false);
+  }, [clearAll, clearFindHighlightsBoth]);
+
+  const endFindDockSession = useCallback(() => {
+    findSessionGenRef.current += 1;
+    findDockOpenRef.current = false;
+    findNotesBusyRef.current = false;
+    clearFindHighlightsBoth();
+    setFindDockOpen(false);
+    setFindDockQuery("");
+    findSubmittedQueryRef.current = "";
+    setFindExploreOn(false);
+    setFindMatchNotes(null);
+    setFindMatchFormula(null);
+    setFindWorkspace("notes");
+    findBarRef.current = { notesDone: true, formulaDone: true };
+    setFindNotesBusy(false);
+  }, [clearFindHighlightsBoth]);
+
+  const requestLogout = useCallback(() => {
+    try {
+      if (typeof window.confirm === "function" && !window.confirm("Log out and lock the notes?")) return;
+    } catch (e) {}
+    try {
+      window.dispatchEvent(new CustomEvent("sr-notes-lock-request"));
+    } catch (e2) {}
+  }, []);
+
+  const tryFinishFindBar = useCallback(() => {
+    if (!findBarRef.current.notesDone || !findBarRef.current.formulaDone) return;
+    const q = (findSubmittedQueryRef.current || "").trim();
+    setFindDockQuery(q);
+    setFindNotesBusy(false);
+    findNotesBusyRef.current = false;
+  }, []);
+
+  const submitFindInNotes = useCallback(() => {
+    const q = findNotesQuery.trim();
+    if (!q) return;
+    const sessionId = ++findSessionGenRef.current;
+    findSubmittedQueryRef.current = q;
+    setFollowUp(null);
+    setFindExploreOn(false);
+    setFindMatchNotes(null);
+    setFindMatchFormula(null);
+    setFindWorkspace("notes");
+    try {
+      const nEl = document.getElementById("notes-frame");
+      const fEl = document.getElementById("formula-frame");
+      const hasN = !!(nEl && nEl.contentWindow);
+      const hasF = !!(fEl && fEl.contentWindow);
+      if (!hasN && !hasF) {
+        setFollowUp("Notes are not loaded in this view yet. Open the study guide, then try again.");
+        return;
+      }
+      findBarRef.current = { notesDone: !hasN, formulaDone: !hasF };
+      findNotesBusyRef.current = true;
+      findDockOpenRef.current = true;
+      findNotesActiveRef.current = false;
+      setFindNotesBusy(true);
+      setFindDockOpen(true);
+      setFindDockQuery(q);
+      setFindNotesActive(false);
+      setFindExploreOn(false);
+      setFindBetaBannerVisible(false);
+      setTyping(false);
+      setTxt("");
+      setMouth(false);
+      setNode(null);
+      setPhase("parked");
+      setParked(true);
+
+      const failKick = () => {
+        findSessionGenRef.current += 1;
+        findNotesBusyRef.current = false;
+        findDockOpenRef.current = false;
+        setFindNotesBusy(false);
+        setFindDockOpen(false);
+      };
+
+      const kick = () => {
+        if (findSessionGenRef.current !== sessionId) return;
+        try {
+          findBarRef.current = { notesDone: !hasN, formulaDone: !hasF };
+          if (hasN) nEl.contentWindow.postMessage({ type: "tm_spocket_find", query: q }, "*");
+          if (hasF) fEl.contentWindow.postMessage({ type: "tm_spocket_find", query: q }, "*");
+        } catch (e) {
+          failKick();
+          setFollowUp("Could not reach the notes page from here.");
+        }
+      };
+
+      if (hasF && typeof window.tmEnsureFormulaSheetReady === "function") {
+        window.tmEnsureFormulaSheetReady().then(kick, kick);
+      } else {
+        kick();
+      }
+    } catch (e) {
+      findNotesBusyRef.current = false;
+      findDockOpenRef.current = false;
+      setFindNotesBusy(false);
+      setFindDockOpen(false);
+      setFollowUp("Could not reach the notes page from here.");
+    }
+  }, [findNotesQuery]);
+
+  const postFindStep = useCallback((delta) => {
+    const id = findWorkspace === "formula" ? "formula-frame" : "notes-frame";
+    const d = typeof delta === "number" ? delta : parseInt(delta, 10);
+    const step = isFinite(d) ? d : 0;
+    try {
+      document.getElementById(id)?.contentWindow?.postMessage({ type: "tm_spocket_find_step", delta: step }, "*");
+    } catch (e) {}
+  }, [findWorkspace]);
+
+  const switchFindWorkspace = useCallback((to) => {
+    if (to === "formula") {
+      try {
+        window.tmOpenFormulaDock?.();
+      } catch (e) {}
+      setFindWorkspace("formula");
+      requestAnimationFrame(() => {
+        try {
+          document.getElementById("formula-frame")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        } catch (e2) {}
+      });
+    } else {
+      try {
+        window.tmCloseFormulaDock?.();
+      } catch (e2) {}
+      setFindWorkspace("notes");
+      requestAnimationFrame(() => {
+        try {
+          document.getElementById("notes-frame")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        } catch (e3) {}
+      });
+    }
+  }, []);
+
+  const startFindInNotes = useCallback(() => {
+    clearAll();
+    findSessionGenRef.current += 1;
+    findDockOpenRef.current = false;
+    findNotesBusyRef.current = false;
+    setParkedQaOpen(false);
+    setParkedNotesHelpOpen(false);
+    setFindNotesQuery("");
+    setFollowUp(null);
+    setFindNotesBusy(false);
+    setFindExploreOn(false);
+    setFindMatchNotes(null);
+    setFindMatchFormula(null);
+    setFindWorkspace("notes");
+    setFindBetaBannerVisible(false);
+    setFindDockOpen(false);
+    setFindDockQuery("");
+    findSubmittedQueryRef.current = "";
+    setFindNotesActive(true);
+    setParked(true);
+    setPhase("talking");
+    setNode(null);
+    setCardGone(true);
+    setCardBack(false);
+    setCryExit(false);
+    setShowForm(false);
+    setShowIpad(false);
+    setShowCookie(false);
+    setCookiePopup(false);
+    setBalloon(false);
+    setFacing("front");
   }, [clearAll]);
 
-  const skipTyping=useCallback(()=>{
-    if(!typing)return;clearInterval(tt.current);clearInterval(mt.current);
-    setTxt(fullRef.current);setTyping(false);setMouth(false);
-    const nd=TREE[node];if(nd){
-      if(nd.returnCard)later(()=>{setCardGone(false);setCardBack(true)},400);
-      if(nd.animation==="give_cookies"){later(()=>setShowCookie(true),200);later(()=>setCookiePopup(true),600)}
-      if(nd.showForm)later(()=>setShowForm(true),300);
-      if(nd.showIpad)later(()=>setShowIpad(true),300);
-      if(nd.animation==="balloon_away")later(()=>setBalloon(true),400);
-      if(nd.followUp)later(()=>setFollowUp(nd.followUp.msg),nd.followUp.delay||2000);
+  useEffect(() => {
+    if (!findNotesActive) return;
+    fullRef.current = SPOCKET_FIND_INTRO_RAW;
+    const plain = spocketPlainFromRaw(SPOCKET_FIND_INTRO_RAW);
+    setFollowUp(null);
+    setTxt("");
+    setTyping(true);
+    let i = 0;
+    clearInterval(tt.current);
+    clearInterval(mt.current);
+    mt.current = setInterval(() => setMouth((p) => !p), SPOCKET_MOUTH_MS);
+    tt.current = setInterval(() => {
+      i++;
+      setTxt(plain.slice(0, i));
+      if (i >= plain.length) {
+        clearInterval(tt.current);
+        clearInterval(mt.current);
+        setMouth(false);
+        setTyping(false);
+      }
+    }, SPOCKET_TYPING_MS);
+    return () => {
+      clearInterval(tt.current);
+      clearInterval(mt.current);
+    };
+  }, [findNotesActive]);
+
+  /* Beta find notice: show after intro typing ends, then auto-hide after 10s. */
+  useEffect(() => {
+    if (!findNotesActive || typing) return;
+    setFindBetaBannerVisible(true);
+    const t = setTimeout(() => setFindBetaBannerVisible(false), 10000);
+    return () => clearTimeout(t);
+  }, [findNotesActive, typing]);
+
+  /* If an iframe never answers, unblock the pink bar after a short wait. */
+  useEffect(() => {
+    if (!findNotesBusy) return;
+    const gen = ++findBusyGenRef.current;
+    const FIND_WAIT_MS = 10000;
+    const t = setTimeout(() => {
+      if (!findNotesBusyRef.current) return;
+      if (findBusyGenRef.current !== gen) return;
+      if (findBarRef.current.notesDone && findBarRef.current.formulaDone) return;
+      let timed = false;
+      if (!findBarRef.current.notesDone) {
+        findBarRef.current.notesDone = true;
+        setFindMatchNotes(0);
+        timed = true;
+      }
+      if (!findBarRef.current.formulaDone) {
+        findBarRef.current.formulaDone = true;
+        setFindMatchFormula(0);
+        timed = true;
+      }
+      if (timed) {
+        setFollowUp("Search timed out waiting for one workspace — opening the find bar anyway.");
+        tryFinishFindBar();
+      }
+    }, FIND_WAIT_MS);
+    return () => clearTimeout(t);
+  }, [findNotesBusy, tryFinishFindBar]);
+
+  useEffect(() => {
+    const onMsg = (ev) => {
+      if (!ev.data || ev.data.type !== "tm_spocket_find_result") return;
+      if (!findNotesActiveRef.current && !findDockOpenRef.current && !findNotesBusyRef.current) return;
+      const nWin = document.getElementById("notes-frame")?.contentWindow;
+      const fWin = document.getElementById("formula-frame")?.contentWindow;
+      const fromNotes = nWin && tmSpocketFindSourceMatchesFrame(nWin, ev.source);
+      const fromFormula = fWin && tmSpocketFindSourceMatchesFrame(fWin, ev.source);
+      if (!fromNotes && !fromFormula) {
+        try {
+          if (typeof localStorage !== "undefined" && localStorage.getItem("tm_debug_spocket_find") === "1") {
+            console.debug("[tm_spocket_find] ignored tm_spocket_find_result (source not notes/formula iframe)", {
+              source: ev.source,
+              nWin,
+              fWin,
+            });
+          }
+        } catch (eDbg) {}
+        return;
+      }
+      const mc = typeof ev.data.matchCount === "number" ? ev.data.matchCount : 0;
+      const ok = !!ev.data.ok;
+      const count = ok ? mc : 0;
+      if (fromNotes) {
+        findBarRef.current.notesDone = true;
+        setFindMatchNotes(count);
+      }
+      if (fromFormula) {
+        findBarRef.current.formulaDone = true;
+        setFindMatchFormula(count);
+      }
+      tryFinishFindBar();
+    };
+    window.addEventListener("message", onMsg);
+    return () => window.removeEventListener("message", onMsg);
+  }, [tryFinishFindBar]);
+
+  const toggleImmersiveSiteNav = useCallback(() => {
+    setImmersiveSiteNavOpen((wasOpen) => {
+      const next = !wasOpen;
+      try {
+        if (typeof window.closeMenu === "function") window.closeMenu();
+        if (document.body.classList.contains("sr-spocket-immersive")) {
+          if (next) document.body.classList.add("sr-spocket-immersive-nav-open");
+          else document.body.classList.remove("sr-spocket-immersive-nav-open");
+        }
+      } catch (e) {}
+      return next;
+    });
+  }, []);
+
+  const skipTyping = useCallback(() => {
+    if (!typing) return;
+    clearInterval(tt.current);
+    clearInterval(mt.current);
+    setTxt(spocketPlainFromRaw(fullRef.current));
+    setTyping(false);
+    setMouth(false);
+    const nd = TREE[node];
+    if (nd) {
+      if (nd.animation === "give_cookies") {
+        later(() => setShowCookie(true), 200);
+        later(() => setCookiePopup(true), 600);
+      }
+      if (nd.showForm) later(() => setShowForm(true), 300);
+      if (nd.showIpad) later(() => setShowIpad(true), 300);
+      if (nd.animation === "balloon_away") later(() => setBalloon(true), 400);
+      if (nd.followUp) later(() => setFollowUp(nd.followUp.msg), nd.followUp.delay || 2000);
     }
-  },[typing,node]);
+  }, [typing, node]);
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.code !== "Space" && e.key !== " ") return;
+      const el = e.target;
+      if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT" || el.isContentEditable))
+        return;
+      if (el && el.closest && el.closest("button")) return;
+      if (!typing) return;
+      e.preventDefault();
+      skipTyping();
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [typing, skipTyping]);
+
+  const spaceTipPostTypeTimerRef = useRef(null);
+
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(LS_SPOCKET_SPACE_TIP) === "1") return;
+    } catch (e) {}
+    if (typing) {
+      setSpaceSkipTipOpen(true);
+      if (spaceTipPostTypeTimerRef.current) {
+        clearTimeout(spaceTipPostTypeTimerRef.current);
+        spaceTipPostTypeTimerRef.current = null;
+      }
+      return;
+    }
+    if (!spaceSkipTipOpen) return;
+    spaceTipPostTypeTimerRef.current = setTimeout(() => {
+      setSpaceSkipTipOpen(false);
+      spaceTipPostTypeTimerRef.current = null;
+    }, 10000);
+    return () => {
+      if (spaceTipPostTypeTimerRef.current) {
+        clearTimeout(spaceTipPostTypeTimerRef.current);
+        spaceTipPostTypeTimerRef.current = null;
+      }
+    };
+  }, [typing, spaceSkipTipOpen]);
+
+  const dismissSpaceSkipTipSoft = useCallback(() => {
+    if (spaceTipPostTypeTimerRef.current) {
+      clearTimeout(spaceTipPostTypeTimerRef.current);
+      spaceTipPostTypeTimerRef.current = null;
+    }
+    setSpaceSkipTipOpen(false);
+  }, []);
+
+  const dismissSpaceSkipTipForever = useCallback(() => {
+    if (spaceTipPostTypeTimerRef.current) {
+      clearTimeout(spaceTipPostTypeTimerRef.current);
+      spaceTipPostTypeTimerRef.current = null;
+    }
+    try {
+      localStorage.setItem(LS_SPOCKET_SPACE_TIP, "1");
+    } catch (e) {}
+    setSpaceSkipTipOpen(false);
+  }, []);
+
+  useEffect(() => {
+    if (node === "unlock_name_entry") setNameDraft("");
+  }, [node]);
+
+  const commitStudentName = useCallback(() => {
+    const t = nameDraft.trim();
+    if (!t) return;
+    try {
+      localStorage.setItem(LS_SPOCKET_DISPLAY_NAME, t);
+    } catch (e) {}
+    setStudentDisplayName(t);
+    setNode("unlock_name_saved_ack");
+  }, [nameDraft]);
+
+  /* After unlock (or if already unlocked), ask for a display name once unless saved or skipped. */
+  useEffect(() => {
+    if (!notesUnlocked) return;
+    let skip = false;
+    try {
+      skip = localStorage.getItem(LS_SPOCKET_NAME_SKIP) === "1";
+    } catch (e) {}
+    const hasName = !!(studentDisplayName && String(studentDisplayName).trim());
+    if (skip || hasName) return;
+    const t = setTimeout(() => {
+      setParkedNotesHelpOpen(false);
+      setParkedQaOpen(true);
+      setParked(true);
+      setPhase("talking");
+      setNode("unlock_name_entry");
+      setCardGone(true);
+      setCardBack(false);
+      setCryExit(false);
+      setFacing("front");
+      setTxt("");
+      setTyping(false);
+      setMouth(false);
+    }, 850);
+    return () => clearTimeout(t);
+  }, [notesUnlocked, studentDisplayName]);
 
   /* ── ENTRANCE ANIMATION SEQUENCE ──
-     The robot rolls in from off-screen left, pushes the Student Resources card off-screen right,
-     then settles into position and starts talking.
-     
-     TIMING: Each step uses later() which is just setTimeout.
-     The CSS transition on the robot container is 1.8s, so movement takes 1.8s to complete.
-     
-     TO ADJUST:
-     - Robot speed: change transition duration in the robot container style (currently "left 1.8s")
-     - When card gets pushed: change the 2300ms timeout (should = step1 time + transition duration)
-     - Where robot parks to talk: change talkX (currently 60px from left)
-     - Card push direction: change the transform in the card's style (currently "translate(130%,-50%)")
+     Robot rolls toward the real #lock-card (site unlock form), then parks to talk.
+     No duplicate login card — collision math uses measured #lock-card geometry.
   */
   const start=useCallback(()=>{
     clearAll();
@@ -1468,33 +2790,28 @@ function App() {
     setCookiePopup(false);setBalloon(false);setParked(false);setFollowUp(null);
     setFacing("side"); // Robot enters in side profile
 
-    // Calculate where the robot needs to stop so its arm tip touches the card
-    const w=window.innerWidth||900;
-    const cardLeft = (w/2) - (CARD_W/2);           // Card's left edge in pixels
-    const contactX = cardLeft - ROBOT_TOTAL_W;       // Robot position where arm tip reaches card
-    const talkX = 60;                                // Where robot parks after pushing card
+    const w = window.innerWidth || 900;
+    const m = measureLockCardForArena();
+    if (m) {
+      lockCardMetricsRef.current = m;
+      setRobotAnchorY(m.centerY);
+    } else {
+      lockCardMetricsRef.current = { left: w / 2 - CARD_W / 2, centerY: null, width: CARD_W };
+      setRobotAnchorY(null);
+    }
+    const cardLeft = lockCardMetricsRef.current.left;
+    const contactX = cardLeft - ROBOT_TOTAL_W;
+    const talkX = 60;
 
     // Step 0 (200ms): Mount robot in DOM at off-screen position
-    // (Robot only renders when phase !== "idle", so changing phase makes it appear)
     later(()=>{setPhase("entering")},200);
-    
-    // Step 1 (400ms): Start rolling toward card
-    // (CSS transition fires because element already exists in DOM from step 0)
     later(()=>{setRobotX(contactX)},400);
-    
-    // Step 2 (2300ms): Robot's arm has reached the card — push it off screen
-    // (1.8s transition started at 400ms, completes at ~2200ms)
+    /* Push real #lock-card off-screen (CSS class), same beat as original MiniCard */
     later(()=>setCardGone(true),2300);
-    
-    // Step 3 (2900ms): Slide to talk position (left side of screen)
     later(()=>setRobotX(talkX),2900);
-    
-    // Step 4 (3500ms): Turn to face the user (side → front)
     later(()=>setFacing("front"),3500);
-    
-    // Step 5 (3900ms): Start the dialogue
     later(()=>{setPhase("talking");setNode("start")},3900);
-  },[clearAll]);
+  },[clearAll, measureLockCardForArena]);
 
   /* ── CHECK IF RETURNING USER ──
      Uses localStorage to persist visit flag across sessions.
@@ -1525,12 +2842,22 @@ function App() {
     setRobotX(-ROBOT_TOTAL_W-50);setShowForm(false);setShowIpad(false);setShowCookie(false);
     setCookiePopup(false);setBalloon(false);setParked(false);setFollowUp(null);setRoaming(false);setStudyActive(false);setFacing("side");
 
+    const m = measureLockCardForArena();
+    if (m) {
+      lockCardMetricsRef.current = m;
+      setRobotAnchorY(m.centerY);
+    } else {
+      const w = window.innerWidth || 900;
+      lockCardMetricsRef.current = { left: w / 2 - CARD_W / 2, centerY: null, width: CARD_W };
+      setRobotAnchorY(null);
+    }
+
     const talkX = 60;
 
     // Pick a random welcome back message
     const welcomeMsg = WELCOME_BACKS[Math.floor(Math.random() * WELCOME_BACKS.length)];
-    // Override the returning node's message
-    TREE.returning.msg = welcomeMsg;
+    const nick = (studentDisplayName || "").trim();
+    TREE.returning.msg = nick ? `Welcome back, ${nick}. ${welcomeMsg}` : welcomeMsg;
 
     // Step 0: Mount robot
     later(()=>{setPhase("entering")},200);
@@ -1540,7 +2867,7 @@ function App() {
     later(()=>setFacing("front"),2200);
     // Step 3: Start talking
     later(()=>{setPhase("talking");setNode("returning")},2600);
-  },[clearAll]);
+  },[clearAll, measureLockCardForArena, studentDisplayName]);
 
   /* ── ROAM MODE — Spocket's free play workstation ── */
   const startRoam = useCallback(()=>{
@@ -1549,25 +2876,93 @@ function App() {
     setCardGone(true);setCardBack(false);setCryExit(false);
     setRobotX(-ROBOT_TOTAL_W-50);setShowForm(false);setShowIpad(false);setShowCookie(false);
     setCookiePopup(false);setBalloon(false);setParked(false);setFollowUp(null);setRoaming(false);setStudyActive(false);setFacing("front");
+    setImmersiveSiteNavOpen(false);
+    setParkedQaOpen(false);
+    setParkedNotesHelpOpen(false);
+    clearFindHighlightsBoth();
+    findSessionGenRef.current += 1;
+    findDockOpenRef.current = false;
+    findNotesBusyRef.current = false;
+    setFindNotesBusy(false);
+    setFindNotesActive(false);
+    setFindExploreOn(false);
+    setFindMatchNotes(null);
+    setFindMatchFormula(null);
+    setFindWorkspace("notes");
+    setFindBetaBannerVisible(false);
+    setFindDockOpen(false);
+    setFindDockQuery("");
+    findSubmittedQueryRef.current = "";
     setRoaming(true);
-  },[clearAll]);
+  },[clearAll, clearFindHighlightsBoth]);
 
   const exitRoam = useCallback(()=>{
     setRoaming(false);
+    setImmersiveSiteNavOpen(false);
+    setParkedQaOpen(false);
+    setParkedNotesHelpOpen(false);
+    clearFindHighlightsBoth();
+    findSessionGenRef.current += 1;
+    findDockOpenRef.current = false;
+    findNotesBusyRef.current = false;
+    setFindNotesBusy(false);
+    setFindNotesActive(false);
+    setFindExploreOn(false);
+    setFindMatchNotes(null);
+    setFindMatchFormula(null);
+    setFindWorkspace("notes");
+    setFindBetaBannerVisible(false);
+    setFindDockOpen(false);
+    setFindDockQuery("");
+    findSubmittedQueryRef.current = "";
     setCardGone(false);setCardBack(true);
     setPhase("parked");setParked(true);
-  },[]);
+  },[clearFindHighlightsBoth]);
 
   const startStudy = useCallback(()=>{
     clearAll();
     setPhase("parked");setParked(false);
+    setImmersiveSiteNavOpen(false);
+    setParkedQaOpen(false);
+    setParkedNotesHelpOpen(false);
+    clearFindHighlightsBoth();
+    findSessionGenRef.current += 1;
+    findDockOpenRef.current = false;
+    findNotesBusyRef.current = false;
+    setFindNotesBusy(false);
+    setFindNotesActive(false);
+    setFindExploreOn(false);
+    setFindMatchNotes(null);
+    setFindMatchFormula(null);
+    setFindWorkspace("notes");
+    setFindBetaBannerVisible(false);
+    setFindDockOpen(false);
+    setFindDockQuery("");
+    findSubmittedQueryRef.current = "";
     setRoaming(false);setStudyActive(true);
-  },[clearAll]);
+  },[clearAll, clearFindHighlightsBoth]);
 
   const exitStudy = useCallback(()=>{
     setStudyActive(false);
+    setImmersiveSiteNavOpen(false);
+    setParkedQaOpen(false);
+    setParkedNotesHelpOpen(false);
+    clearFindHighlightsBoth();
+    findSessionGenRef.current += 1;
+    findDockOpenRef.current = false;
+    findNotesBusyRef.current = false;
+    setFindNotesBusy(false);
+    setFindNotesActive(false);
+    setFindExploreOn(false);
+    setFindMatchNotes(null);
+    setFindMatchFormula(null);
+    setFindWorkspace("notes");
+    setFindBetaBannerVisible(false);
+    setFindDockOpen(false);
+    setFindDockQuery("");
+    findSubmittedQueryRef.current = "";
     setPhase("parked");setParked(true);
-  },[]);
+  },[clearFindHighlightsBoth]);
 
   // Once storage is checked, start the appropriate flow (skip full intro when notes already unlocked)
   useEffect(() => {
@@ -1592,29 +2987,157 @@ function App() {
     return () => window.removeEventListener("sr-notes-unlocked", onUnlock);
   }, [snapToParkedIdle]);
 
-  useEffect(()=>{
-    if(!node||!TREE[node])return;
-    const nd=TREE[node];const full=nd.msg;fullRef.current=full;
-    setTxt("");setTyping(true);setShowForm(false);setShowIpad(false);setShowCookie(false);setFollowUp(null);
-    let i=0;clearInterval(tt.current);clearInterval(mt.current);
-    mt.current=setInterval(()=>setMouth(p=>!p),110);
-    tt.current=setInterval(()=>{
-      i++;setTxt(full.slice(0,i));
-      if(i>=full.length){
-        clearInterval(tt.current);clearInterval(mt.current);setMouth(false);setTyping(false);
-        if(nd.returnCard)later(()=>{setCardGone(false);setCardBack(true)},600);
-        if(nd.animation==="give_cookies"){later(()=>setShowCookie(true),300);later(()=>setCookiePopup(true),800)}
-        if(nd.showForm)later(()=>setShowForm(true),400);
-        if(nd.showIpad)later(()=>setShowIpad(true),400);
-        if(nd.animation==="balloon_away")later(()=>setBalloon(true),500);
-        if(nd.followUp)later(()=>setFollowUp(nd.followUp.msg),nd.followUp.delay||2000);
+  useEffect(() => {
+    const onLocked = () => {
+      setNotesUnlocked(false);
+      setParkedQaOpen(false);
+      setParkedNotesHelpOpen(false);
+      setImmersiveSiteNavOpen(false);
+      setRoaming(false);
+      setStudyActive(false);
+      clearFindHighlightsBoth();
+      findSessionGenRef.current += 1;
+      findDockOpenRef.current = false;
+      findNotesBusyRef.current = false;
+      setFindNotesBusy(false);
+      setFindDockOpen(false);
+      setFindDockQuery("");
+      findSubmittedQueryRef.current = "";
+      setFindNotesActive(false);
+      setFindExploreOn(false);
+      setFindMatchNotes(null);
+      setFindMatchFormula(null);
+      setFindWorkspace("notes");
+      findBarRef.current = { notesDone: true, formulaDone: true };
+      if (isReturning) startReturning();
+      else start();
+    };
+    window.addEventListener("sr-notes-locked", onLocked);
+    return () => window.removeEventListener("sr-notes-locked", onLocked);
+  }, [isReturning, start, startReturning, clearFindHighlightsBoth]);
+
+  useEffect(() => {
+    if (phase !== "entering" && phase !== "talking" && phase !== "leaving") return;
+    const sync = () => {
+      try {
+        const lock = document.getElementById("lock-card");
+        if (lock && lock.classList.contains("spocket-lock-pushed")) return;
+      } catch (e) {}
+      const mm = measureLockCardForArena();
+      if (mm) {
+        lockCardMetricsRef.current = mm;
+        setRobotAnchorY(mm.centerY);
       }
-    },45);
-    return()=>{clearInterval(tt.current);clearInterval(mt.current)};
-  },[node]);
+    };
+    window.addEventListener("resize", sync);
+    return () => window.removeEventListener("resize", sync);
+  }, [phase, measureLockCardForArena]);
+
+  /* Drive real #lock-card “pushed off” animation (notes/index.html CSS). Never while page unlocked. */
+  useEffect(() => {
+    const el = document.getElementById("lock-card");
+    if (!el) return;
+    let unlocked = false;
+    try {
+      unlocked = document.body.classList.contains("sr-auth-unlocked");
+    } catch (e) {}
+    if (!cardGone || unlocked || notesUnlocked) {
+      el.classList.remove("spocket-lock-pushed");
+    } else {
+      el.classList.add("spocket-lock-pushed");
+    }
+    return () => {
+      try {
+        el.classList.remove("spocket-lock-pushed");
+      } catch (e) {}
+    };
+  }, [cardGone, notesUnlocked]);
+
+  /* Hide site nav while Roam / Study are open (full-width Spocket modes). */
+  useEffect(() => {
+    const immersive = roaming || studyActive;
+    try {
+      if (immersive) {
+        document.body.classList.add("sr-spocket-immersive");
+        if (typeof window.closeMenu === "function") window.closeMenu();
+      } else {
+        document.body.classList.remove("sr-spocket-immersive");
+        document.body.classList.remove("sr-spocket-immersive-nav-open");
+      }
+    } catch (e) {}
+    return () => {
+      try {
+        document.body.classList.remove("sr-spocket-immersive");
+        document.body.classList.remove("sr-spocket-immersive-nav-open");
+      } catch (e2) {}
+    };
+  }, [roaming, studyActive]);
+
+  useLayoutEffect(() => {
+    if (!roaming && !studyActive) return;
+    try {
+      if (immersiveSiteNavOpen) {
+        document.body.classList.add("sr-spocket-immersive-nav-open");
+      } else {
+        document.body.classList.remove("sr-spocket-immersive-nav-open");
+      }
+    } catch (e) {}
+    return () => {
+      try {
+        document.body.classList.remove("sr-spocket-immersive-nav-open");
+      } catch (e2) {}
+    };
+  }, [roaming, studyActive, immersiveSiteNavOpen]);
+
+  /* Study mode: start with the real site nav visible so the menu toggle in <nav> is reachable. */
+  useEffect(() => {
+    if (studyActive) setImmersiveSiteNavOpen(true);
+  }, [studyActive]);
+
+  useEffect(() => {
+    if (!node || !TREE[node]) return;
+    const nd = TREE[node];
+    const raw = applySpocketPlaceholders(nd.msg || "", studentDisplayName);
+    fullRef.current = raw;
+    const plain = spocketPlainFromRaw(raw);
+    setTxt("");
+    setTyping(true);
+    setShowForm(false);
+    setShowIpad(false);
+    setShowCookie(false);
+    setFollowUp(null);
+    let i = 0;
+    clearInterval(tt.current);
+    clearInterval(mt.current);
+    mt.current = setInterval(() => setMouth((p) => !p), SPOCKET_MOUTH_MS);
+    tt.current = setInterval(() => {
+      i++;
+      setTxt(plain.slice(0, i));
+      if (i >= plain.length) {
+        clearInterval(tt.current);
+        clearInterval(mt.current);
+        setMouth(false);
+        setTyping(false);
+        if (nd.animation === "give_cookies") {
+          later(() => setShowCookie(true), 300);
+          later(() => setCookiePopup(true), 800);
+        }
+        if (nd.showForm) later(() => setShowForm(true), 400);
+        if (nd.showIpad) later(() => setShowIpad(true), 400);
+        if (nd.animation === "balloon_away") later(() => setBalloon(true), 500);
+        if (nd.followUp) later(() => setFollowUp(nd.followUp.msg), nd.followUp.delay || 2000);
+      }
+    }, SPOCKET_TYPING_MS);
+    return () => {
+      clearInterval(tt.current);
+      clearInterval(mt.current);
+    };
+  }, [node, studentDisplayName]);
 
   const exit=useCallback(()=>{
     if(!isReturning) markVisited(); // Save that user has visited (only on first visit)
+    setCardGone(false);
+    setCardBack(true);
     setFacing("side");later(()=>{setPhase("leaving");setRobotX(-ROBOT_TOTAL_W-50)},200);
     later(()=>{setPhase("parked");setParked(true)},1600);
   },[isReturning,markVisited]);
@@ -1625,31 +3148,125 @@ function App() {
     later(()=>{setFacing("side");later(()=>{setPhase("leaving");setRobotX(-ROBOT_TOTAL_W-50)},300);later(()=>{setPhase("parked");setParked(true);setCryExit(false)},1600)},2000);
   },[isReturning,markVisited]);
 
-  const pick=useCallback((o)=>{if(o.next==="_exit"){exit();return}if(o.next==="end_convo"){endConvo();return}setNode(o.next)},[exit,endConvo]);
-  const nd=node?TREE[node]:null;
-  const showUI=phase==="talking"||cryExit;
-  const compactParkedUi = notesUnlocked && parked && !roaming && !studyActive;
-  const outerStyle = compactParkedUi
-    ? {
-        width: "100%",
-        height: "100%",
-        minHeight: 0,
-        background: "transparent",
-        fontFamily: "'JetBrains Mono',monospace",
-        position: "relative",
-        overflow: "visible",
-      }
-    : {
-        width: "100%",
-        minHeight: "100vh",
-        background: "linear-gradient(180deg,#0a0f1a,#0d1520 40%,#111b2b)",
-        fontFamily: "'JetBrains Mono',monospace",
-        position: "relative",
-        overflow: "hidden",
-      };
+  const pick=useCallback((o)=>{
+    if(o.next==="_exit"){exit();return}
+    if(o.next==="end_convo"){endConvo();return}
+    if (o.next === "_unlock_name_dismiss") {
+      try {
+        localStorage.setItem(LS_SPOCKET_NAME_SKIP, "1");
+      } catch (e) {}
+      dismissParkedQa();
+      return;
+    }
+    if(o.next==="_parked_dismiss"){dismissParkedQa();return}
+    if(o.next==="_find_in_notes"){startFindInNotes();return}
+    if(o.next==="notes_help_hub"){setParkedNotesHelpOpen(true);setParkedQaOpen(false);}
+    else if(o.next==="ask_spocket_unlocked"){setParkedQaOpen(true);setParkedNotesHelpOpen(false);}
+    setNode(o.next);
+  },[exit,endConvo,dismissParkedQa,startFindInNotes]);
+  const nd = node ? TREE[node] : null;
+  const dialogueRaw = useMemo(() => {
+    if (!node || !TREE[node]) return "";
+    return applySpocketPlaceholders(TREE[node].msg || "", studentDisplayName);
+  }, [node, studentDisplayName]);
+  const showUI = phase === "talking" || cryExit || findDockOpen;
+  const cornerUnlockedChat = notesUnlocked && (parkedQaOpen || parkedNotesHelpOpen || findNotesActive);
+  const compactParkedUi = notesUnlocked && parked && !roaming && !studyActive && !cornerUnlockedChat;
+  const showMainRobot = phase !== "idle" && (phase !== "parked" || cornerUnlockedChat);
+  const findFormulaFrameOk =
+    typeof document !== "undefined" && !!(document.getElementById("formula-frame")?.contentWindow);
+  const findActiveMatchCount =
+    findWorkspace === "formula"
+      ? typeof findMatchFormula === "number"
+        ? findMatchFormula
+        : 0
+      : typeof findMatchNotes === "number"
+        ? findMatchNotes
+        : 0;
+  const findCanStepMatches = findActiveMatchCount > 0;
+  /* Embedded in notes/index.html: no duplicate nav or full-page backdrop — only Spocket UI layers. */
+  const outerStyle = {
+    width: "100%",
+    height: "100%",
+    minHeight: 0,
+    background: "transparent",
+    fontFamily: "'JetBrains Mono',monospace",
+    position: "relative",
+    /* overflow:hidden clips position:fixed descendants (e.g. find dock); keep visible while dock open */
+    overflow: compactParkedUi || findDockOpen ? "visible" : "hidden",
+    pointerEvents: "none",
+  };
 
-  return(
+  return (
     <div style={outerStyle}>
+      {spaceSkipTipOpen && (
+        <div
+          role="status"
+          style={{
+            position: "fixed",
+            top: 72,
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 600,
+            maxWidth: "min(420px, calc(100vw - 24px))",
+            padding: "12px 16px",
+            borderRadius: 14,
+            background: "linear-gradient(135deg,#1e293b,#0f172a)",
+            border: "1px solid #7fdbca55",
+            boxShadow: "0 10px 36px rgba(0,0,0,0.55)",
+            fontFamily: "'JetBrains Mono',monospace",
+            fontSize: 11,
+            color: "#e2e8f0",
+            lineHeight: 1.5,
+            pointerEvents: "auto",
+            animation: "fadeInUp 0.25s ease",
+          }}
+        >
+          <div style={{ fontWeight: 700, marginBottom: 6, color: "#7fdbca" }}>Tip</div>
+          <div>
+            You can press <kbd style={{ padding: "2px 6px", borderRadius: 4, background: "#334155", border: "1px solid #475569" }}>Space</kbd> to skip waiting for my typing (when you are not typing in a text field).
+          </div>
+          <div style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+            <button
+              type="button"
+              onClick={dismissSpaceSkipTipSoft}
+              style={{
+                padding: "6px 12px",
+                borderRadius: 8,
+                border: "none",
+                background: "#7fdbca",
+                color: "#0f172a",
+                fontWeight: 700,
+                fontSize: 10,
+                fontFamily: "'JetBrains Mono',monospace",
+                cursor: "pointer",
+              }}
+            >
+              Dismiss
+            </button>
+            <button
+              type="button"
+              onClick={dismissSpaceSkipTipForever}
+              style={{
+                padding: "6px 12px",
+                borderRadius: 8,
+                border: "1px solid #64748b",
+                background: "transparent",
+                color: "#94a3b8",
+                fontWeight: 600,
+                fontSize: 10,
+                fontFamily: "'JetBrains Mono',monospace",
+                cursor: "pointer",
+              }}
+            >
+              Do not show again
+            </button>
+          </div>
+          <div style={{ marginTop: 8, fontSize: 9, color: "#64748b" }}>
+            Stays until you dismiss, or for 10 seconds after I finish typing. Dismiss hides it for now; Do not show again stops the tip permanently.
+          </div>
+        </div>
+      )}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Playfair+Display:wght@700;900&display=swap');
         @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
@@ -1675,106 +3292,460 @@ function App() {
            transformOrigin:"top center" on each SVG makes it hinge from the wrist.
            To make it open wider: increase 1.25. To slow down: increase 3s. */
         @keyframes clawHinge{0%,100%{transform:translateX(-50%) scaleX(1)}50%{transform:translateX(-50%) scaleX(1.25)}}
-        .opt-btn{padding:10px 20px;background:transparent;border:1px solid #7fdbca50;border-radius:22px;color:#7fdbca;font-size:12px;font-family:'JetBrains Mono',monospace;cursor:pointer;transition:all 0.2s;white-space:nowrap}
-        .opt-btn:hover{background:#7fdbca18;border-color:#7fdbca;transform:translateY(-2px);box-shadow:0 4px 16px rgba(127,219,202,0.15)}
-        .end-btn{padding:6px 14px;background:transparent;border:1px solid #ff6b6b30;border-radius:16px;color:#ff6b6b60;font-size:10px;font-family:'JetBrains Mono',monospace;cursor:pointer;transition:all 0.2s}
-        .end-btn:hover{background:#ff6b6b10;border-color:#ff6b6b;color:#ff6b6b}
+        .opt-btn{padding:10px 20px;background:#0f172a;border:1px solid #7fdbca50;border-radius:22px;color:#7fdbca;font-size:12px;font-family:'JetBrains Mono',monospace;cursor:pointer;transition:all 0.2s;white-space:nowrap;box-shadow:0 2px 10px rgba(0,0,0,0.4)}
+        .opt-btn:hover{background:#152238;border-color:#7fdbca;transform:translateY(-2px);box-shadow:0 4px 16px rgba(127,219,202,0.2)}
+        .end-btn{padding:6px 14px;background:#0f172a;border:1px solid #ff6b6b30;border-radius:16px;color:#ff6b6b60;font-size:10px;font-family:'JetBrains Mono',monospace;cursor:pointer;transition:all 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.35)}
+        .end-btn:hover{background:#1a1218;border-color:#ff6b6b;color:#ff6b6b}
       `}</style>
+
+      {findDockOpen &&
+        typeof document !== "undefined" &&
+        SpocketReactDOM &&
+        typeof SpocketReactDOM.createPortal === "function" &&
+        SpocketReactDOM.createPortal(
+          <div
+            role="toolbar"
+            aria-label="Find in notes"
+            style={{
+              position: "fixed",
+              top: 64,
+              left: 0,
+              right: 0,
+              zIndex: 515,
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "center",
+              gap: 10,
+              padding: "10px 14px",
+              background: "linear-gradient(90deg, #fbcfe8 0%, #f9a8d4 35%, #f472b6 100%)",
+              borderBottom: "2px solid #be185d",
+              boxShadow: "0 4px 20px rgba(190, 24, 93, 0.35)",
+              pointerEvents: "auto",
+              fontFamily: "'JetBrains Mono', monospace",
+            }}
+          >
+            <span
+              style={{
+                flex: "1 1 140px",
+                minWidth: 0,
+                fontSize: 11,
+                fontWeight: 700,
+                color: "#831843",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+              title={findDockQuery}
+            >
+              {findDockQuery || "—"}
+            </span>
+            <span style={{ fontSize: 10, fontWeight: 600, color: "#9d174d", whiteSpace: "nowrap" }}>
+              {findWorkspace === "formula" ? "Formula" : "Study guide"}
+              {findNotesBusy && (findMatchNotes === null || findMatchFormula === null)
+                ? " · …"
+                : findActiveMatchCount > 0
+                  ? ` · ${findActiveMatchCount}`
+                  : " · 0"}
+            </span>
+            <button
+              type="button"
+              disabled={!findCanStepMatches}
+              onClick={() => postFindStep(-1)}
+              title="Previous highlight"
+              style={{
+                minWidth: 44,
+                minHeight: 40,
+                padding: "0 14px",
+                borderRadius: 10,
+                border: "2px solid #831843",
+                background: findCanStepMatches ? "#be185d" : "#fda4af",
+                color: "#fff1f2",
+                fontSize: 18,
+                fontWeight: 900,
+                cursor: findCanStepMatches ? "pointer" : "not-allowed",
+                fontFamily: "'JetBrains Mono', monospace",
+              }}
+            >
+              ◀
+            </button>
+            <button
+              type="button"
+              disabled={!findCanStepMatches}
+              onClick={() => postFindStep(1)}
+              title="Next highlight"
+              style={{
+                minWidth: 44,
+                minHeight: 40,
+                padding: "0 14px",
+                borderRadius: 10,
+                border: "2px solid #831843",
+                background: findCanStepMatches ? "#be185d" : "#fda4af",
+                color: "#fff1f2",
+                fontSize: 18,
+                fontWeight: 900,
+                cursor: findCanStepMatches ? "pointer" : "not-allowed",
+                fontFamily: "'JetBrains Mono', monospace",
+              }}
+            >
+              ▶
+            </button>
+            {findFormulaFrameOk && findWorkspace === "notes" && (
+              <button
+                type="button"
+                onClick={() => switchFindWorkspace("formula")}
+                style={{
+                  padding: "8px 12px",
+                  borderRadius: 10,
+                  border: "2px solid #831843",
+                  background: "#fff1f2",
+                  color: "#831843",
+                  fontSize: 10,
+                  fontWeight: 800,
+                  cursor: "pointer",
+                  fontFamily: "'JetBrains Mono', monospace",
+                }}
+              >
+                Formula ▶
+              </button>
+            )}
+            {findFormulaFrameOk && findWorkspace === "formula" && (
+              <button
+                type="button"
+                onClick={() => switchFindWorkspace("notes")}
+                style={{
+                  padding: "8px 12px",
+                  borderRadius: 10,
+                  border: "2px solid #831843",
+                  background: "#fff1f2",
+                  color: "#831843",
+                  fontSize: 10,
+                  fontWeight: 800,
+                  cursor: "pointer",
+                  fontFamily: "'JetBrains Mono', monospace",
+                }}
+              >
+                ◀ Study guide
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => endFindDockSession()}
+              style={{
+                marginLeft: "auto",
+                padding: "8px 16px",
+                borderRadius: 10,
+                border: "2px solid #450a0a",
+                background: "#1c1917",
+                color: "#fecdd3",
+                fontSize: 10,
+                fontWeight: 800,
+                cursor: "pointer",
+                fontFamily: "'JetBrains Mono', monospace",
+              }}
+            >
+              Done
+            </button>
+          </div>,
+          document.body
+        )}
+
+      {findNotesActive && !typing && findBetaBannerVisible && (
+        <div
+          style={{
+            position: "fixed",
+            left: 12,
+            top: 64,
+            zIndex: 125,
+            maxWidth: "min(380px, calc(100vw - 24px))",
+            padding: "12px 14px",
+            background: "linear-gradient(145deg, #fb923c 0%, #ea580c 45%, #c2410c 100%)",
+            border: "2px solid #ffedd5",
+            borderRadius: 12,
+            boxShadow: "0 10px 32px rgba(234, 88, 12, 0.55), 0 0 0 1px rgba(127, 29, 29, 0.2) inset",
+            pointerEvents: "auto",
+            fontFamily: "'JetBrains Mono', monospace",
+          }}
+        >
+          <div style={{ fontSize: 11, fontWeight: 800, color: "#431407", marginBottom: 6, letterSpacing: "0.04em" }}>
+            BETA · “What do you want to know?”
+          </div>
+          <div style={{ fontSize: 10, lineHeight: 1.5, color: "#292524", fontWeight: 600 }}>
+            Search is best-effort — try words you remember. After you search, a pink bar appears at the top with arrows to step through highlights; tap Done there when finished.
+          </div>
+        </div>
+      )}
 
       {!compactParkedUi ? (
       <>
-      {/* Nav */}
-      <nav style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 32px",borderBottom:"1px solid #7fdbca15",position:"relative",zIndex:10}}>
-        <div style={{fontSize:20,fontWeight:700}}><span style={{color:"#e2e8f0"}}>T.</span><span style={{color:"#7fdbca"}}>M</span></div>
-        <div style={{display:"flex",gap:28,alignItems:"center"}}>
-          {["HOME","PROJECTS","RESUME","CONTACT"].map(i=><span key={i} style={{color:"#94a3b8",fontSize:11,letterSpacing:2,cursor:"pointer"}}>{i}</span>)}
-          <span style={{color:"#7fdbca",fontSize:11,letterSpacing:2,padding:"6px 14px",border:"1px solid #7fdbca40",borderRadius:4,cursor:"pointer"}}>STUDENT RESOURCES</span>
-        </div>
-      </nav>
+      {/* Main area — fills #spocket-root; clicks pass through to real #lock-card except on Spocket UI */}
+      <div
+        ref={mainLayoutRef}
+        style={{ position: "relative", width: "100%", height: "100%", minHeight: 0, pointerEvents: "none" }}
+      >
 
-      {/* Main area */}
-      <div style={{position:"relative",width:"100%",height:"calc(100vh - 60px)"}}>
-
-        {/* ── STUDENT RESOURCES CARD ──
-            Centered at 60% vertically. Flies right when cardGone=true.
-            TO ADJUST: change top:"60%" to move vertically, change "130%" in transform to change push distance */}
-        <div style={{
-          position:"absolute",
-          top:"60%",left:"50%",
-          transform:cardGone?"translate(130%,-50%) rotate(12deg)":"translate(-50%,-50%)",
-          transition:cardGone?"all 0.5s cubic-bezier(0.3,0.8,0.4,1)":"all 1s cubic-bezier(0.34,1.56,0.64,1)",
-          zIndex:2,opacity:cardGone?0:1,
-          pointerEvents:cardBack?"auto":"none",
-        }}>
-          <MiniCard/>
-        </div>
-
-        {/* ── ROBOT CONTAINER ──
-            Contains both the robot and its speech bubble (they move together).
-            top:"60%" matches card vertical position so the push looks physical.
-            left:robotX is animated via CSS transition.
-            scaleX(-1) when leaving makes robot face left as it rolls away.
-            
-            TO ADJUST:
-            - Robot vertical position: change top:"60%"
-            - Robot transition speed: change "1.8s" in transition
-            - Exit direction: the scaleX(-1) flips the side profile to face left */}
-        {phase!=="idle"&&phase!=="parked"&&(
-          <div style={{
-            position:"absolute",
-            top:"60%",
-            left:robotX,
-            transform:`translateY(-50%)${phase==="leaving"?" scaleX(-1)":""}`,
-            transition:"left 1.8s cubic-bezier(0.25,0.46,0.45,0.94)",
-            zIndex:20,
-          }}>
-            {/* ── SPEECH BUBBLE ── 
-                Positioned above-right of robot. bottom:340 = distance above robot center.
-                left:100 = horizontal offset to the right.
-                TO ADJUST: change bottom:340 (higher=further up) and left:100 (higher=further right) */}
-            {showUI&&(
-              <div style={{
-                position:"absolute",
-                bottom:340,
-                left:100,
-                zIndex:25,
-                animation:"fadeInUp 0.3s ease",
-                width:440,
-              }}>
-                <Bubble text={txt} isTyping={typing} tiny={cryExit} onSkip={typing?skipTyping:null}/>
-                {followUp&&<div style={{marginTop:10,animation:"fadeInUp 0.3s ease"}}><Bubble text={followUp} tiny={true}/></div>}
+        {/* ── ROBOT CONTAINER — aligned to measured #lock-card; pointer-events none so password form works */}
+        {showMainRobot&&(
+          <div style={
+            cornerUnlockedChat
+              ? {
+                  position: "fixed",
+                  bottom: 72,
+                  right: 8,
+                  left: "auto",
+                  top: "auto",
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "flex-end",
+                  gap: 10,
+                  width: "auto",
+                  maxWidth: "min(calc(100vw - 24px), 560px)",
+                  transform: phase === "leaving" ? "scaleX(-1)" : "none",
+                  transition: "left 1.8s cubic-bezier(0.25,0.46,0.45,0.94)",
+                  zIndex: 80,
+                  pointerEvents: "none",
+                }
+              : {
+                  position: "absolute",
+                  top: robotAnchorY != null ? robotAnchorY : "60%",
+                  left: robotX,
+                  transform: `translateY(-50%)${phase === "leaving" ? " scaleX(-1)" : ""}`,
+                  transition: "left 1.8s cubic-bezier(0.25,0.46,0.45,0.94)",
+                  zIndex: 20,
+                  pointerEvents: "none",
+                }
+          }>
+            {/* Corner Q&A: bubble left of big Spocket, tail points right toward robot */}
+            {cornerUnlockedChat && showUI && (
+              <div
+                style={{
+                  flex: "1 1 auto",
+                  minWidth: 0,
+                  maxWidth: findNotesActive ? "min(440px, calc(100vw - 120px))" : 300,
+                  marginBottom: CORNER_CHAT_BUBBLE_LIFT,
+                  zIndex: 25,
+                  animation: "fadeInUp 0.3s ease",
+                  pointerEvents: "auto",
+                  alignSelf: "flex-end",
+                }}
+              >
+                <Bubble
+                  rawMsg={cryExit ? txt : findNotesActive ? SPOCKET_FIND_INTRO_RAW : dialogueRaw}
+                  textPlain={txt}
+                  isTyping={typing}
+                  tiny={cryExit}
+                  onSkip={typing && !cryExit ? skipTyping : null}
+                  tail="right"
+                />
+                {followUp && !(findNotesActive && findExploreOn) && (
+                  <div style={{ marginTop: 10, animation: "fadeInUp 0.3s ease" }}>
+                    <Bubble text={followUp} tiny={true} tail="right" />
+                  </div>
+                )}
+                {findNotesActive && !typing && !findExploreOn && (
+                  <div style={{ marginTop: 12, animation: "fadeInUp 0.25s ease" }}>
+                    <label htmlFor="tm-find-notes-input" style={{ display: "block", fontSize: 10, color: "#94a3b8", marginBottom: 6 }}>
+                      What do you want to know? (short question or words you remember)
+                    </label>
+                    <textarea
+                      id="tm-find-notes-input"
+                      value={findNotesQuery}
+                      onChange={(e) => setFindNotesQuery(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          submitFindInNotes();
+                        }
+                      }}
+                      disabled={findNotesBusy}
+                      rows={3}
+                      placeholder="e.g. safety factor definition"
+                      style={{
+                        width: "100%",
+                        boxSizing: "border-box",
+                        resize: "vertical",
+                        minHeight: 72,
+                        padding: "8px 10px",
+                        borderRadius: 10,
+                        border: "1px solid #334155",
+                        background: "#0b1220",
+                        color: "#e2e8f0",
+                        fontFamily: "'JetBrains Mono',monospace",
+                        fontSize: 11,
+                        lineHeight: 1.45,
+                        marginBottom: 8,
+                      }}
+                    />
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                      <button
+                        type="button"
+                        onClick={() => dismissParkedQa()}
+                        style={{
+                          padding: "6px 12px",
+                          borderRadius: 10,
+                          border: "1px solid #475569",
+                          background: "#0f172a",
+                          color: "#94a3b8",
+                          fontSize: 10,
+                          fontFamily: "'JetBrains Mono',monospace",
+                          cursor: "pointer",
+                        }}
+                      >
+                        Never mind
+                      </button>
+                      <button
+                        type="button"
+                        disabled={findNotesBusy || !findNotesQuery.trim()}
+                        onClick={() => submitFindInNotes()}
+                        style={{
+                          padding: "6px 14px",
+                          borderRadius: 10,
+                          border: "none",
+                          background: findNotesBusy || !findNotesQuery.trim() ? "#334155" : "#38bdf8",
+                          color: findNotesBusy || !findNotesQuery.trim() ? "#64748b" : "#0f172a",
+                          fontSize: 10,
+                          fontWeight: 700,
+                          fontFamily: "'JetBrains Mono',monospace",
+                          cursor: findNotesBusy || !findNotesQuery.trim() ? "default" : "pointer",
+                        }}
+                      >
+                        {findNotesBusy ? "Searching…" : "Go find it"}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
-            {/* Robot body */}
-            <div style={{
-              animation:balloon?"balloonUp 2.5s ease-in forwards":phase==="talking"?"idleBob 3s ease-in-out infinite":"none",
-              position:"relative",
-            }}>
-              {balloon&&<div style={{position:"absolute",top:-40,left:"50%",transform:"translateX(-50%)",fontSize:36}}>🎈</div>}
-              <Robot eyes={cryExit?"crying":(nd?.eyes||"happy")} mouthOpen={mouth} scale={ROBOT_SCALE} showCookie={showCookie} showIpad={showIpad} facing={facing}/>
+            <div
+              style={{
+                flexShrink: 0,
+                width: cornerUnlockedChat ? 220 : undefined,
+                position: "relative",
+              }}
+            >
+              {!cornerUnlockedChat && showUI && (
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: 340,
+                    left: 100,
+                    zIndex: 25,
+                    animation: "fadeInUp 0.3s ease",
+                    width: 440,
+                    pointerEvents: "auto",
+                  }}
+                >
+                  <Bubble
+                    rawMsg={cryExit ? txt : dialogueRaw}
+                    textPlain={txt}
+                    isTyping={typing}
+                    tiny={cryExit}
+                    onSkip={typing && !cryExit ? skipTyping : null}
+                  />
+                  {followUp && (
+                    <div style={{ marginTop: 10, animation: "fadeInUp 0.3s ease" }}>
+                      <Bubble text={followUp} tiny={true} />
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Robot body */}
+              <div
+                style={{
+                  animation: balloon ? "balloonUp 2.5s ease-in forwards" : phase === "talking" ? "idleBob 3s ease-in-out infinite" : "none",
+                  position: "relative",
+                }}
+              >
+                {balloon && (
+                  <div style={{ position: "absolute", top: -40, left: "50%", transform: "translateX(-50%)", fontSize: 36 }}>🎈</div>
+                )}
+                <Robot eyes={cryExit ? "crying" : findNotesActive ? "thinking" : nd?.eyes || "happy"} mouthOpen={mouth} scale={ROBOT_SCALE} showCookie={showCookie} showIpad={showIpad} facing={facing} />
+              </div>
             </div>
           </div>
         )}
 
         {/* User response options — completely independent, bottom center of screen */}
-        {showUI&&!cryExit&&!typing&&nd&&nd.options.length>0&&(
+        {showUI&&!cryExit&&!typing&&(nd&&nd.options.length>0||findNotesActive||findDockOpen)&&(
           <div style={{
             position:"fixed",
-            bottom:40,
+            bottom: findNotesActive || findDockOpen ? 12 : cornerUnlockedChat ? 8 : 40,
             left:0,
             right:0,
-            zIndex:30,
+            zIndex: cornerUnlockedChat || findDockOpen ? 90 : 30,
             animation:"fadeInUp 0.3s ease",
             display:"flex",
             flexDirection:"column",
             alignItems:"center",
             gap:10,
+            pointerEvents:"auto",
           }}>
-            <div style={{display:"flex",flexWrap:"wrap",gap:10,justifyContent:"center"}}>
-              {nd.options.map((o,i)=><button key={i} className="opt-btn" onClick={()=>pick(o)}>{o.label}</button>)}
-            </div>
-            <button className="end-btn" onClick={endConvo}>✕ End conversation</button>
+            {nd && nd.captureName && (
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  padding: "10px 14px",
+                  borderRadius: 14,
+                  background: "#0f172a",
+                  border: "1px solid #7fdbca40",
+                  maxWidth: "min(480px, calc(100vw - 24px))",
+                }}
+              >
+                <label htmlFor="tm-spocket-name-input" style={{ fontSize: 10, color: "#94a3b8", width: "100%", marginBottom: 2 }}>
+                  Name or nickname (saved only in this browser)
+                </label>
+                <input
+                  id="tm-spocket-name-input"
+                  type="text"
+                  value={nameDraft}
+                  onChange={(e) => setNameDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      commitStudentName();
+                    }
+                  }}
+                  placeholder="e.g. Alex"
+                  maxLength={48}
+                  style={{
+                    flex: "1 1 160px",
+                    minWidth: 140,
+                    padding: "8px 10px",
+                    borderRadius: 10,
+                    border: "1px solid #334155",
+                    background: "#0b1220",
+                    color: "#e2e8f0",
+                    fontFamily: "'JetBrains Mono',monospace",
+                    fontSize: 12,
+                  }}
+                />
+                <button type="button" className="opt-btn" onClick={() => commitStudentName()}>
+                  Save
+                </button>
+              </div>
+            )}
+            {nd && nd.options.length > 0 && (
+              <div style={{display:"flex",flexWrap:"wrap",gap:10,justifyContent:"center"}}>
+                {nd.options.map((o,i)=><button key={i} className="opt-btn" onClick={()=>pick(o)}>{o.label}</button>)}
+              </div>
+            )}
+            <button
+              className="end-btn"
+              onClick={() => {
+                if (findDockOpen) {
+                  endFindDockSession();
+                  return;
+                }
+                cornerUnlockedChat ? dismissParkedQa() : endConvo();
+              }}
+            >
+              {findDockOpen ? "✕ Done (find)" : findNotesActive ? "✕ Done" : cornerUnlockedChat ? "✕ Close" : "✕ End conversation"}
+            </button>
           </div>
         )}
 
@@ -1789,7 +3760,7 @@ function App() {
             animation:"fadeInUp 0.4s ease",
             display:"flex",
             alignItems:"center",
-            pointerEvents:"none",
+            pointerEvents:"auto",
           }}>
             <div style={{pointerEvents:"auto"}}>
               <IpadForm/>
@@ -1808,7 +3779,7 @@ function App() {
             animation:"fadeInUp 0.3s ease",
             display:"flex",
             alignItems:"center",
-            pointerEvents:"none",
+            pointerEvents:"auto",
           }}>
             <div style={{pointerEvents:"auto"}}>
               <EmailForm onSubmit={()=>later(exit,2000)}/>
@@ -1818,25 +3789,50 @@ function App() {
 
         {/* Cookie popup */}
         {cookiePopup&&(
-          <div style={{position:"fixed",top:70,right:20,background:"#1a2538",border:"1px solid #7fdbca30",borderRadius:14,padding:"16px 24px",display:"flex",alignItems:"center",gap:16,zIndex:50,animation:"fadeInUp 0.5s ease",boxShadow:"0 8px 32px rgba(0,0,0,0.5)"}}>
+          <div style={{position:"fixed",top:70,right:20,background:"#1a2538",border:"1px solid #7fdbca30",borderRadius:14,padding:"16px 24px",display:"flex",alignItems:"center",gap:16,zIndex:50,animation:"fadeInUp 0.5s ease",boxShadow:"0 8px 32px rgba(0,0,0,0.5)",pointerEvents:"auto"}}>
             <span style={{fontSize:28,animation:"cookieFloat 0.6s ease"}}>🍪</span>
             <div><div style={{color:"#e2e8f0",fontSize:13,fontWeight:600,marginBottom:4}}>Spocket wants to share her cookies with you!</div><div style={{color:"#94a3b8",fontSize:11}}>This site uses cookies for authentication.</div></div>
             <button onClick={()=>setCookiePopup(false)} style={{padding:"8px 18px",background:"#7fdbca",color:"#0a0f1a",border:"none",borderRadius:8,fontWeight:700,fontSize:11,fontFamily:"monospace",cursor:"pointer"}}>Accept 🍪</button>
           </div>
         )}
 
-        {parked&&!roaming&&!studyActive&&<ParkedRobot onRestartNew={start} onRestartReturning={startReturning} onRoam={startRoam} onStudy={startStudy}/>}
+        {parked&&!roaming&&!studyActive&&!cornerUnlockedChat&&(
+          <ParkedRobot
+            onRestartNew={start}
+            onRestartReturning={startReturning}
+            onRoam={startRoam}
+            onStudy={startStudy}
+            hideTestUserButtons={notesUnlocked}
+            showUnlockedExtras={notesUnlocked}
+            onAskAboutMe={startParkedQa}
+            onNotesHelp={startNotesHelp}
+            onFindInNotes={startFindInNotes}
+            onLogOut={requestLogout}
+          />
+        )}
 
         {/* ── ROAM MODE ── */}
-        {roaming&&<RoamMode onExit={exitRoam}/>}
+        {roaming&&<RoamMode onExit={exitRoam} siteNavOpen={immersiveSiteNavOpen} onToggleSiteNav={toggleImmersiveSiteNav} />}
 
         {/* ── STUDY MODE ── */}
-        {studyActive&&<StudyPanel onClose={exitStudy}/>}
+        {studyActive&&<StudyPanel onClose={exitStudy} siteNavOpen={immersiveSiteNavOpen} onToggleSiteNav={toggleImmersiveSiteNav} />}
       </div>
       </>
       ) : (
-      <div style={{ pointerEvents: "auto", width: "100%", height: "100%", minHeight: "100%" }}>
-        <ParkedRobot onRestartNew={start} onRestartReturning={startReturning} onRoam={startRoam} onStudy={startStudy} />
+      /* Full-size wrapper must stay pointer-events: none so notes/main stay clickable; ParkedRobot opts in. */
+      <div style={{ pointerEvents: "none", width: "100%", height: "100%", minHeight: "100%" }}>
+        <ParkedRobot
+          onRestartNew={start}
+          onRestartReturning={startReturning}
+          onRoam={startRoam}
+          onStudy={startStudy}
+          hideTestUserButtons={notesUnlocked}
+          showUnlockedExtras={notesUnlocked}
+          onAskAboutMe={startParkedQa}
+          onNotesHelp={startNotesHelp}
+          onFindInNotes={startFindInNotes}
+          onLogOut={requestLogout}
+        />
       </div>
       )}
     </div>
