@@ -173,7 +173,7 @@ const TREE = {
     ],
   },
   what_spocket_does: {
-    msg: "Before unlock I run the scripted onboarding tree (access paths, what is locked, where to request a code). **After unlock the same React layer adds a parked UI: Roam and Study are separate layouts with optional full-width chrome; the dialogue hub documents toolbar tools, persistence, and shortcuts, or dispatches tm_spocket_find* messages into the workspace frames for cross-document search.** The site nav can be toggled from Roam/Study so the iframe column stays readable.",
+    msg: "Before unlock I run the scripted onboarding tree (access paths, what is locked, where to request a code). **After unlock the same React layer adds a parked UI: Roam and Study are separate layouts with optional full-width chrome; the dialogue hub documents toolbar tools, persistence, and shortcuts, or dispatches tm_spocket_find* messages into the workspace frames for cross-document search.** Roam can toggle the site nav so the iframe column stays readable; full-page Study hides the menu until you leave with ← Leave.",
     eyes: "happy",
     options: [
       { label: "Who are you?", next: "who_spocket" },
@@ -255,7 +255,7 @@ const TREE = {
     ],
   },
   sq_can_do_p: {
-    msg: "Locked: onboarding + access paths only. Unlocked: Roam/Study layouts, reminders, structured notes help, and Find in notes (beta) that issues tm_spocket_find / step / clear messages into both workspace frames so highlights stay aligned while you navigate. Roam/Study expose a control to collapse site nav for a wider iframe. Motion is local React/CSS state only.",
+    msg: "Locked: onboarding + access paths only. Unlocked: Roam/Study layouts, reminders, structured notes help, and Find in notes (beta) that issues tm_spocket_find / step / clear messages into both workspace frames so highlights stay aligned while you navigate. Roam exposes a control to collapse site nav for a wider iframe; Study is full-page with the menu hidden. Motion is local React/CSS state only.",
     eyes: "happy",
     options: [
       { label: "Another question", next: "ask_spocket_unlocked" },
@@ -1030,12 +1030,15 @@ function SpocketImmersiveChrome({
   onToggleSiteNav,
   dockToggleInNav = false,
   hideImmersiveTopBar = false,
+  allowSiteNavToggle = true,
 }) {
   const S = { fontFamily: "'JetBrains Mono', monospace" };
   const navHost =
-    typeof document !== "undefined" && dockToggleInNav ? document.getElementById("sr-spocket-nav-toggle-host") : null;
+    typeof document !== "undefined" && dockToggleInNav && allowSiteNavToggle
+      ? document.getElementById("sr-spocket-nav-toggle-host")
+      : null;
 
-  const roamBarToggle = (
+  const roamBarToggle = allowSiteNavToggle ? (
     <button
       type="button"
       onClick={onToggleSiteNav}
@@ -1052,13 +1055,13 @@ function SpocketImmersiveChrome({
     >
       {siteNavOpen ? "Hide site menu" : "Show site menu"}
     </button>
-  );
+  ) : null;
 
-  const studyNavToggle = (
+  const studyNavToggle = allowSiteNavToggle ? (
     <button type="button" className="sr-spocket-nav-site-toggle" onClick={onToggleSiteNav} aria-pressed={siteNavOpen}>
       {siteNavOpen ? "Hide site menu" : "Show site menu"}
     </button>
-  );
+  ) : null;
 
   const barInner = (
     <div
@@ -1080,7 +1083,10 @@ function SpocketImmersiveChrome({
   );
 
   const floatShowSiteMenu =
-    dockToggleInNav && !siteNavOpen && typeof document !== "undefined" ? (
+    allowSiteNavToggle &&
+    dockToggleInNav &&
+    !siteNavOpen &&
+    typeof document !== "undefined" ? (
       <button
         type="button"
         onClick={onToggleSiteNav}
@@ -1107,7 +1113,10 @@ function SpocketImmersiveChrome({
     ) : null;
 
   const floatHideLegacy =
-    siteNavOpen && !dockToggleInNav && typeof document !== "undefined" ? (
+    allowSiteNavToggle &&
+    siteNavOpen &&
+    !dockToggleInNav &&
+    typeof document !== "undefined" ? (
       <button
         type="button"
         onClick={onToggleSiteNav}
@@ -1162,8 +1171,10 @@ function SpocketImmersiveChrome({
       : null;
 
   const portaledNav =
+    allowSiteNavToggle &&
     dockToggleInNav &&
     navHost &&
+    studyNavToggle &&
     SpocketReactDOM &&
     typeof SpocketReactDOM.createPortal === "function"
       ? SpocketReactDOM.createPortal(studyNavToggle, navHost)
@@ -1364,13 +1375,14 @@ function StudyPanel({ onClose, siteNavOpen = false, onToggleSiteNav = () => {}, 
   const handleClose=()=>{saveSession();stopAmbient();onClose();};
 
   return(
-    <div style={{position:embedded?"absolute":"fixed",inset:0,zIndex:embedded?56:50,paddingTop:embedded?0:64,overflow:"hidden",pointerEvents:"auto",display:"flex",flexDirection:"column"}}>
+    <div style={{position:embedded?"absolute":"fixed",inset:0,zIndex:embedded?56:50,paddingTop:0,overflow:"hidden",pointerEvents:"auto",display:"flex",flexDirection:"column"}}>
       <SpocketImmersiveChrome
         label="Spocket · Study"
         siteNavOpen={siteNavOpen}
         onToggleSiteNav={onToggleSiteNav}
-        dockToggleInNav={!embedded}
-        hideImmersiveTopBar={!embedded}
+        dockToggleInNav={false}
+        hideImmersiveTopBar
+        allowSiteNavToggle={embedded}
       />
       <div style={{flex:1,minHeight:0,position:"relative",overflow:"hidden"}}>
       {/* Library background — user's image */}
@@ -1393,7 +1405,7 @@ function StudyPanel({ onClose, siteNavOpen = false, onToggleSiteNav = () => {}, 
       )}
 
       {/* Controls */}
-      <div style={{position:"absolute",top:embedded?12:76,left:12,display:"flex",gap:8,zIndex:40,flexWrap:"wrap",alignItems:"center"}}>
+      <div style={{position:"absolute",top:12,left:12,display:"flex",gap:8,zIndex:40,flexWrap:"wrap",alignItems:"center"}}>
         <button onClick={handleClose} style={{padding:"6px 14px",background:"#1a253880",border:"1px solid #ff6b6b30",borderRadius:12,color:"#ff6b6b80",fontSize:10,...S,cursor:"pointer",backdropFilter:"blur(4px)"}}>← Leave</button>
         <button onClick={()=>setLight(!light)} style={{padding:"6px 14px",background:light?"#1a253880":"#e8e0d480",border:"1px solid #ffffff20",borderRadius:12,color:light?"#e2e8f0":"#1a1a2e",fontSize:10,...S,cursor:"pointer",backdropFilter:"blur(4px)"}}>{light?"🌙 Dark":"☀️ Light"}</button>
         <button onClick={toggleLock} style={{padding:"6px 14px",background:lockedIn?"#4ad4a025":"#1a253880",border:`1px solid ${lockedIn?"#4ad4a060":"#ffffff20"}`,borderRadius:12,color:lockedIn?"#4ad4a0":"#94a3b8",fontSize:10,...S,cursor:"pointer",backdropFilter:"blur(4px)",fontWeight:lockedIn?700:400}}>{lockedIn?"🔒 Locked In":"🔓 Not Locked In"}</button>
@@ -3059,16 +3071,20 @@ function App() {
     try {
       if (immersive) {
         document.body.classList.add("sr-spocket-immersive");
+        if (studyActive) document.body.classList.add("sr-spocket-study");
+        else document.body.classList.remove("sr-spocket-study");
         if (typeof window.closeMenu === "function") window.closeMenu();
       } else {
         document.body.classList.remove("sr-spocket-immersive");
         document.body.classList.remove("sr-spocket-immersive-nav-open");
+        document.body.classList.remove("sr-spocket-study");
       }
     } catch (e) {}
     return () => {
       try {
         document.body.classList.remove("sr-spocket-immersive");
         document.body.classList.remove("sr-spocket-immersive-nav-open");
+        document.body.classList.remove("sr-spocket-study");
       } catch (e2) {}
     };
   }, [roaming, studyActive]);
@@ -3089,9 +3105,9 @@ function App() {
     };
   }, [roaming, studyActive, immersiveSiteNavOpen]);
 
-  /* Study mode: start with the real site nav visible so the menu toggle in <nav> is reachable. */
+  /* Study mode: site nav stays hidden; exit via ← Leave in Study. */
   useEffect(() => {
-    if (studyActive) setImmersiveSiteNavOpen(true);
+    if (studyActive) setImmersiveSiteNavOpen(false);
   }, [studyActive]);
 
   useEffect(() => {
