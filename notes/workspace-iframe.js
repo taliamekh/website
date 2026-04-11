@@ -146,86 +146,35 @@
     syncUndoRedoBtns();
   }
   function syncUndoRedoBtns() {
-    if (btnUndo) btnUndo.disabled = undoStack.length === 0;
-    if (btnRedo) btnRedo.disabled = redoStack.length === 0;
+    // Use aria-disabled + class (not the HTML disabled attribute) so the buttons still receive
+    // click/touch events reliably; guards inside undoDraw/redoDraw remain the source of truth.
+    if (btnUndo) {
+      var noUndo = undoStack.length === 0;
+      btnUndo.classList.toggle('tm-ws-head-btn--disabled', noUndo);
+      btnUndo.setAttribute('aria-disabled', noUndo ? 'true' : 'false');
+    }
+    if (btnRedo) {
+      var noRedo = redoStack.length === 0;
+      btnRedo.classList.toggle('tm-ws-head-btn--disabled', noRedo);
+      btnRedo.setAttribute('aria-disabled', noRedo ? 'true' : 'false');
+    }
   }
   // Snapshot drawings before a change so Undo can restore them.
   function pushDrawHistory() {
     undoStack.push(snapshotItemsDeep());
     if (undoStack.length > MAX_UNDO) undoStack.shift();
     redoStack = [];
-    // #region agent log
-    fetch('http://127.0.0.1:7464/ingest/bdc7c5ef-96eb-4ddc-a919-a2248f13feb1', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '6f0602' },
-      body: JSON.stringify({
-        sessionId: '6f0602',
-        location: 'workspace-iframe.js:pushDrawHistory',
-        message: 'pushed draw history',
-        data: { uLen: undoStack.length, rLen: redoStack.length, itemCount: items.length },
-        timestamp: Date.now(),
-        hypothesisId: 'H2'
-      })
-    }).catch(function () {});
-    // #endregion
     syncUndoRedoBtns();
   }
   function undoDraw() {
-    // #region agent log
-    fetch('http://127.0.0.1:7464/ingest/bdc7c5ef-96eb-4ddc-a919-a2248f13feb1', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '6f0602' },
-      body: JSON.stringify({
-        sessionId: '6f0602',
-        location: 'workspace-iframe.js:undoDraw:entry',
-        message: 'undoDraw called',
-        data: {
-          uLen: undoStack.length,
-          rLen: redoStack.length,
-          itemCount: items.length,
-          btnUndoDis: !!(btnUndo && btnUndo.disabled)
-        },
-        timestamp: Date.now(),
-        hypothesisId: 'H3'
-      })
-    }).catch(function () {});
-    // #endregion
     if (!undoStack.length) return;
     redoStack.push(snapshotItemsDeep());
     items = migrateItems(undoStack.pop());
     saveDrawings();
     render();
     syncUndoRedoBtns();
-    // #region agent log
-    fetch('http://127.0.0.1:7464/ingest/bdc7c5ef-96eb-4ddc-a919-a2248f13feb1', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '6f0602' },
-      body: JSON.stringify({
-        sessionId: '6f0602',
-        location: 'workspace-iframe.js:undoDraw:after',
-        message: 'undoDraw finished',
-        data: { uLen: undoStack.length, rLen: redoStack.length, itemCount: items.length },
-        timestamp: Date.now(),
-        hypothesisId: 'H4'
-      })
-    }).catch(function () {});
-    // #endregion
   }
   function redoDraw() {
-    // #region agent log
-    fetch('http://127.0.0.1:7464/ingest/bdc7c5ef-96eb-4ddc-a919-a2248f13feb1', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '6f0602' },
-      body: JSON.stringify({
-        sessionId: '6f0602',
-        location: 'workspace-iframe.js:redoDraw:entry',
-        message: 'redoDraw called',
-        data: { uLen: undoStack.length, rLen: redoStack.length, itemCount: items.length },
-        timestamp: Date.now(),
-        hypothesisId: 'H3'
-      })
-    }).catch(function () {});
-    // #endregion
     if (!redoStack.length) return;
     undoStack.push(snapshotItemsDeep());
     items = migrateItems(redoStack.pop());
@@ -1018,7 +967,7 @@
       '.tm-ws-head-btn{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;min-width:34px;padding:0;' +
       'border:none;border-radius:8px;background:transparent;color:rgba(255,255,255,.95);cursor:pointer}' +
       '.tm-ws-head-btn:hover{color:#fff;background:rgba(255,255,255,.1)}' +
-      '.tm-ws-head-btn:disabled{opacity:.26;cursor:not-allowed}' +
+      '.tm-ws-head-btn:disabled,.tm-ws-head-btn.tm-ws-head-btn--disabled{opacity:.26;cursor:not-allowed}' +
       '.tm-ws-main{display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;gap:8px;width:100%;' +
       'min-width:0;box-sizing:border-box}' +
       '.tm-ws-tail{display:flex;flex-direction:row;flex-wrap:nowrap;align-items:stretch;gap:6px;flex:1 1 auto;min-width:0}' +
@@ -1273,22 +1222,12 @@
           if (hlColorSlots.length === 0) hlColorSlots = DEFAULT_HL_COLORS.slice();
         }
         if (Array.isArray(p.drawings)) {
-          items = migrateItems(p.drawings);
-          resetDrawHistory();
-          // #region agent log
-          fetch('http://127.0.0.1:7464/ingest/bdc7c5ef-96eb-4ddc-a919-a2248f13feb1', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '6f0602' },
-            body: JSON.stringify({
-              sessionId: '6f0602',
-              location: 'workspace-iframe.js:tm_iframe_workspace_boot',
-              message: 'boot reset draw history',
-              data: { drawingCount: p.drawings.length, itemCount: items.length },
-              timestamp: Date.now(),
-              hypothesisId: 'H5'
-            })
-          }).catch(function () {});
-          // #endregion
+          var nextItems = migrateItems(p.drawings);
+          var sameDrawings = JSON.stringify(items) === JSON.stringify(nextItems);
+          if (!sameDrawings) {
+            items = nextItems;
+            resetDrawHistory();
+          }
         }
         if (p.hlBar) applyHlLayout(p.hlBar);
         if (btnNotesExpandLayout) {
@@ -1338,26 +1277,13 @@
     btnUndo.className = 'tm-ws-head-btn';
     btnUndo.title = 'Undo last drawing';
     btnUndo.setAttribute('aria-label', 'Undo');
-    btnUndo.disabled = true;
+    btnUndo.setAttribute('aria-disabled', 'true');
+    btnUndo.classList.add('tm-ws-head-btn--disabled');
     btnUndo.innerHTML =
       '<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9 9 4" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linejoin="round"/><path d="M5 9h12a5 5 0 0 1 0 10H10" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/></svg>';
     btnUndo.addEventListener(
       'click',
       function (e) {
-        // #region agent log
-        fetch('http://127.0.0.1:7464/ingest/bdc7c5ef-96eb-4ddc-a919-a2248f13feb1', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '6f0602' },
-          body: JSON.stringify({
-            sessionId: '6f0602',
-            location: 'workspace-iframe.js:btnUndo:click',
-            message: 'undo button click',
-            data: { disabled: !!btnUndo.disabled, uLen: undoStack.length },
-            timestamp: Date.now(),
-            hypothesisId: 'H1'
-          })
-        }).catch(function () {});
-        // #endregion
         e.stopPropagation();
         closeAllPops();
         undoDraw();
@@ -1369,26 +1295,13 @@
     btnRedo.className = 'tm-ws-head-btn';
     btnRedo.title = 'Redo drawing';
     btnRedo.setAttribute('aria-label', 'Redo');
-    btnRedo.disabled = true;
+    btnRedo.setAttribute('aria-disabled', 'true');
+    btnRedo.classList.add('tm-ws-head-btn--disabled');
     btnRedo.innerHTML =
       '<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 14l5-5-5-5" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linejoin="round"/><path d="M19 9H7a5 5 0 0 0 0 10h7" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/></svg>';
     btnRedo.addEventListener(
       'click',
       function (e) {
-        // #region agent log
-        fetch('http://127.0.0.1:7464/ingest/bdc7c5ef-96eb-4ddc-a919-a2248f13feb1', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '6f0602' },
-          body: JSON.stringify({
-            sessionId: '6f0602',
-            location: 'workspace-iframe.js:btnRedo:click',
-            message: 'redo button click',
-            data: { disabled: !!btnRedo.disabled, rLen: redoStack.length },
-            timestamp: Date.now(),
-            hypothesisId: 'H1'
-          })
-        }).catch(function () {});
-        // #endregion
         e.stopPropagation();
         closeAllPops();
         redoDraw();

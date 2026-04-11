@@ -1668,8 +1668,8 @@
   var FORMULA_README_URL = 'https://raw.githubusercontent.com/taliamekh/Ecor2050-formula-sheet/main/README.md';
   /** If the URL contains this (e.g. shared link), the formula panel opens automatically after unlock. */
   var FORMULA_VIEW_HREF = '?view=formula';
-  /** Local script that draws the floating toolbar and tools inside the notes iframe. */
-  var WORKSPACE_IFRAME_URL = 'workspace-iframe.js';
+  /** Local script that draws the floating toolbar and tools inside the notes iframe. Bump ?v= after edits so fetches are not stuck on an old cached copy. */
+  var WORKSPACE_IFRAME_URL = 'workspace-iframe.js?v=4';
   var overlay = document.getElementById('lock-overlay');
   var main = document.getElementById('main-content');
   var form = document.getElementById('unlock-form');
@@ -4294,7 +4294,7 @@
       fetch(FORMULA_SHEET_HTML_URL).then(function (r) {
         return r.ok ? r.text() : Promise.reject(new Error('Formula sheet fetch failed'));
       }),
-      fetch(WORKSPACE_IFRAME_URL).then(function (r) {
+      fetch(WORKSPACE_IFRAME_URL, { cache: 'no-store' }).then(function (r) {
         return r.ok ? r.text() : Promise.reject(new Error('Workspace script fetch failed'));
       })
     ])
@@ -4335,7 +4335,7 @@
       fetch(NOTES_HTML_URL).then(function (r) {
         return r.ok ? r.text() : Promise.reject(new Error('Notes HTML fetch failed'));
       }),
-      fetch(WORKSPACE_IFRAME_URL).then(function (r) {
+      fetch(WORKSPACE_IFRAME_URL, { cache: 'no-store' }).then(function (r) {
         return r.ok ? r.text() : Promise.reject(new Error('Workspace script fetch failed'));
       })
     ])
