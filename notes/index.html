@@ -48,7 +48,7 @@
     z-index: 0;
     transition: opacity 0.45s ease;
   }
-  body.sr-notes-fullscreen::before {
+  body.sr-notes-expand::before {
     opacity: 0;
   }
 
@@ -154,29 +154,36 @@
       padding 0.35s ease,
       max-width 0.35s ease;
   }
-  body.sr-notes-fullscreen {
-    overflow: hidden;
-  }
-  body.sr-notes-fullscreen main {
-    max-width: none;
-    padding: 80px 0 0;
-    margin: 0;
-  }
-
-  /* Wide reading column — full horizontal width, minimal side padding */
-  body.sr-notes-wide main {
-    max-width: none;
-    padding-left: 12px;
-    padding-right: 12px;
-    transition: padding 0.35s ease, max-width 0.35s ease;
-  }
-  body.sr-notes-wide .ecor-panel {
+  /* Expand view: full-width notes, minimal horizontal padding; nav + footer stay in normal document flow */
+  body.sr-notes-expand main {
     max-width: none;
     width: 100%;
+    padding: 100px 0 32px;
+    margin: 0;
+    transition: padding 0.35s ease, max-width 0.35s ease;
   }
-  body.sr-notes-wide.sr-notes-fullscreen main {
-    padding-left: 0;
-    padding-right: 0;
+  body.sr-notes-expand .page-head,
+  body.sr-notes-expand .course-grid {
+    display: none;
+  }
+  body.sr-notes-expand .ecor-panel {
+    max-width: none;
+    width: 100%;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+  body.sr-notes-expand .ecor-panel-head {
+    padding: 12px 16px;
+  }
+  body.sr-notes-expand .readme-block {
+    display: none;
+  }
+  body.sr-notes-expand .load-status:not(.err) {
+    padding: 8px 16px;
+  }
+  body.sr-notes-expand .notes-frame {
+    min-height: 78vh;
   }
 
   .page-head {
@@ -251,6 +258,10 @@
     display: flex;
     flex-direction: column;
   }
+  .ecor-panel .browser-fs-root {
+    flex: 1;
+    min-height: 0;
+  }
   .ecor-panel .ecor-panel-head,
   .ecor-panel .load-status {
     flex-shrink: 0;
@@ -279,9 +290,6 @@
     letter-spacing: 0.06em;
     color: var(--white);
     margin: 0;
-  }
-  .btn-fs-notes {
-    flex-shrink: 0;
   }
   .readme-block {
     font-size: 14px;
@@ -312,45 +320,44 @@
     display: block;
     background: #0d0f14;
   }
-  body.sr-notes-fullscreen .notes-frame-wrap {
-    flex: 1;
-    min-height: 0;
-  }
-  body.sr-notes-fullscreen .notes-frame {
-    flex: 1;
-    min-height: 0;
-  }
-
-  body.sr-notes-fullscreen .page-head,
-  body.sr-notes-fullscreen .course-grid {
-    display: none;
-  }
-  body.sr-notes-fullscreen .ecor-panel {
-    position: fixed;
-    top: 64px;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 40;
-    border-radius: 0;
-    border-left: none;
-    border-right: none;
+  /* Browser fullscreen root: fills space in expand mode; hosts exit control */
+  .browser-fs-root {
+    position: relative;
     display: flex;
     flex-direction: column;
-    margin: 0;
-    max-width: none;
-    overflow: hidden;
+    flex: 1;
+    min-height: 0;
   }
-  body.sr-notes-fullscreen .ecor-panel-head {
-    flex-shrink: 0;
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--border);
+  .browser-fs-root .notes-frame-wrap {
+    flex: 1;
+    min-height: 0;
   }
-  body.sr-notes-fullscreen .readme-block {
-    display: none;
+  .browser-fs-exit {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 20;
+    display: flex;
+    gap: 8px;
   }
-  body.sr-notes-fullscreen .load-status:not(.err) {
-    padding: 8px 16px;
+  .browser-fs-exit[hidden] {
+    display: none !important;
+  }
+  .browser-fs-root:fullscreen,
+  .browser-fs-root:-webkit-full-screen {
+    background: #0d0f14;
+    width: 100%;
+    height: 100%;
+  }
+  .browser-fs-root:fullscreen .notes-frame-wrap,
+  .browser-fs-root:-webkit-full-screen .notes-frame-wrap {
+    flex: 1;
+    min-height: 0;
+  }
+  .browser-fs-root:fullscreen .notes-frame,
+  .browser-fs-root:-webkit-full-screen .notes-frame {
+    flex: 1;
+    min-height: 0;
   }
 
   .load-status {
@@ -360,6 +367,27 @@
     padding: 16px 24px;
   }
   .load-status.err { color: var(--err); }
+
+  body.sr-notes-expand .notes-frame-wrap {
+    flex: 1;
+    min-height: 0;
+  }
+  body.sr-notes-expand .notes-frame {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .notes-footer {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 28px 24px 36px;
+    border-top: 1px solid var(--border);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+  }
 
   /* Lock overlay — starts below nav so Student Resources stays visible */
   .lock-overlay {
@@ -423,20 +451,65 @@
     display: block;
     margin-bottom: 8px;
   }
-  .lock-card input[type="password"] {
+  .lock-pass-wrap {
+    position: relative;
+    margin-bottom: 14px;
+  }
+  .lock-pass-wrap input {
     width: 100%;
-    padding: 12px 14px;
+    padding: 12px 44px 12px 14px;
     border-radius: 4px;
     border: 1px solid var(--border2);
     background: var(--deep);
     color: var(--white);
     font-family: 'Outfit', sans-serif;
     font-size: 15px;
-    margin-bottom: 14px;
+    margin: 0;
+    box-sizing: border-box;
   }
-  .lock-card input:focus {
+  .lock-pass-wrap input:focus {
     outline: none;
     border-color: var(--cyan);
+  }
+  .lock-pass-toggle {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s, background 0.2s;
+  }
+  .lock-pass-toggle:hover {
+    color: var(--cyan);
+    background: rgba(0, 212, 255, 0.08);
+  }
+  .lock-pass-toggle svg {
+    width: 22px;
+    height: 22px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.75;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .lock-pass-toggle .icon-eye-off {
+    display: none;
+  }
+  .lock-pass-toggle[aria-pressed="true"] .icon-eye {
+    display: none;
+  }
+  .lock-pass-toggle[aria-pressed="true"] .icon-eye-off {
+    display: block;
   }
   .lock-actions {
     display: flex;
@@ -547,6 +620,11 @@
     min-height: 120px;
     resize: vertical;
   }
+  .modal .lock-error {
+    margin-top: 0;
+    margin-bottom: 12px;
+    min-height: 1em;
+  }
   .modal-footer {
     display: flex;
     gap: 10px;
@@ -584,10 +662,12 @@
       padding: 12px 20px;
     }
     main { padding: 96px 20px 60px; }
+    body.sr-notes-expand main { padding-left: 0; padding-right: 0; padding-top: 96px; }
   }
 
   @media (max-width: 480px) {
     main { padding: 92px 16px 48px; }
+    body.sr-notes-expand main { padding-top: 92px; }
     .lock-card { padding: 24px 20px; }
   }
 </style>
@@ -611,10 +691,16 @@
 <div id="lock-overlay" class="lock-overlay" aria-hidden="false">
   <div id="lock-card" class="lock-card" role="dialog" aria-labelledby="lock-title" aria-modal="true">
     <h1 id="lock-title">Student Resources</h1>
-    <p>The main site (home, projects, resume, contact) is public. Only this Student Resources page asks for a password. Enter the shared access phrase to view materials.</p>
+    <p>These student resources are only for students in my courses. If you should have access, enter the password you were given. If you cannot get in, use <strong>Request Access</strong> below or reach out through the contact links in the main site navigation.</p>
     <form id="unlock-form" autocomplete="off">
       <label for="notes-pass">Password</label>
-      <input id="notes-pass" type="password" name="password" required placeholder="Enter password">
+      <div class="lock-pass-wrap">
+        <input id="notes-pass" type="password" name="password" required placeholder="Enter password" autocomplete="current-password">
+        <button type="button" class="lock-pass-toggle" id="btn-toggle-pass" aria-label="Show password" aria-pressed="false" title="Show password">
+          <svg class="icon-eye" viewBox="0 0 24 24" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+          <svg class="icon-eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+        </button>
+      </div>
       <div class="lock-actions">
         <button type="submit" class="btn btn-primary">Unlock</button>
         <button type="button" class="btn" id="btn-request-access">Request Access</button>
@@ -627,15 +713,16 @@
 <div id="access-modal" class="modal-backdrop" hidden>
   <div class="modal" role="dialog" aria-labelledby="modal-title" aria-modal="true">
     <h2 id="modal-title">Request Access</h2>
-    <p>Send a message to request the notes password. Your email client will open with a pre-filled message.</p>
-    <form id="request-form">
-      <label for="req-name">Name</label>
-      <input id="req-name" type="text" autocomplete="name" required placeholder="Your name">
-      <label for="req-msg">Message</label>
-      <textarea id="req-msg" required placeholder="Course, why you need access, etc."></textarea>
+    <p>Your email app will open with a pre-filled message. If nothing opens, copy the address <strong>taliamekhayche@gmail.com</strong> into your mail client.</p>
+    <form id="request-form" action="#" method="get">
+      <label for="req-name">Name (optional)</label>
+      <input id="req-name" type="text" autocomplete="name" placeholder="Your name">
+      <label for="req-reason">Reason for access</label>
+      <textarea id="req-reason" required placeholder="Course, term, and why you need access to these notes"></textarea>
+      <div id="req-form-error" class="lock-error" role="alert" aria-live="polite"></div>
       <div class="modal-footer">
         <button type="button" class="btn" id="modal-cancel">Cancel</button>
-        <button type="submit" class="btn btn-primary">Open Email</button>
+        <button type="submit" class="btn btn-primary" id="btn-send-access-request">Send request</button>
       </div>
     </form>
   </div>
@@ -666,26 +753,39 @@
       <div class="ecor-panel-head-row">
         <h2 id="ecor-heading">ECOR 2050</h2>
         <div class="ecor-panel-actions">
-          <button type="button" class="btn btn-primary" id="btn-wide-notes" aria-pressed="false">
+          <button type="button" class="btn btn-primary" id="btn-expand-view" aria-pressed="false">
             Expand view
           </button>
-          <button type="button" class="btn btn-primary btn-fs-notes" id="btn-fs-notes" aria-pressed="false">
-            Full screen notes
+          <button type="button" class="btn btn-primary" id="btn-browser-fullscreen" aria-pressed="false">
+            Full screen
           </button>
         </div>
       </div>
       <div id="readme-out" class="readme-block"></div>
     </div>
     <div id="frame-status" class="load-status">Loading notes from GitHub…</div>
-    <div class="notes-frame-wrap">
-      <iframe id="notes-frame" class="notes-frame" title="ECOR 2050 complete learning notes" sandbox="allow-scripts allow-same-origin allow-popups"></iframe>
+    <div id="browser-fullscreen-root" class="browser-fs-root">
+      <div id="browser-fs-exit-bar" class="browser-fs-exit" hidden>
+        <button type="button" class="btn btn-primary" id="btn-exit-browser-fullscreen">Exit full screen</button>
+      </div>
+      <div class="notes-frame-wrap">
+        <iframe id="notes-frame" class="notes-frame" title="ECOR 2050 complete learning notes" sandbox="allow-scripts allow-same-origin allow-popups allow-modals"></iframe>
+      </div>
     </div>
   </section>
 </main>
 
+<footer class="notes-footer">© 2026 Talia Mekhayche · Student Resources</footer>
+
 <script src="auth.config.js"></script>
 <script>
 (function () {
+  /** Used only when auth.config.js is missing or empty (e.g. GitHub Pages). Override via auth.config.js. */
+  var DEFAULT_STUDENT_RESOURCES_PASSWORD = 'noteslol';
+  if (typeof window.TM_STUDENT_RESOURCES_PASSWORD !== 'string' || !String(window.TM_STUDENT_RESOURCES_PASSWORD).trim()) {
+    window.TM_STUDENT_RESOURCES_PASSWORD = DEFAULT_STUDENT_RESOURCES_PASSWORD;
+  }
+
   var STORAGE_KEY = 'tm_notes_session_ok';
   var README_URL = 'https://raw.githubusercontent.com/taliamekh/ECOR2050_Final_Notes/main/README.md';
   var NOTES_HTML_URL = 'https://raw.githubusercontent.com/taliamekh/ECOR2050_Final_Notes/main/ECOR2050_Final_Notes.html';
@@ -704,14 +804,22 @@
   var frame = document.getElementById('notes-frame');
   var frameStatus = document.getElementById('frame-status');
   var lockCard = document.getElementById('lock-card');
-  var btnFsNotes = document.getElementById('btn-fs-notes');
-  var btnWideNotes = document.getElementById('btn-wide-notes');
+  var btnTogglePass = document.getElementById('btn-toggle-pass');
+  var btnExpandView = document.getElementById('btn-expand-view');
+  var btnBrowserFullscreen = document.getElementById('btn-browser-fullscreen');
+  var btnExitBrowserFullscreen = document.getElementById('btn-exit-browser-fullscreen');
+  var browserFullscreenRoot = document.getElementById('browser-fullscreen-root');
+  var browserFsExitBar = document.getElementById('browser-fs-exit-bar');
   /** Parent-origin storage for iframe highlights (blob origins do not persist reliably). */
   var HL_PARENT_KEY = 'tm_student_resources_notes_ecor2050_highlights_v1';
 
   function getExpectedPassword() {
     var p = window.TM_STUDENT_RESOURCES_PASSWORD;
-    return typeof p === 'string' ? p : '';
+    if (typeof p === 'string' && p.trim()) return p;
+    if (typeof DEFAULT_STUDENT_RESOURCES_PASSWORD === 'string' && DEFAULT_STUDENT_RESOURCES_PASSWORD.trim()) {
+      return DEFAULT_STUDENT_RESOURCES_PASSWORD;
+    }
+    return '';
   }
 
   function isUnlocked() {
@@ -740,44 +848,88 @@
     overlay.removeAttribute('inert');
     overlay.setAttribute('aria-hidden', 'false');
     passInput.focus();
-    if (!getExpectedPassword()) {
-      lockError.textContent =
-        'Password file missing. Copy auth.config.example.js to auth.config.js and set TM_STUDENT_RESOURCES_PASSWORD (do not commit auth.config.js).';
-    }
   }
 
-  function setNotesFullscreen(on) {
+  function setNotesExpand(on) {
     if (on) {
-      document.body.classList.add('sr-notes-fullscreen');
-      btnFsNotes.setAttribute('aria-pressed', 'true');
-      btnFsNotes.textContent = 'Exit full screen';
+      document.body.classList.add('sr-notes-expand');
+      if (btnExpandView) {
+        btnExpandView.setAttribute('aria-pressed', 'true');
+        btnExpandView.textContent = 'Exit expand view';
+      }
     } else {
-      document.body.classList.remove('sr-notes-fullscreen');
-      btnFsNotes.setAttribute('aria-pressed', 'false');
-      btnFsNotes.textContent = 'Full screen notes';
+      document.body.classList.remove('sr-notes-expand');
+      if (btnExpandView) {
+        btnExpandView.setAttribute('aria-pressed', 'false');
+        btnExpandView.textContent = 'Expand view';
+      }
     }
     window.closeMenu();
   }
 
-  function toggleNotesFullscreen() {
-    setNotesFullscreen(!document.body.classList.contains('sr-notes-fullscreen'));
+  function toggleNotesExpand() {
+    setNotesExpand(!document.body.classList.contains('sr-notes-expand'));
   }
 
-  function setNotesWide(on) {
-    if (on) {
-      document.body.classList.add('sr-notes-wide');
-      btnWideNotes.setAttribute('aria-pressed', 'true');
-      btnWideNotes.textContent = 'Normal width';
-    } else {
-      document.body.classList.remove('sr-notes-wide');
-      btnWideNotes.setAttribute('aria-pressed', 'false');
-      btnWideNotes.textContent = 'Expand view';
+  function getFullscreenElement() {
+    return (
+      document.fullscreenElement ||
+      document.webkitFullscreenElement ||
+      document.msFullscreenElement ||
+      null
+    );
+  }
+
+  function syncBrowserFullscreenUI() {
+    var active = browserFullscreenRoot && getFullscreenElement() === browserFullscreenRoot;
+    if (browserFsExitBar) browserFsExitBar.hidden = !active;
+    if (btnBrowserFullscreen) {
+      btnBrowserFullscreen.setAttribute('aria-pressed', active ? 'true' : 'false');
+      btnBrowserFullscreen.textContent = active ? 'Exit full screen' : 'Full screen';
     }
-    window.closeMenu();
   }
 
-  function toggleNotesWide() {
-    setNotesWide(!document.body.classList.contains('sr-notes-wide'));
+  function exitBrowserFullscreen() {
+    if (!getFullscreenElement()) {
+      syncBrowserFullscreenUI();
+      return;
+    }
+    var p =
+      document.exitFullscreen ||
+      document.webkitExitFullscreen ||
+      document.webkitCancelFullScreen ||
+      document.msExitFullscreen;
+    if (p) {
+      var ret = p.call(document);
+      if (ret && typeof ret.catch === 'function') ret.catch(function () {});
+    }
+    syncBrowserFullscreenUI();
+  }
+
+  function enterBrowserFullscreen() {
+    if (!browserFullscreenRoot) return;
+    var req =
+      browserFullscreenRoot.requestFullscreen ||
+      browserFullscreenRoot.webkitRequestFullscreen ||
+      browserFullscreenRoot.msRequestFullscreen;
+    if (!req) {
+      alert('Full screen is not supported in this browser.');
+      return;
+    }
+    var ret = req.call(browserFullscreenRoot);
+    if (ret && typeof ret.then === 'function') {
+      ret.then(syncBrowserFullscreenUI).catch(syncBrowserFullscreenUI);
+    } else {
+      setTimeout(syncBrowserFullscreenUI, 0);
+    }
+  }
+
+  function toggleBrowserFullscreen() {
+    if (getFullscreenElement() === browserFullscreenRoot) {
+      exitBrowserFullscreen();
+    } else {
+      enterBrowserFullscreen();
+    }
   }
 
   function injectHighlightPersistence(html) {
@@ -794,7 +946,7 @@
       'var _s=saveHL;' +
       'saveHL=function(){_s.apply(this,arguments);try{var marks=document.querySelectorAll("mark.usr"),d=[];marks.forEach(function(m){d.push({text:m.textContent,bg:m.style.background});});window.parent.postMessage({type:"tm_student_resources_hl",action:"save",payload:JSON.stringify(d)},"*");}catch(e){}};' +
       'var _c=clearAll;' +
-      'clearAll=function(){_c.apply(this,arguments);if(document.querySelectorAll("mark.usr").length===0){try{window.parent.postMessage({type:"tm_student_resources_hl",action:"save",payload:"[]"},"*");}catch(e){}}};' +
+      'clearAll=function(){_c.apply(this,arguments);try{var marks=document.querySelectorAll("mark.usr"),d=[];marks.forEach(function(m){d.push({text:m.textContent,bg:m.style.background});});window.parent.postMessage({type:"tm_student_resources_hl",action:"save",payload:JSON.stringify(d)},"*");}catch(e){}};' +
       '})();' +
       '</scr' +
       'ipt>';
@@ -869,19 +1021,18 @@
 
   function openRequestModal() {
     modal.hidden = false;
-    document.getElementById('req-name').focus();
+    var errEl = document.getElementById('req-form-error');
+    if (errEl) errEl.textContent = '';
+    var reason = document.getElementById('req-reason');
+    if (reason) reason.focus();
+    else {
+      var n = document.getElementById('req-name');
+      if (n) n.focus();
+    }
   }
 
   function closeRequestModal() {
     modal.hidden = true;
-  }
-
-  function buildMailto(name, message) {
-    var subject = encodeURIComponent('Student resources access request');
-    var body = encodeURIComponent(
-      'Name: ' + name + '\n\n' + message + '\n\n— Sent from portfolio student resources page'
-    );
-    return 'mailto:' + EMAIL + '?subject=' + subject + '&body=' + body;
   }
 
   function loadRepoContent() {
@@ -925,6 +1076,22 @@
     showLock();
   }
 
+  function setPasswordVisible(show) {
+    passInput.type = show ? 'text' : 'password';
+    if (btnTogglePass) {
+      btnTogglePass.setAttribute('aria-pressed', show ? 'true' : 'false');
+      btnTogglePass.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+      btnTogglePass.setAttribute('title', show ? 'Hide password' : 'Show password');
+    }
+  }
+
+  if (btnTogglePass) {
+    btnTogglePass.addEventListener('click', function () {
+      var visible = passInput.type === 'text';
+      setPasswordVisible(!visible);
+    });
+  }
+
   passInput.addEventListener('input', function () {
     lockError.textContent = '';
     lockCard.classList.remove('shake');
@@ -936,8 +1103,7 @@
     lockCard.classList.remove('shake');
     var expected = getExpectedPassword();
     if (!expected) {
-      lockError.textContent =
-        'Password is not configured. Add notes/auth.config.js (see auth.config.example.js).';
+      lockError.textContent = 'Access is not configured on this site.';
       return;
     }
     if (passInput.value === expected) {
@@ -964,14 +1130,49 @@
     if (e.target === modal) closeRequestModal();
   });
 
-  requestForm.addEventListener('submit', function (e) {
+  if (requestForm) requestForm.addEventListener('submit', function (e) {
     e.preventDefault();
-    var name = document.getElementById('req-name').value.trim();
-    var msg = document.getElementById('req-msg').value.trim();
-    if (!name || !msg) return;
-    window.location.href = buildMailto(name, msg);
+    var errEl = document.getElementById('req-form-error');
+    if (errEl) errEl.textContent = '';
+    var nameInput = document.getElementById('req-name');
+    var name = nameInput && nameInput.value ? String(nameInput.value).trim() : '';
+    var reasonEl = document.getElementById('req-reason');
+    var reason = reasonEl && reasonEl.value ? String(reasonEl.value).trim() : '';
+    if (!reason) {
+      if (errEl) errEl.textContent = 'Please enter your reason for access.';
+      if (reasonEl) reasonEl.focus();
+      return;
+    }
+    var subject = encodeURIComponent('Request for Course Notes Access');
+    var bodyLines = [];
+    if (name) bodyLines.push('Name: ' + name);
+    bodyLines.push('Reason for access:\n' + reason);
+    bodyLines.push('');
+    bodyLines.push('— Sent from Student Resources page');
+    var href =
+      'mailto:' +
+      EMAIL +
+      '?subject=' +
+      subject +
+      '&body=' +
+      encodeURIComponent(bodyLines.join('\n'));
+    try {
+      var a = document.createElement('a');
+      a.href = href;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } catch (err) {
+      window.location.href = href;
+    }
     closeRequestModal();
+    if (reasonEl) reasonEl.value = '';
+    if (nameInput) nameInput.value = '';
   });
+
+  syncBrowserFullscreenUI();
 
   window.toggleMenu = function () {
     document.querySelector('.hamburger').classList.toggle('active');
@@ -986,19 +1187,30 @@
     if (nav && !nav.contains(e.target)) window.closeMenu();
   });
 
-  if (btnFsNotes) {
-    btnFsNotes.addEventListener('click', toggleNotesFullscreen);
+  if (btnExpandView) {
+    btnExpandView.addEventListener('click', toggleNotesExpand);
   }
-  if (btnWideNotes) {
-    btnWideNotes.addEventListener('click', toggleNotesWide);
+  if (btnBrowserFullscreen) {
+    btnBrowserFullscreen.addEventListener('click', toggleBrowserFullscreen);
   }
+  if (btnExitBrowserFullscreen) {
+    btnExitBrowserFullscreen.addEventListener('click', function () {
+      exitBrowserFullscreen();
+    });
+  }
+
+  document.addEventListener('fullscreenchange', syncBrowserFullscreenUI);
+  document.addEventListener('webkitfullscreenchange', syncBrowserFullscreenUI);
+  document.addEventListener('MSFullscreenChange', syncBrowserFullscreenUI);
 
   document.addEventListener('keydown', function (e) {
     if (e.key !== 'Escape') return;
-    if (document.body.classList.contains('sr-notes-fullscreen')) {
-      setNotesFullscreen(false);
-    } else if (document.body.classList.contains('sr-notes-wide')) {
-      setNotesWide(false);
+    if (getFullscreenElement() === browserFullscreenRoot) {
+      exitBrowserFullscreen();
+      return;
+    }
+    if (document.body.classList.contains('sr-notes-expand')) {
+      setNotesExpand(false);
     }
   });
 })();

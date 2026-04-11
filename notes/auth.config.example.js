@@ -1,13 +1,9 @@
 /**
- * Student resources password (not stored in the public repo)
+ * Optional: override the student-resources password.
  *
- * 1. Copy this file to auth.config.js in this same folder.
- * 2. Set your password string below.
- * 3. Keep auth.config.js out of git (see repo .gitignore).
+ * If this file is missing, notes/index.html uses a built-in default
+ * (change DEFAULT_STUDENT_RESOURCES_PASSWORD in that file to rotate it).
  *
- * GitHub Pages and other static hosts only serve files from the repo,
- * so you must either upload auth.config.js through a non-git deploy step
- * or use real server-side auth (e.g. Netlify/Vercel function + env secret)
- * if you need the passphrase to exist only on the server.
+ * To use this file: copy to auth.config.js (gitignored) and set your phrase.
  */
 window.TM_STUDENT_RESOURCES_PASSWORD = 'your-password-here';
