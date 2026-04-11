@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+const { useState, useEffect, useRef, useCallback } = React;
 
 /* ═══════════════════════════════════════════
    DIALOGUE TREE
@@ -1376,7 +1376,7 @@ const ARM_EXTEND = 40;                     // ~40px arm sticks out beyond body i
 const ROBOT_TOTAL_W = ROBOT_RENDER_W + ARM_EXTEND; // 250px — rightmost point of robot (arm tip)
 const CARD_W = 340;                        // Student Resources card width
 
-export default function App() {
+function App() {
   const [phase, setPhase] = useState("idle");
   const [node, setNode] = useState(null);
   const [txt, setTxt] = useState("");
@@ -1398,10 +1398,39 @@ export default function App() {
   const [storageChecked, setStorageChecked] = useState(false);
   const [roaming, setRoaming] = useState(false);
   const [studyActive, setStudyActive] = useState(false);
+  const [notesUnlocked, setNotesUnlocked] = useState(() => {
+    try {
+      return typeof document !== "undefined" && document.body.classList.contains("sr-auth-unlocked");
+    } catch (e) {
+      return false;
+    }
+  });
 
   const tt=useRef(null);const mt=useRef(null);const timers=useRef([]);const fullRef=useRef("");
   const later=(fn,ms)=>{const t=setTimeout(fn,ms);timers.current.push(t)};
   const clearAll=useCallback(()=>{clearInterval(tt.current);clearInterval(mt.current);timers.current.forEach(clearTimeout);timers.current=[]},[]);
+
+  const snapToParkedIdle = useCallback(() => {
+    clearAll();
+    setPhase("parked");
+    setParked(true);
+    setRoaming(false);
+    setStudyActive(false);
+    setNode(null);
+    setTxt("");
+    setTyping(false);
+    setMouth(false);
+    setCardGone(true);
+    setCardBack(false);
+    setCryExit(false);
+    setShowForm(false);
+    setShowIpad(false);
+    setShowCookie(false);
+    setCookiePopup(false);
+    setBalloon(false);
+    setFollowUp(null);
+    setFacing("front");
+  }, [clearAll]);
 
   const skipTyping=useCallback(()=>{
     if(!typing)return;clearInterval(tt.current);clearInterval(mt.current);
@@ -1482,16 +1511,6 @@ export default function App() {
     return clearAll;
   },[]);
 
-  // Once storage is checked, start the appropriate flow
-  useEffect(()=>{
-    if (!storageChecked) return;
-    if (isReturning) {
-      startReturning();
-    } else {
-      start();
-    }
-  },[storageChecked]);
-
   /* ── MARK AS VISITED — called when first-time interaction ends ── */
   const markVisited = useCallback(() => {
     try { localStorage.setItem("spocket_visited", "true"); } catch(e) {}
@@ -1550,6 +1569,29 @@ export default function App() {
     setPhase("parked");setParked(true);
   },[]);
 
+  // Once storage is checked, start the appropriate flow (skip full intro when notes already unlocked)
+  useEffect(() => {
+    if (!storageChecked) return;
+    if (typeof document !== "undefined" && document.body.classList.contains("sr-auth-unlocked")) {
+      snapToParkedIdle();
+      return;
+    }
+    if (isReturning) {
+      startReturning();
+    } else {
+      start();
+    }
+  }, [storageChecked, isReturning, start, startReturning, snapToParkedIdle]);
+
+  useEffect(() => {
+    const onUnlock = () => {
+      setNotesUnlocked(true);
+      snapToParkedIdle();
+    };
+    window.addEventListener("sr-notes-unlocked", onUnlock);
+    return () => window.removeEventListener("sr-notes-unlocked", onUnlock);
+  }, [snapToParkedIdle]);
+
   useEffect(()=>{
     if(!node||!TREE[node])return;
     const nd=TREE[node];const full=nd.msg;fullRef.current=full;
@@ -1586,9 +1628,28 @@ export default function App() {
   const pick=useCallback((o)=>{if(o.next==="_exit"){exit();return}if(o.next==="end_convo"){endConvo();return}setNode(o.next)},[exit,endConvo]);
   const nd=node?TREE[node]:null;
   const showUI=phase==="talking"||cryExit;
+  const compactParkedUi = notesUnlocked && parked && !roaming && !studyActive;
+  const outerStyle = compactParkedUi
+    ? {
+        width: "100%",
+        height: "100%",
+        minHeight: 0,
+        background: "transparent",
+        fontFamily: "'JetBrains Mono',monospace",
+        position: "relative",
+        overflow: "visible",
+      }
+    : {
+        width: "100%",
+        minHeight: "100vh",
+        background: "linear-gradient(180deg,#0a0f1a,#0d1520 40%,#111b2b)",
+        fontFamily: "'JetBrains Mono',monospace",
+        position: "relative",
+        overflow: "hidden",
+      };
 
   return(
-    <div style={{width:"100%",minHeight:"100vh",background:"linear-gradient(180deg,#0a0f1a,#0d1520 40%,#111b2b)",fontFamily:"'JetBrains Mono',monospace",position:"relative",overflow:"hidden"}}>
+    <div style={outerStyle}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Playfair+Display:wght@700;900&display=swap');
         @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
@@ -1620,6 +1681,8 @@ export default function App() {
         .end-btn:hover{background:#ff6b6b10;border-color:#ff6b6b;color:#ff6b6b}
       `}</style>
 
+      {!compactParkedUi ? (
+      <>
       {/* Nav */}
       <nav style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 32px",borderBottom:"1px solid #7fdbca15",position:"relative",zIndex:10}}>
         <div style={{fontSize:20,fontWeight:700}}><span style={{color:"#e2e8f0"}}>T.</span><span style={{color:"#7fdbca"}}>M</span></div>
@@ -1770,6 +1833,14 @@ export default function App() {
         {/* ── STUDY MODE ── */}
         {studyActive&&<StudyPanel onClose={exitStudy}/>}
       </div>
+      </>
+      ) : (
+      <div style={{ pointerEvents: "auto", width: "100%", height: "100%", minHeight: "100%" }}>
+        <ParkedRobot onRestartNew={start} onRestartReturning={startReturning} onRoam={startRoam} onStudy={startStudy} />
+      </div>
+      )}
     </div>
   );
 }
+
+window.SpocketApp = App;

@@ -1102,11 +1102,15 @@
     box-shadow: 0 24px 48px rgba(0,0,0,0.45);
     transition: opacity 0.4s ease;
   }
+  /* Spocket layer: fixed below site nav, outside lock-overlay so it stays visible when unlocked */
   #spocket-root {
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
+    position: fixed;
+    top: 64px;
+    left: 0;
+    right: 0;
+    bottom: 0;
     pointer-events: none;
-    z-index: 440;
+    z-index: 435;
   }
   #spocket-root > * {
     pointer-events: auto;
@@ -1439,8 +1443,9 @@
       <div id="lock-error" class="lock-error" aria-live="polite"></div>
     </form>
   </div>
-  <div id="spocket-root"></div>
 </div>
+
+<div id="spocket-root"></div>
 
 <div id="tm-access-toast" class="tm-access-toast" hidden role="status" aria-live="polite">
   <p class="tm-access-toast-msg">To request access to these notes, please use the <a href="../index.html#contact">Contact</a> section on the main site and send a message there.</p>
@@ -3099,6 +3104,9 @@
     overlay.setAttribute('inert', '');
     lockError.textContent = '';
     initStickyWorkspaceFromStorage();
+    try {
+      window.dispatchEvent(new CustomEvent('sr-notes-unlocked'));
+    } catch (e) { /* ignore */ }
   }
 
   function showLock() {
@@ -4919,8 +4927,13 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js" crossorigin></script>
 <script type="text/babel" src="SpocketOnboarding.jsx" data-presets="react"></script>
 <script type="text/babel" data-presets="react">
-  const root = ReactDOM.createRoot(document.getElementById('spocket-root'));
-  root.render(React.createElement(window.SpocketApp));
+  const spocketMount = document.getElementById('spocket-root');
+  if (!window.SpocketApp) {
+    console.error('[Spocket] SpocketOnboarding.jsx did not set window.SpocketApp. Check that the script loaded and React is available.');
+  } else if (spocketMount) {
+    const root = ReactDOM.createRoot(spocketMount);
+    root.render(React.createElement(window.SpocketApp));
+  }
 </script>
 </body>
 </html>
