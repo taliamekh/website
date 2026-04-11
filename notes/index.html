@@ -1100,6 +1100,16 @@
     border-radius: 8px;
     padding: 32px 28px;
     box-shadow: 0 24px 48px rgba(0,0,0,0.45);
+    transition: opacity 0.4s ease;
+  }
+  #spocket-root {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    z-index: 440;
+  }
+  #spocket-root > * {
+    pointer-events: auto;
   }
   .lock-card h1 {
     font-family: 'Bebas Neue', sans-serif;
@@ -1429,6 +1439,7 @@
       <div id="lock-error" class="lock-error" aria-live="polite"></div>
     </form>
   </div>
+  <div id="spocket-root"></div>
 </div>
 
 <div id="tm-access-toast" class="tm-access-toast" hidden role="status" aria-live="polite">
@@ -4901,6 +4912,15 @@
     }
   });
 })();
+</script>
+<!-- Spocket Robot Integration -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" crossorigin></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js" crossorigin></script>
+<script type="text/babel" src="SpocketOnboarding.jsx" data-presets="react"></script>
+<script type="text/babel" data-presets="react">
+  const root = ReactDOM.createRoot(document.getElementById('spocket-root'));
+  root.render(React.createElement(window.SpocketApp));
 </script>
 </body>
 </html>
