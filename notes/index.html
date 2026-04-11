@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Resources — Talia Mekhayche</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #060d1a;
+    --deep: #0a1628;
+    --mid: #0f2040;
+    --panel: #111e33;
+    --border: #1e3555;
+    --border2: #254470;
+    --blue: #2b7fff;
+    --cyan: hwb(204 27% 8% / 0.921);
+    --text: #add7ff;
+    --text-muted: #7a95bb;
+    --white: #f0f5ff;
+    --err: #f87171;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--navy);
+    color: var(--text);
+    font-family: 'Outfit', sans-serif;
+    font-weight: 300;
+    line-height: 1.7;
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(82, 117, 174, 0.039) 1px, transparent 2px),
+      linear-gradient(90deg, rgba(84, 141, 227, 0.053) 1px, transparent 2px),
+      linear-gradient(rgba(43, 128, 255, 0.064) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(67, 135, 237, 0.025) 1px, transparent 2px);
+    background-size: 80px 80px, 80px 80px, 16px 16px, 16px 16px;
+    pointer-events: none;
+    z-index: 0;
+    transition: opacity 0.45s ease;
+  }
+  body.sr-notes-fullscreen::before {
+    opacity: 0;
+  }
+
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 520;
+    background: rgba(6,13,26,0.93);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 48px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .nav-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 0.1em;
+    color: var(--white);
+    text-decoration: none;
+  }
+  .nav-logo span { color: var(--cyan); }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    list-style: none;
+  }
+
+  .nav-links a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 15px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--text-muted);
+    border-radius: 4px;
+    border: 1px solid transparent;
+    transition: color 0.2s, border-color 0.2s, background 0.2s;
+  }
+
+  .nav-links a:hover,
+  .nav-links a[aria-current="page"] {
+    color: var(--cyan);
+    border-color: var(--cyan);
+    background: rgba(0,212,255,0.06);
+  }
+
+  .hamburger {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    z-index: 110;
+  }
+  .hamburger span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: var(--text);
+    border-radius: 2px;
+    transition: transform 0.3s, opacity 0.3s;
+  }
+  .hamburger.active span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .hamburger.active span:nth-child(2) { opacity: 0; }
+  .hamburger.active span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+  main {
+    position: relative;
+    z-index: 2;
+    padding: 100px 48px 80px;
+    max-width: 1100px;
+    margin: 0 auto;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+      opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+      visibility 0s linear 0.5s,
+      padding 0.35s ease,
+      max-width 0.35s ease;
+  }
+  body.sr-auth-unlocked main {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transition:
+      opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.08s,
+      visibility 0s linear 0s,
+      padding 0.35s ease,
+      max-width 0.35s ease;
+  }
+  body.sr-notes-fullscreen {
+    overflow: hidden;
+  }
+  body.sr-notes-fullscreen main {
+    max-width: none;
+    padding: 80px 0 0;
+    margin: 0;
+  }
+
+  /* Wide reading column — full horizontal width, minimal side padding */
+  body.sr-notes-wide main {
+    max-width: none;
+    padding-left: 12px;
+    padding-right: 12px;
+    transition: padding 0.35s ease, max-width 0.35s ease;
+  }
+  body.sr-notes-wide .ecor-panel {
+    max-width: none;
+    width: 100%;
+  }
+  body.sr-notes-wide.sr-notes-fullscreen main {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .page-head {
+    margin-bottom: 40px;
+  }
+  .section-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--cyan);
+    letter-spacing: 0.1em;
+    display: block;
+    margin-bottom: 8px;
+  }
+  .page-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(40px, 6vw, 56px);
+    letter-spacing: 0.05em;
+    color: var(--white);
+    line-height: 1;
+  }
+  .page-sub {
+    margin-top: 14px;
+    font-size: 15px;
+    color: var(--text-muted);
+    max-width: 640px;
+  }
+
+  .course-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+    margin-bottom: 36px;
+  }
+
+  .course-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 22px;
+    transition: border-color 0.2s;
+  }
+  .course-card.active {
+    border-color: var(--cyan);
+  }
+  .course-card.placeholder {
+    opacity: 0.55;
+  }
+  .course-code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--cyan);
+    margin-bottom: 8px;
+  }
+  .course-name {
+    font-weight: 600;
+    font-size: 17px;
+    color: var(--white);
+    margin-bottom: 6px;
+  }
+  .course-meta {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .ecor-panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .ecor-panel .ecor-panel-head,
+  .ecor-panel .load-status {
+    flex-shrink: 0;
+  }
+  .ecor-panel-head {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .ecor-panel-head-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 4px;
+  }
+  .ecor-panel-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+  }
+  .ecor-panel-head h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 0.06em;
+    color: var(--white);
+    margin: 0;
+  }
+  .btn-fs-notes {
+    flex-shrink: 0;
+  }
+  .readme-block {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-top: 12px;
+    max-width: 720px;
+  }
+  .readme-block h3 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--cyan);
+    margin: 16px 0 8px;
+  }
+  .readme-block p { margin-bottom: 10px; }
+
+  .notes-frame-wrap {
+    background: #0d0f14;
+    min-height: 480px;
+    display: flex;
+    flex-direction: column;
+  }
+  .notes-frame {
+    width: 100%;
+    min-height: 72vh;
+    border: 0;
+    display: block;
+    background: #0d0f14;
+  }
+  body.sr-notes-fullscreen .notes-frame-wrap {
+    flex: 1;
+    min-height: 0;
+  }
+  body.sr-notes-fullscreen .notes-frame {
+    flex: 1;
+    min-height: 0;
+  }
+
+  body.sr-notes-fullscreen .page-head,
+  body.sr-notes-fullscreen .course-grid {
+    display: none;
+  }
+  body.sr-notes-fullscreen .ecor-panel {
+    position: fixed;
+    top: 64px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    max-width: none;
+    overflow: hidden;
+  }
+  body.sr-notes-fullscreen .ecor-panel-head {
+    flex-shrink: 0;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  body.sr-notes-fullscreen .readme-block {
+    display: none;
+  }
+  body.sr-notes-fullscreen .load-status:not(.err) {
+    padding: 8px 16px;
+  }
+
+  .load-status {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text-muted);
+    padding: 16px 24px;
+  }
+  .load-status.err { color: var(--err); }
+
+  /* Lock overlay — starts below nav so Student Resources stays visible */
+  .lock-overlay {
+    position: fixed;
+    top: 64px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 430;
+    background: rgba(6, 13, 26, 0.94);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transition:
+      opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+      visibility 0s linear 0s,
+      backdrop-filter 0.45s ease;
+  }
+  body.sr-auth-unlocked .lock-overlay {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+      opacity 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+      visibility 0s linear 0.42s,
+      backdrop-filter 0.42s ease;
+  }
+
+  .lock-card {
+    width: 100%;
+    max-width: 420px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 32px 28px;
+    box-shadow: 0 24px 48px rgba(0,0,0,0.45);
+  }
+  .lock-card h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    color: var(--white);
+    letter-spacing: 0.06em;
+    margin-bottom: 8px;
+  }
+  .lock-card p {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+  }
+  .lock-card label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    display: block;
+    margin-bottom: 8px;
+  }
+  .lock-card input[type="password"] {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 4px;
+    border: 1px solid var(--border2);
+    background: var(--deep);
+    color: var(--white);
+    font-family: 'Outfit', sans-serif;
+    font-size: 15px;
+    margin-bottom: 14px;
+  }
+  .lock-card input:focus {
+    outline: none;
+    border-color: var(--cyan);
+  }
+  .lock-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 8px;
+  }
+  .btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 11px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 1px solid var(--border2);
+    background: var(--deep);
+    color: var(--text-muted);
+    transition: border-color 0.2s, color 0.2s, background 0.2s;
+  }
+  .btn:hover {
+    border-color: var(--cyan);
+    color: var(--cyan);
+  }
+  .btn-primary {
+    background: rgba(0,212,255,0.08);
+    border-color: var(--cyan);
+    color: var(--cyan);
+  }
+  .btn-primary:hover {
+    background: rgba(0,212,255,0.14);
+  }
+  .lock-error {
+    font-size: 13px;
+    color: var(--err);
+    margin-top: 12px;
+    min-height: 1.2em;
+  }
+
+  @keyframes lock-shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-8px); }
+    40% { transform: translateX(8px); }
+    60% { transform: translateX(-6px); }
+    80% { transform: translateX(6px); }
+  }
+  .lock-card.shake {
+    animation: lock-shake 0.45s ease;
+  }
+
+  /* Modal */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 540;
+    background: rgba(0,0,0,0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal-backdrop[hidden] { display: none !important; }
+
+  .modal {
+    width: 100%;
+    max-width: 440px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 26px 24px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .modal h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    color: var(--white);
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+  }
+  .modal > p {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+  }
+  .modal label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    display: block;
+    margin-bottom: 6px;
+  }
+  .modal input,
+  .modal textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 4px;
+    border: 1px solid var(--border2);
+    background: var(--deep);
+    color: var(--white);
+    font-family: 'Outfit', sans-serif;
+    font-size: 14px;
+    margin-bottom: 16px;
+  }
+  .modal textarea {
+    min-height: 120px;
+    resize: vertical;
+  }
+  .modal-footer {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    margin-top: 4px;
+  }
+
+  @media (max-width: 768px) {
+    .hamburger { display: flex; }
+    nav { padding: 0 20px; }
+    .nav-links {
+      position: absolute;
+      top: 64px;
+      right: 0;
+      width: 220px;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0;
+      background: var(--deep);
+      border: 1px solid var(--border);
+      border-radius: 0 0 8px 8px;
+      padding: 8px 0;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-8px);
+      transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+    }
+    .nav-links.open { opacity: 1; visibility: visible; transform: translateY(0); }
+    .nav-links li { border-bottom: 1px solid var(--border); }
+    .nav-links li:last-child { border-bottom: none; }
+    .nav-links a {
+      display: flex;
+      padding: 12px 20px;
+    }
+    main { padding: 96px 20px 60px; }
+  }
+
+  @media (max-width: 480px) {
+    main { padding: 92px 16px 48px; }
+    .lock-card { padding: 24px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="../index.html#home" class="nav-logo">T.<span>M</span></a>
+  <button type="button" class="hamburger" onclick="toggleMenu()" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
+  <ul class="nav-links">
+    <li><a href="../index.html#home" onclick="closeMenu()">Home</a></li>
+    <li><a href="../index.html#projects" onclick="closeMenu()">Projects</a></li>
+    <li><a href="../index.html#resume" onclick="closeMenu()">Resume</a></li>
+    <li><a href="../index.html#contact" onclick="closeMenu()">Contact</a></li>
+    <li><a href="./" aria-current="page" onclick="closeMenu()">Student Resources</a></li>
+  </ul>
+</nav>
+
+<div id="lock-overlay" class="lock-overlay" aria-hidden="false">
+  <div id="lock-card" class="lock-card" role="dialog" aria-labelledby="lock-title" aria-modal="true">
+    <h1 id="lock-title">Student Resources</h1>
+    <p>The main site (home, projects, resume, contact) is public. Only this Student Resources page asks for a password. Enter the shared access phrase to view materials.</p>
+    <form id="unlock-form" autocomplete="off">
+      <label for="notes-pass">Password</label>
+      <input id="notes-pass" type="password" name="password" required placeholder="Enter password">
+      <div class="lock-actions">
+        <button type="submit" class="btn btn-primary">Unlock</button>
+        <button type="button" class="btn" id="btn-request-access">Request Access</button>
+      </div>
+      <div id="lock-error" class="lock-error" aria-live="polite"></div>
+    </form>
+  </div>
+</div>
+
+<div id="access-modal" class="modal-backdrop" hidden>
+  <div class="modal" role="dialog" aria-labelledby="modal-title" aria-modal="true">
+    <h2 id="modal-title">Request Access</h2>
+    <p>Send a message to request the notes password. Your email client will open with a pre-filled message.</p>
+    <form id="request-form">
+      <label for="req-name">Name</label>
+      <input id="req-name" type="text" autocomplete="name" required placeholder="Your name">
+      <label for="req-msg">Message</label>
+      <textarea id="req-msg" required placeholder="Course, why you need access, etc."></textarea>
+      <div class="modal-footer">
+        <button type="button" class="btn" id="modal-cancel">Cancel</button>
+        <button type="submit" class="btn btn-primary">Open Email</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<main id="main-content">
+  <div class="page-head">
+    <span class="section-num">Student Resources</span>
+    <h1 class="page-title">Student Resources</h1>
+    <p class="page-sub">Materials organized by course code. ECOR 2050 notes are synced from the public study guide repository.</p>
+  </div>
+
+  <div class="course-grid" aria-label="Courses">
+    <article class="course-card active">
+      <div class="course-code">ECOR 2050</div>
+      <div class="course-name">Design &amp; Communication</div>
+      <div class="course-meta">Final exam notes · Topics 4–6</div>
+    </article>
+    <article class="course-card placeholder">
+      <div class="course-code">Coming soon</div>
+      <div class="course-name">Additional courses</div>
+      <div class="course-meta">More sections can be added here as notes are published.</div>
+    </article>
+  </div>
+
+  <section class="ecor-panel" aria-labelledby="ecor-heading">
+    <div class="ecor-panel-head">
+      <div class="ecor-panel-head-row">
+        <h2 id="ecor-heading">ECOR 2050</h2>
+        <div class="ecor-panel-actions">
+          <button type="button" class="btn btn-primary" id="btn-wide-notes" aria-pressed="false">
+            Expand view
+          </button>
+          <button type="button" class="btn btn-primary btn-fs-notes" id="btn-fs-notes" aria-pressed="false">
+            Full screen notes
+          </button>
+        </div>
+      </div>
+      <div id="readme-out" class="readme-block"></div>
+    </div>
+    <div id="frame-status" class="load-status">Loading notes from GitHub…</div>
+    <div class="notes-frame-wrap">
+      <iframe id="notes-frame" class="notes-frame" title="ECOR 2050 complete learning notes" sandbox="allow-scripts allow-same-origin allow-popups"></iframe>
+    </div>
+  </section>
+</main>
+
+<script src="auth.config.js"></script>
+<script>
+(function () {
+  var STORAGE_KEY = 'tm_notes_session_ok';
+  var README_URL = 'https://raw.githubusercontent.com/taliamekh/ECOR2050_Final_Notes/main/README.md';
+  var NOTES_HTML_URL = 'https://raw.githubusercontent.com/taliamekh/ECOR2050_Final_Notes/main/ECOR2050_Final_Notes.html';
+  var EMAIL = 'taliamekhayche@gmail.com';
+
+  var overlay = document.getElementById('lock-overlay');
+  var main = document.getElementById('main-content');
+  var form = document.getElementById('unlock-form');
+  var passInput = document.getElementById('notes-pass');
+  var lockError = document.getElementById('lock-error');
+  var modal = document.getElementById('access-modal');
+  var btnRequest = document.getElementById('btn-request-access');
+  var btnCancel = document.getElementById('modal-cancel');
+  var requestForm = document.getElementById('request-form');
+  var readmeOut = document.getElementById('readme-out');
+  var frame = document.getElementById('notes-frame');
+  var frameStatus = document.getElementById('frame-status');
+  var lockCard = document.getElementById('lock-card');
+  var btnFsNotes = document.getElementById('btn-fs-notes');
+  var btnWideNotes = document.getElementById('btn-wide-notes');
+  /** Parent-origin storage for iframe highlights (blob origins do not persist reliably). */
+  var HL_PARENT_KEY = 'tm_student_resources_notes_ecor2050_highlights_v1';
+
+  function getExpectedPassword() {
+    var p = window.TM_STUDENT_RESOURCES_PASSWORD;
+    return typeof p === 'string' ? p : '';
+  }
+
+  function isUnlocked() {
+    try {
+      return sessionStorage.getItem(STORAGE_KEY) === '1';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function setUnlocked() {
+    try {
+      sessionStorage.setItem(STORAGE_KEY, '1');
+    } catch (e) { /* ignore */ }
+  }
+
+  function showApp() {
+    document.body.classList.add('sr-auth-unlocked');
+    overlay.setAttribute('aria-hidden', 'true');
+    overlay.setAttribute('inert', '');
+    lockError.textContent = '';
+  }
+
+  function showLock() {
+    document.body.classList.remove('sr-auth-unlocked');
+    overlay.removeAttribute('inert');
+    overlay.setAttribute('aria-hidden', 'false');
+    passInput.focus();
+    if (!getExpectedPassword()) {
+      lockError.textContent =
+        'Password file missing. Copy auth.config.example.js to auth.config.js and set TM_STUDENT_RESOURCES_PASSWORD (do not commit auth.config.js).';
+    }
+  }
+
+  function setNotesFullscreen(on) {
+    if (on) {
+      document.body.classList.add('sr-notes-fullscreen');
+      btnFsNotes.setAttribute('aria-pressed', 'true');
+      btnFsNotes.textContent = 'Exit full screen';
+    } else {
+      document.body.classList.remove('sr-notes-fullscreen');
+      btnFsNotes.setAttribute('aria-pressed', 'false');
+      btnFsNotes.textContent = 'Full screen notes';
+    }
+    window.closeMenu();
+  }
+
+  function toggleNotesFullscreen() {
+    setNotesFullscreen(!document.body.classList.contains('sr-notes-fullscreen'));
+  }
+
+  function setNotesWide(on) {
+    if (on) {
+      document.body.classList.add('sr-notes-wide');
+      btnWideNotes.setAttribute('aria-pressed', 'true');
+      btnWideNotes.textContent = 'Normal width';
+    } else {
+      document.body.classList.remove('sr-notes-wide');
+      btnWideNotes.setAttribute('aria-pressed', 'false');
+      btnWideNotes.textContent = 'Expand view';
+    }
+    window.closeMenu();
+  }
+
+  function toggleNotesWide() {
+    setNotesWide(!document.body.classList.contains('sr-notes-wide'));
+  }
+
+  function injectHighlightPersistence(html) {
+    var bridge =
+      '<script>' +
+      '(function(){' +
+      'function strip(){document.querySelectorAll("mark.usr").forEach(function(m){var p=m.parentNode;while(m.firstChild)p.insertBefore(m.firstChild,m);p.removeChild(m);});}' +
+      'window.addEventListener("message",function(ev){' +
+      'if(!ev.data||ev.data.type!=="tm_student_resources_hl"||ev.data.action!=="hydrate")return;' +
+      'try{if(ev.data.payload)localStorage.setItem("ecor2050_hl",ev.data.payload);else localStorage.removeItem("ecor2050_hl");}catch(e){}' +
+      'strip();' +
+      'if(typeof restoreHL==="function")restoreHL();' +
+      '});' +
+      'var _s=saveHL;' +
+      'saveHL=function(){_s.apply(this,arguments);try{var marks=document.querySelectorAll("mark.usr"),d=[];marks.forEach(function(m){d.push({text:m.textContent,bg:m.style.background});});window.parent.postMessage({type:"tm_student_resources_hl",action:"save",payload:JSON.stringify(d)},"*");}catch(e){}};' +
+      'var _c=clearAll;' +
+      'clearAll=function(){_c.apply(this,arguments);if(document.querySelectorAll("mark.usr").length===0){try{window.parent.postMessage({type:"tm_student_resources_hl",action:"save",payload:"[]"},"*");}catch(e){}}};' +
+      '})();' +
+      '</scr' +
+      'ipt>';
+    return html.replace(/<\/body>/i, function (m) {
+      return bridge + m;
+    });
+  }
+
+  function migrateLegacyHighlightKey() {
+    try {
+      if (!localStorage.getItem(HL_PARENT_KEY)) {
+        var legacy = localStorage.getItem('ecor2050_hl');
+        if (legacy) localStorage.setItem(HL_PARENT_KEY, legacy);
+      }
+    } catch (e) { /* ignore */ }
+  }
+
+  function readStoredHighlights() {
+    try {
+      return localStorage.getItem(HL_PARENT_KEY) || '';
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function hydrateIframeHighlights() {
+    try {
+      if (!frame.contentWindow) return;
+      var raw = readStoredHighlights();
+      frame.contentWindow.postMessage(
+        { type: 'tm_student_resources_hl', action: 'hydrate', payload: raw || null },
+        '*'
+      );
+    } catch (e) { /* ignore */ }
+  }
+
+  window.addEventListener('message', function (ev) {
+    if (!frame.contentWindow || ev.source !== frame.contentWindow) return;
+    if (!ev.data || ev.data.type !== 'tm_student_resources_hl' || ev.data.action !== 'save') return;
+    try {
+      localStorage.setItem(HL_PARENT_KEY, ev.data.payload || '[]');
+    } catch (e) { /* ignore */ }
+  });
+
+  function simpleMarkdownToHtml(md) {
+    var lines = (md || '').trim().split(/\r?\n/);
+    var html = '';
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i];
+      if (/^###\s+/.test(line)) {
+        html += '<h3>' + escapeHtml(line.replace(/^###\s+/, '')) + '</h3>';
+      } else if (/^##\s+/.test(line)) {
+        html += '<h3>' + escapeHtml(line.replace(/^##\s+/, '')) + '</h3>';
+      } else if (/^#\s+/.test(line)) {
+        html += '<h3>' + escapeHtml(line.replace(/^#\s+/, '')) + '</h3>';
+      } else if (line.trim() === '') {
+        continue;
+      } else {
+        html += '<p>' + escapeHtml(line) + '</p>';
+      }
+    }
+    return html || '<p>No description available.</p>';
+  }
+
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function openRequestModal() {
+    modal.hidden = false;
+    document.getElementById('req-name').focus();
+  }
+
+  function closeRequestModal() {
+    modal.hidden = true;
+  }
+
+  function buildMailto(name, message) {
+    var subject = encodeURIComponent('Student resources access request');
+    var body = encodeURIComponent(
+      'Name: ' + name + '\n\n' + message + '\n\n— Sent from portfolio student resources page'
+    );
+    return 'mailto:' + EMAIL + '?subject=' + subject + '&body=' + body;
+  }
+
+  function loadRepoContent() {
+    fetch(README_URL)
+      .then(function (r) { return r.ok ? r.text() : Promise.reject(new Error('README fetch failed')); })
+      .then(function (text) {
+        readmeOut.innerHTML = simpleMarkdownToHtml(text);
+      })
+      .catch(function () {
+        readmeOut.innerHTML = '<p>Could not load repository README.</p>';
+      });
+
+    fetch(NOTES_HTML_URL)
+      .then(function (r) { return r.ok ? r.text() : Promise.reject(new Error('Notes HTML fetch failed')); })
+      .then(function (html) {
+        migrateLegacyHighlightKey();
+        html = injectHighlightPersistence(html);
+        var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+        var url = URL.createObjectURL(blob);
+        frame.onload = function () {
+          frameStatus.textContent = '';
+          frameStatus.classList.remove('err');
+          requestAnimationFrame(function () {
+            setTimeout(hydrateIframeHighlights, 0);
+          });
+        };
+        frame.src = url;
+      })
+      .catch(function () {
+        frameStatus.textContent = 'Could not load notes from GitHub. Try again later or open the repo directly.';
+        frameStatus.classList.add('err');
+      });
+  }
+
+  if (isUnlocked()) {
+    document.body.classList.add('sr-auth-unlocked');
+    overlay.setAttribute('aria-hidden', 'true');
+    overlay.setAttribute('inert', '');
+    loadRepoContent();
+  } else {
+    showLock();
+  }
+
+  passInput.addEventListener('input', function () {
+    lockError.textContent = '';
+    lockCard.classList.remove('shake');
+  });
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    lockError.textContent = '';
+    lockCard.classList.remove('shake');
+    var expected = getExpectedPassword();
+    if (!expected) {
+      lockError.textContent =
+        'Password is not configured. Add notes/auth.config.js (see auth.config.example.js).';
+      return;
+    }
+    if (passInput.value === expected) {
+      setUnlocked();
+      showApp();
+      loadRepoContent();
+      passInput.value = '';
+    } else {
+      lockCard.classList.remove('shake');
+      lockError.textContent = 'Wrong password. Please try again.';
+      void lockCard.offsetWidth;
+      lockCard.classList.add('shake');
+      passInput.focus();
+      passInput.select();
+    }
+  });
+
+  btnRequest.addEventListener('click', function () {
+    openRequestModal();
+  });
+
+  btnCancel.addEventListener('click', closeRequestModal);
+  modal.addEventListener('click', function (e) {
+    if (e.target === modal) closeRequestModal();
+  });
+
+  requestForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var name = document.getElementById('req-name').value.trim();
+    var msg = document.getElementById('req-msg').value.trim();
+    if (!name || !msg) return;
+    window.location.href = buildMailto(name, msg);
+    closeRequestModal();
+  });
+
+  window.toggleMenu = function () {
+    document.querySelector('.hamburger').classList.toggle('active');
+    document.querySelector('.nav-links').classList.toggle('open');
+  };
+  window.closeMenu = function () {
+    document.querySelector('.hamburger').classList.remove('active');
+    document.querySelector('.nav-links').classList.remove('open');
+  };
+  document.addEventListener('click', function (e) {
+    var nav = document.querySelector('nav');
+    if (nav && !nav.contains(e.target)) window.closeMenu();
+  });
+
+  if (btnFsNotes) {
+    btnFsNotes.addEventListener('click', toggleNotesFullscreen);
+  }
+  if (btnWideNotes) {
+    btnWideNotes.addEventListener('click', toggleNotesWide);
+  }
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    if (document.body.classList.contains('sr-notes-fullscreen')) {
+      setNotesFullscreen(false);
+    } else if (document.body.classList.contains('sr-notes-wide')) {
+      setNotesWide(false);
+    }
+  });
+})();
+</script>
+</body>
+</html>
