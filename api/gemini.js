@@ -7,6 +7,14 @@ const SYSTEM_PROMPT =
   "Keep answers under 300 words. Use bold (**word**) for key terms.";
 
 module.exports = async function handler(req, res) {
+  // Allow CORS for the notes page
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -21,37 +29,41 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ error: "messages array is required" });
   }
 
-  // Truncate context and history
-  const trimmedContext = typeof context === "string" ? context.slice(0, 30000) : "";
+  // Truncate context to ~15K chars to stay well within free tier token limits
+  const trimmedContext = typeof context === "string" ? context.slice(0, 15000) : "";
   const recentMessages = messages.slice(-10);
 
-  // Build Gemini request
+  // Build Gemini request — context + question in a single user message
   const contents = [];
 
-  // First message: inject notes context as a user message
-  if (trimmedContext) {
+  // Combine context and first question into one message to reduce request overhead
+  const firstMsg = recentMessages[0];
+  if (trimmedContext && firstMsg) {
     contents.push({
       role: "user",
-      parts: [{ text: "NOTES CONTEXT (use this to answer questions):\n\n" + trimmedContext }],
+      parts: [{ text: "NOTES CONTEXT:\n\n" + trimmedContext + "\n\n---\n\nQUESTION: " + firstMsg.content }],
     });
-    contents.push({
-      role: "model",
-      parts: [{ text: "Got it — I have the notes loaded. Ask me anything about them." }],
-    });
-  }
-
-  // Map conversation history (Gemini uses "model" instead of "assistant")
-  for (const msg of recentMessages) {
-    contents.push({
-      role: msg.role === "assistant" ? "model" : "user",
-      parts: [{ text: msg.content }],
-    });
+    // Add remaining messages normally
+    for (let i = 1; i < recentMessages.length; i++) {
+      contents.push({
+        role: recentMessages[i].role === "assistant" ? "model" : "user",
+        parts: [{ text: recentMessages[i].content }],
+      });
+    }
+  } else {
+    // No context — just send messages directly
+    for (const msg of recentMessages) {
+      contents.push({
+        role: msg.role === "assistant" ? "model" : "user",
+        parts: [{ text: msg.content }],
+      });
+    }
   }
 
   const body = {
     systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
     contents,
-    generationConfig: { maxOutputTokens: 2048 },
+    generationConfig: { maxOutputTokens: 1024 },
   };
 
   try {
@@ -62,12 +74,19 @@ module.exports = async function handler(req, res) {
     });
 
     if (response.status === 429) {
-      return res.status(429).json({ error: "Rate limit reached. Try again in a moment." });
+      const errBody = await response.text().catch(() => "");
+      return res.status(429).json({
+        error: "Rate limit reached. Try again in a moment.",
+        details: errBody,
+      });
     }
 
     if (!response.ok) {
       const errText = await response.text().catch(() => "Unknown error");
-      return res.status(502).json({ error: "Gemini API error: " + response.status, details: errText });
+      return res.status(502).json({
+        error: "Gemini API error: " + response.status,
+        details: errText,
+      });
     }
 
     const data = await response.json();

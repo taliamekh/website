@@ -2657,7 +2657,7 @@ function App() {
         }
         if (responded >= needed) {
           window.removeEventListener("message", onMsg);
-          resolve((notesText + "\n\n--- FORMULA SHEET ---\n\n" + formulaText).slice(0, 30000));
+          resolve((notesText + "\n\n--- FORMULA SHEET ---\n\n" + formulaText).slice(0, 15000));
         }
       };
       window.addEventListener("message", onMsg);
@@ -2666,7 +2666,7 @@ function App() {
       // Timeout fallback
       setTimeout(() => {
         window.removeEventListener("message", onMsg);
-        resolve((notesText + "\n\n" + formulaText).slice(0, 30000));
+        resolve((notesText + "\n\n" + formulaText).slice(0, 15000));
       }, 5000);
     });
   }, []);
