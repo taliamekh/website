@@ -78,7 +78,7 @@ function spocketBubbleRichNodes(raw, visiblePlainLen) {
 }
 
 const SPOCKET_FIND_INTRO_RAW =
-  "What do you want to know? Type a short question or words you remember from your notes or formula sheet. **I will highlight related spots, then a pink bar at the top will appear with arrows to jump between them and switch workspaces — tap Done on that bar when you are finished.** This finder is still in beta.";
+  "Ask me anything about your notes! Type a question or topic and **I will highlight the relevant sections in your study guide and formula sheet, then explain what I found.** A pink bar will appear at the top with arrows to jump between highlights and switch workspaces — tap Done on that bar when you are finished.";
 
 /* ═══════════════════════════════════════════
    DIALOGUE TREE
@@ -169,7 +169,7 @@ const TREE = {
     ],
   },
   who_spocket: {
-    msg: "I'm Spocket, the in-page assistant for Talia's Student Resources. **I am not course content: I route people through unlock, explain how the notes workspace behaves, and after unlock I stay in a fixed corner shell.** From there you can open Roam (interactive scene), Study (timers, reminders, session log), structured help for the study guide / formula views, or Find in notes (beta), which posts search steps into the embedded iframes so related passages highlight in sync.",
+    msg: "I'm Spocket, the in-page assistant for Talia's Student Resources. **I help students navigate the notes workspace, and I can answer questions about your notes using AI.** From the corner menu you can open Roam (interactive scene), Study (timers, reminders, session log), structured workspace help, Ask AI about your notes (I read the content and answer questions), or Find in notes (highlights and explains related sections).",
     eyes: "happy",
     options: [
       { label: "What will you be doing here?", next: "what_spocket_does" },
@@ -178,7 +178,7 @@ const TREE = {
     ],
   },
   what_spocket_does: {
-    msg: "Before unlock I run the scripted onboarding tree (access paths, what is locked, where to request a code). **After unlock the same React layer adds a parked UI: Roam and Study are separate layouts with optional full-width chrome; the dialogue hub documents toolbar tools, persistence, and shortcuts, or dispatches tm_spocket_find* messages into the workspace frames for cross-document search.** Roam can toggle the site nav so the iframe column stays readable; full-page Study hides the menu until you leave with ← Leave.",
+    msg: "Before unlock I run scripted onboarding (access paths, what is locked, where to request a code). **After unlock I add a corner menu with: Roam and Study layouts, workspace help and keyboard shortcuts, Find in notes (highlights and explains what you ask about), and Ask AI (I read your notes and answer freeform questions using Gemini).** Roam can toggle the site nav so the iframe column stays readable; full-page Study hides the menu until you leave.",
     eyes: "happy",
     options: [
       { label: "Who are you?", next: "who_spocket" },
@@ -206,7 +206,7 @@ const TREE = {
     ],
   },
   sq_ai_real: {
-    msg: "No large language model: I am a branching state machine (plain objects in this file), React state for UI modes, and imperative bits for timers and postMessage bridges. If an answer is wrong, it is a content bug—tell Talia.",
+    msg: "I am a mix! My dialogue, onboarding, and workspace tools are a **hand-authored state machine** (React state + scripted nodes). But my **Ask AI about your notes** feature connects to Gemini to answer freeform questions grounded in the actual notes content. The AI only sees what is in your notes — it does not make things up from the internet.",
     eyes: "nervous",
     options: [
       { label: "Another question", next: "ask_spocket_start" },
@@ -214,7 +214,7 @@ const TREE = {
     ],
   },
   sq_can_do: {
-    msg: "On this page: scripted onboarding, access routing, embedded forms, and this FAQ. After unlock: Roam/Study experiences, reminder scheduling, the structured notes-help tree, and Find in notes (beta) that walks iframe content via typed window messages. Idle motion is CSS + timed state on the SVG puppet—no backend calls.",
+    msg: "On this page: scripted onboarding, access routing, embedded forms, and this FAQ. After unlock: **Ask AI about your notes** (I read the content and answer questions via Gemini), **Find in notes** (highlights and explains relevant sections), Roam/Study experiences, reminder scheduling, keyboard shortcut reference, and the structured notes-help tree.",
     eyes: "happy",
     options: [
       { label: "Another question", next: "ask_spocket_start" },
@@ -240,7 +240,7 @@ const TREE = {
       { label: "Where did you come from?", next: "sq_origin_p" },
       { label: "How do the notes tools work?", next: "notes_help_hub" },
       { label: "Shortcut keys", next: "shortcut_keys_intro" },
-      { label: "Find text in my notes (beta)", next: "_find_in_notes" },
+      { label: "Find & explain in my notes", next: "_find_in_notes" },
       { label: "Done for now", next: "_parked_dismiss" },
     ],
   },
@@ -253,7 +253,7 @@ const TREE = {
     ],
   },
   sq_ai_real_p: {
-    msg: "No large language model: I am a branching state machine (plain objects in this file), React state for UI modes, and imperative bits for timers and postMessage bridges. If an answer is wrong, it is a content bug—tell Talia.",
+    msg: "I am a mix! My dialogue, onboarding, and workspace tools are a **hand-authored state machine** (React state + scripted nodes). But my **Ask AI about your notes** feature connects to Gemini to answer freeform questions grounded in the actual notes content. The AI only sees what is in your notes — it does not make things up from the internet.",
     eyes: "nervous",
     options: [
       { label: "Another question", next: "ask_spocket_unlocked" },
@@ -261,7 +261,7 @@ const TREE = {
     ],
   },
   sq_can_do_p: {
-    msg: "Locked: onboarding + access paths only. Unlocked: Roam/Study layouts, reminders, structured notes help, and Find in notes (beta) that issues tm_spocket_find / step / clear messages into both workspace frames so highlights stay aligned while you navigate. Roam exposes a control to collapse site nav for a wider iframe; Study is full-page with the menu hidden. Motion is local React/CSS state only.",
+    msg: "Locked: onboarding + access paths only. Unlocked: **Ask AI about your notes** (freeform questions answered by Gemini using your actual notes), **Find in notes** (highlights and explains relevant sections), Roam/Study layouts, reminders, keyboard shortcuts, and structured workspace help. Roam collapses the site nav for a wider iframe; Study is full-page with the menu hidden.",
     eyes: "happy",
     options: [
       { label: "Another question", next: "ask_spocket_unlocked" },
@@ -408,12 +408,14 @@ const TREE = {
 };
 
 const IDLE_JOKES = [
-  "Psst... I'm not fully deployed yet. My developer said 'soon™'.",
-  "Still here! Just oiling my treads and contemplating existence.",
-  "Error 418: I'm a teapot. Just kidding! Still under construction.",
-  "My navigation module is on backorder. For now I just... vibe.",
-  "v2 me is gonna be SO cool. Current me just sits here.",
-  "I tried to deploy myself once. Got a 403 Forbidden. Rude.",
+  "v2 is live! I can actually answer questions now. v3 me is gonna have legs.",
+  "Still here! Oiling my treads between questions. v3 might get a jetpack.",
+  "Error 418: I'm a teapot. Just kidding — I'm a study assistant now!",
+  "They gave me a brain in v2. v3 rumor says I get a laser pointer for the whiteboard.",
+  "v2 me: answers questions, highlights notes. v3 me: probably takes the exam for you.",
+  "I used to just sit here. Now I read your notes AND sit here. Progress!",
+  "My developer said v3 will be 'transformative'. I asked if that's a pun. She said no.",
+  "Fun fact: I was once just a dialogue tree. Now I have AI. Still no legs though.",
 ];
 
 /* ═══════════════════════════════════════════
@@ -2120,7 +2122,7 @@ function ParkedRobot({
                   onMouseOver={(e) => (e.target.style.background = "#38bdf824")}
                   onMouseOut={(e) => (e.target.style.background = "#38bdf812")}
                 >
-                  🔎 What do you want to know? (beta)
+                  🔎 Find & explain in my notes
                 </button>
                 <button
                   type="button"
