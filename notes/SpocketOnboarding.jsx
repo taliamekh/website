@@ -708,7 +708,7 @@ function Robot({ eyes = "happy", mouthOpen = false, scale = 1, style = {}, wavin
 
 /* ── Bubble ──
    tail: "bottom" (default, tail under bubble) | "right" (tail on right edge, points toward robot to the right) */
-function Bubble({ rawMsg, textPlain, text, isTyping, tiny, onSkip, tail = "bottom" }) {
+function Bubble({ rawMsg, textPlain, text, isTyping, tiny, onSkip, tail = "bottom", maxWidth: mw }) {
   const raw = rawMsg != null ? rawMsg : text != null ? text : "";
   const plainLen = isTyping ? (textPlain != null ? textPlain.length : text != null ? text.length : 0) : null;
   const bodyNodes = spocketBubbleRichNodes(raw, plainLen);
@@ -719,9 +719,9 @@ function Bubble({ rawMsg, textPlain, text, isTyping, tiny, onSkip, tail = "botto
         backgroundImage: "linear-gradient(135deg,#1a2538,#121a2e)",
         border: "1px solid #7fdbca30",
         borderRadius: 18,
-        padding: tiny ? (tail === "right" ? "10px 18px 10px 14px" : "10px 16px") : tail === "right" ? "18px 26px 18px 22px" : "18px 24px",
+        padding: tiny ? (tail === "right" ? "10px 18px 10px 14px" : "10px 16px") : tail === "right" ? "18px 26px 18px 22px" : tail === "left" ? "18px 24px 18px 26px" : "18px 24px",
         minWidth: 240,
-        maxWidth: 420,
+        maxWidth: mw || 420,
         fontFamily: "'JetBrains Mono',monospace",
         fontSize: tiny ? 11 : 14,
         color: tiny ? "#7fdbca50" : "#c8d6e5",
@@ -756,6 +756,16 @@ function Bubble({ rawMsg, textPlain, text, isTyping, tiny, onSkip, tail = "botto
           aria-hidden="true"
         >
           <path d="M0 5 L14 11 L0 17 Z" fill="#121a2e" />
+        </svg>
+      ) : tail === "left" ? (
+        <svg
+          width="14"
+          height="22"
+          viewBox="0 0 14 22"
+          style={{ position: "absolute", left: -11, top: 28, pointerEvents: "none" }}
+          aria-hidden="true"
+        >
+          <path d="M14 5 L0 11 L14 17 Z" fill="#121a2e" />
         </svg>
       ) : (
         <svg width="20" height="14" viewBox="0 0 20 14" style={{ position: "absolute", bottom: -13, left: 28 }} aria-hidden="true">
@@ -1999,7 +2009,7 @@ function ParkedRobot({
             border: "1px solid #7fdbca30",
             borderRadius: 14,
             padding: "14px 18px",
-            width: 260,
+            width: "min(260px, calc(100vw - 48px))",
             animation: "fadeInUp 0.2s ease",
             boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
             zIndex: 40,
@@ -2196,6 +2206,30 @@ function App() {
       return false;
     }
   });
+
+  /* ── RESPONSIVE: track viewport size ── */
+  const [vpW, setVpW] = useState(() => typeof window !== "undefined" ? window.innerWidth : 1024);
+  const [vpH, setVpH] = useState(() => typeof window !== "undefined" ? window.innerHeight : 800);
+  useEffect(() => {
+    const onResize = () => { setVpW(window.innerWidth); setVpH(window.innerHeight); };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+  const isMobile = vpW <= 768;
+  const isSmallMobile = vpW <= 480;
+  /* Dynamic robot scale: smoothly scales based on both width and height.
+     On mobile (narrow), width is the limiting factor. On short laptops, height is. */
+  const scaleByH = vpH / 600;
+  const scaleByW = vpW / 500;
+  const dynamicScale = Math.min(1.5, Math.max(0.7, Math.min(scaleByH, scaleByW)));
+  const dynamicRobotH = 200 * dynamicScale; /* Robot component is 200px tall before scale */
+  const NAV_H = 64;
+  /* Available vertical space: viewport minus navbar (top) and buttons area (bottom ~100px) */
+  const availH = vpH - NAV_H - 100;
+  const dynamicRobotW = 140 * dynamicScale;
+  /* Always side-by-side: robot on left, bubble to the right — robot height drives vertical centering */
+  const robotTopPos = NAV_H + Math.max(10, (availH - dynamicRobotH) / 2);
+  const bubbleTopPos = robotTopPos;
 
   const tt=useRef(null);const mt=useRef(null);const timers=useRef([]);const fullRef=useRef("");
   useEffect(() => {
@@ -2803,6 +2837,7 @@ function App() {
     setFacing("side"); // Robot enters in side profile
 
     const w = window.innerWidth || 900;
+    const h = window.innerHeight || 800;
     const m = measureLockCardForArena();
     if (m) {
       lockCardMetricsRef.current = m;
@@ -2811,9 +2846,12 @@ function App() {
       lockCardMetricsRef.current = { left: w / 2 - CARD_W / 2, centerY: null, width: CARD_W };
       setRobotAnchorY(null);
     }
+    /* Dynamic scale at animation time — matches the render-time dynamicScale formula */
+    const scaleNow = Math.min(1.5, Math.max(0.7, Math.min(h / 600, w / 500)));
+    const renderW = 140 * scaleNow + 40; /* body width + arm extend */
     const cardLeft = lockCardMetricsRef.current.left;
-    const contactX = cardLeft - ROBOT_TOTAL_W;
-    const talkX = 60;
+    const contactX = cardLeft - renderW; /* robot's right edge touches card's left edge */
+    const talkX = Math.max(10, w * 0.04);
 
     // Step 0 (200ms): Mount robot in DOM at off-screen position
     later(()=>{setPhase("entering")},200);
@@ -2851,7 +2889,7 @@ function App() {
     clearAll();
     setPhase("idle");setNode(null);setTxt("");setTyping(false);setMouth(false);
     setCardGone(false);setCardBack(false);setCryExit(false);
-    setRobotX(-ROBOT_TOTAL_W-50);setShowForm(false);setShowIpad(false);setShowCookie(false);
+    setRobotX(-300);setShowForm(false);setShowIpad(false);setShowCookie(false);
     setCookiePopup(false);setBalloon(false);setParked(false);setFollowUp(null);setRoaming(false);setStudyActive(false);setFacing("side");
 
     const m = measureLockCardForArena();
@@ -2864,7 +2902,10 @@ function App() {
       setRobotAnchorY(null);
     }
 
-    const talkX = 60;
+    const wr = window.innerWidth || 900;
+    const hr = window.innerHeight || 800;
+    const scaleNowR = Math.min(1.5, Math.max(0.7, Math.min(hr / 600, wr / 500)));
+    const talkX = Math.max(10, wr * 0.04);
 
     // Pick a random welcome back message
     const welcomeMsg = WELCOME_BACKS[Math.floor(Math.random() * WELCOME_BACKS.length)];
@@ -2873,11 +2914,8 @@ function App() {
 
     // Step 0: Mount robot
     later(()=>{setPhase("entering")},200);
-    // Step 1: Roll to talk position (no card push)
     later(()=>{setRobotX(talkX)},400);
-    // Step 2: Turn to face user
     later(()=>setFacing("front"),2200);
-    // Step 3: Start talking
     later(()=>{setPhase("talking");setNode("returning")},2600);
   },[clearAll, measureLockCardForArena, studentDisplayName]);
 
@@ -3209,7 +3247,7 @@ function App() {
     fontFamily: "'JetBrains Mono',monospace",
     position: "relative",
     /* overflow:hidden clips position:fixed descendants (e.g. find dock); keep visible while dock open */
-    overflow: compactParkedUi || findDockOpen ? "visible" : "hidden",
+    overflow: compactParkedUi || findDockOpen || isMobile ? "visible" : "hidden",
     pointerEvents: "none",
   };
 
@@ -3310,6 +3348,7 @@ function App() {
         @keyframes clawHinge{0%,100%{transform:translateX(-50%) scaleX(1)}50%{transform:translateX(-50%) scaleX(1.25)}}
         .opt-btn{padding:10px 20px;background:#0f172a;border:1px solid #7fdbca50;border-radius:22px;color:#7fdbca;font-size:12px;font-family:'JetBrains Mono',monospace;cursor:pointer;transition:all 0.2s;white-space:nowrap;box-shadow:0 2px 10px rgba(0,0,0,0.4)}
         .opt-btn:hover{background:#152238;border-color:#7fdbca;transform:translateY(-2px);box-shadow:0 4px 16px rgba(127,219,202,0.2)}
+        @media(max-width:768px){.opt-btn{padding:7px 14px;font-size:10px;white-space:normal;text-align:center}}
         .end-btn{padding:6px 14px;background:#0f172a;border:1px solid #ff6b6b30;border-radius:16px;color:#ff6b6b60;font-size:10px;font-family:'JetBrains Mono',monospace;cursor:pointer;transition:all 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.35)}
         .end-btn:hover{background:#1a1218;border-color:#ff6b6b;color:#ff6b6b}
       `}</style>
@@ -3521,10 +3560,10 @@ function App() {
                   pointerEvents: "none",
                 }
               : {
-                  position: "absolute",
-                  top: robotAnchorY != null ? robotAnchorY : "60%",
+                  position: "fixed",
+                  top: robotTopPos,
                   left: robotX,
-                  transform: `translateY(-50%)${phase === "leaving" ? " scaleX(-1)" : ""}`,
+                  transform: phase === "leaving" ? "scaleX(-1)" : "none",
                   transition: "left 1.8s cubic-bezier(0.25,0.46,0.45,0.94)",
                   zIndex: 20,
                   pointerEvents: "none",
@@ -3635,36 +3674,11 @@ function App() {
             <div
               style={{
                 flexShrink: 0,
-                width: cornerUnlockedChat ? 220 : undefined,
+                width: cornerUnlockedChat ? (isMobile ? 120 : 220) : undefined,
                 position: "relative",
               }}
             >
-              {!cornerUnlockedChat && showUI && (
-                <div
-                  style={{
-                    position: "absolute",
-                    bottom: 340,
-                    left: 100,
-                    zIndex: 25,
-                    animation: "fadeInUp 0.3s ease",
-                    width: 440,
-                    pointerEvents: "auto",
-                  }}
-                >
-                  <Bubble
-                    rawMsg={cryExit ? txt : dialogueRaw}
-                    textPlain={txt}
-                    isTyping={typing}
-                    tiny={cryExit}
-                    onSkip={typing && !cryExit ? skipTyping : null}
-                  />
-                  {followUp && (
-                    <div style={{ marginTop: 10, animation: "fadeInUp 0.3s ease" }}>
-                      <Bubble text={followUp} tiny={true} />
-                    </div>
-                  )}
-                </div>
-              )}
+              {/* Desktop bubble now rendered via portal below — see "Speech bubble portaled to body" */}
 
               {/* Robot body */}
               <div
@@ -3676,25 +3690,63 @@ function App() {
                 {balloon && (
                   <div style={{ position: "absolute", top: -40, left: "50%", transform: "translateX(-50%)", fontSize: 36 }}>🎈</div>
                 )}
-                <Robot eyes={cryExit ? "crying" : findNotesActive ? "thinking" : nd?.eyes || "happy"} mouthOpen={mouth} scale={ROBOT_SCALE} showCookie={showCookie} showIpad={showIpad} facing={facing} />
+                <Robot eyes={cryExit ? "crying" : findNotesActive ? "thinking" : nd?.eyes || "happy"} mouthOpen={mouth} scale={dynamicScale} showCookie={showCookie} showIpad={showIpad} facing={facing} />
               </div>
             </div>
           </div>
         )}
 
+        {/* Speech bubble — portaled to body to escape robot container's transform context */}
+        {!cornerUnlockedChat && showUI && showMainRobot && (() => {
+          const bubbleTop = bubbleTopPos;
+          /* Bubble always to the right of robot */
+          const bubbleLeft = robotX + dynamicRobotW + Math.round(14 * dynamicScale);
+          const bubbleW = Math.min(520, vpW - bubbleLeft - 16);
+          return ReactDOM.createPortal(
+          <div
+            style={{
+              position: "fixed",
+              top: bubbleTop,
+              left: bubbleLeft,
+              width: Math.max(180, bubbleW),
+              zIndex: 500,
+              animation: "fadeInUp 0.3s ease",
+              pointerEvents: "auto",
+              fontFamily: "'JetBrains Mono',monospace",
+            }}
+          >
+            <Bubble
+              rawMsg={cryExit ? txt : dialogueRaw}
+              textPlain={txt}
+              isTyping={typing}
+              tiny={cryExit}
+              onSkip={typing && !cryExit ? skipTyping : null}
+              tail="left"
+              maxWidth={Math.max(180, bubbleW)}
+            />
+            {followUp && (
+              <div style={{ marginTop: 10, animation: "fadeInUp 0.3s ease" }}>
+                <Bubble text={followUp} tiny={true} />
+              </div>
+            )}
+          </div>,
+          document.body
+        );
+        })()}
+
         {/* User response options — completely independent, bottom center of screen */}
         {showUI&&!cryExit&&!typing&&(nd&&nd.options.length>0||findNotesActive||findDockOpen)&&(
           <div style={{
             position:"fixed",
-            bottom: findNotesActive || findDockOpen ? 12 : cornerUnlockedChat ? 8 : 40,
-            left:0,
-            right:0,
+            bottom: findNotesActive || findDockOpen ? 12 : cornerUnlockedChat ? 8 : isMobile ? "6%" : 40,
+            left: isMobile ? 8 : 0,
+            right: isMobile ? 8 : 0,
             zIndex: cornerUnlockedChat || findDockOpen ? 90 : 30,
             animation:"fadeInUp 0.3s ease",
             display:"flex",
             flexDirection:"column",
             alignItems:"center",
-            gap:10,
+            gap: isMobile ? 6 : 10,
             pointerEvents:"auto",
           }}>
             {nd && nd.captureName && (
@@ -3746,7 +3798,7 @@ function App() {
               </div>
             )}
             {nd && nd.options.length > 0 && (
-              <div style={{display:"flex",flexWrap:"wrap",gap:10,justifyContent:"center"}}>
+              <div style={{display:"flex",flexWrap:"wrap",gap: isMobile ? 6 : 10,justifyContent:"center",maxWidth: isMobile ? "calc(100vw - 16px)" : "none",padding: isMobile ? "0 4px" : 0}}>
                 {nd.options.map((o,i)=><button key={i} className="opt-btn" onClick={()=>pick(o)}>{o.label}</button>)}
               </div>
             )}
