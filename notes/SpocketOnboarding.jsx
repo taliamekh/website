@@ -24,6 +24,8 @@ function tmSpocketFindSourceMatchesFrame(frameContentWindow, source) {
 
 const SPOCKET_TYPING_MS = 20;
 const SPOCKET_MOUTH_MS = 80;
+const SPOCKET_AI_WORD_MS = 30;
+const SPOCKET_AI_INTRO_RAW = "I have your notes loaded! **Ask me anything** about the content and I will find the answer for you. I can only reference what is in the notes — if something is not covered, I will let you know.";
 const LS_SPOCKET_DISPLAY_NAME = "spocket_student_display_name_v1";
 const LS_SPOCKET_SPACE_TIP = "spocket_space_skip_tip_dismissed_v1";
 const LS_SPOCKET_NAME_SKIP = "spocket_name_prompt_skip_v1";
@@ -1966,6 +1968,7 @@ function ParkedRobot({
   onAskAboutMe = () => {},
   onNotesHelp = () => {},
   onFindInNotes = () => {},
+  onAskAboutNotes = () => {},
   onLogOut = () => {},
 }) {
   const [h, setH] = useState(false);
@@ -2123,6 +2126,18 @@ function ParkedRobot({
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
+                    onAskAboutNotes();
+                  }}
+                  style={{ ...btn, background: "#fbbf2412", border: "1px solid #fbbf2450", color: "#fde68a" }}
+                  onMouseOver={(e) => (e.target.style.background = "#fbbf2428")}
+                  onMouseOut={(e) => (e.target.style.background = "#fbbf2412")}
+                >
+                  ✨ Ask AI about your notes
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
                     onLogOut();
                   }}
                   style={{ ...btn, background: "#ff6b6b10", border: "1px solid #ff6b6b35", color: "#fca5a5" }}
@@ -2195,6 +2210,13 @@ function App() {
   const [findBetaBannerVisible, setFindBetaBannerVisible] = useState(false);
   const [findDockOpen, setFindDockOpen] = useState(false);
   const [findDockQuery, setFindDockQuery] = useState("");
+  /* ── AI CHAT STATE ── */
+  const [aiChatActive, setAiChatActive] = useState(false);
+  const [aiChatMessages, setAiChatMessages] = useState([]);
+  const [aiChatLoading, setAiChatLoading] = useState(false);
+  const [aiChatInput, setAiChatInput] = useState("");
+  const [aiNotesContext, setAiNotesContext] = useState(null);
+  const aiChatActiveRef = useRef(false);
   const [studentDisplayName, setStudentDisplayName] = useState(() => {
     try {
       return typeof localStorage !== "undefined" ? localStorage.getItem(LS_SPOCKET_DISPLAY_NAME) || "" : "";
@@ -2250,6 +2272,9 @@ function App() {
   useEffect(() => {
     findDockOpenRef.current = findDockOpen;
   }, [findDockOpen]);
+  useEffect(() => {
+    aiChatActiveRef.current = aiChatActive;
+  }, [aiChatActive]);
   useEffect(() => {
     findNotesBusyRef.current = findNotesBusy;
   }, [findNotesBusy]);
@@ -2428,6 +2453,11 @@ function App() {
     setFollowUp(null);
     setBalloon(false);
     setCryExit(false);
+    setAiChatActive(false);
+    setAiChatMessages([]);
+    setAiChatLoading(false);
+    setAiChatInput("");
+    setAiNotesContext(null);
   }, [clearAll, clearFindHighlightsBoth]);
 
   const endFindDockSession = useCallback(() => {
@@ -2599,6 +2629,140 @@ function App() {
     setFacing("front");
   }, [clearAll]);
 
+  /* ── AI CHAT: extract notes context from iframes ── */
+  const extractNotesContext = useCallback(() => {
+    return new Promise((resolve) => {
+      let notesText = "";
+      let formulaText = "";
+      let responded = 0;
+      const nEl = document.getElementById("notes-frame");
+      const fEl = document.getElementById("formula-frame");
+      const hasN = !!(nEl && nEl.contentWindow);
+      const hasF = !!(fEl && fEl.contentWindow);
+      const needed = (hasN ? 1 : 0) + (hasF ? 1 : 0);
+      if (needed === 0) { resolve(""); return; }
+
+      const onMsg = (ev) => {
+        if (!ev.data || ev.data.type !== "tm_spocket_extract_text_result") return;
+        const nWin = nEl && nEl.contentWindow;
+        const fWin = fEl && fEl.contentWindow;
+        if (nWin && tmSpocketFindSourceMatchesFrame(nWin, ev.source)) {
+          notesText = ev.data.text || "";
+          responded++;
+        } else if (fWin && tmSpocketFindSourceMatchesFrame(fWin, ev.source)) {
+          formulaText = ev.data.text || "";
+          responded++;
+        }
+        if (responded >= needed) {
+          window.removeEventListener("message", onMsg);
+          resolve((notesText + "\n\n--- FORMULA SHEET ---\n\n" + formulaText).slice(0, 30000));
+        }
+      };
+      window.addEventListener("message", onMsg);
+      if (hasN) nEl.contentWindow.postMessage({ type: "tm_spocket_extract_text" }, "*");
+      if (hasF) fEl.contentWindow.postMessage({ type: "tm_spocket_extract_text" }, "*");
+      // Timeout fallback
+      setTimeout(() => {
+        window.removeEventListener("message", onMsg);
+        resolve((notesText + "\n\n" + formulaText).slice(0, 30000));
+      }, 5000);
+    });
+  }, []);
+
+  /* ── AI CHAT: start chat mode ── */
+  const startAiChat = useCallback(() => {
+    clearAll();
+    findSessionGenRef.current += 1;
+    findDockOpenRef.current = false;
+    findNotesBusyRef.current = false;
+    setParkedQaOpen(false);
+    setParkedNotesHelpOpen(false);
+    setFindNotesActive(false);
+    setFindNotesQuery("");
+    setFollowUp(null);
+    setFindNotesBusy(false);
+    setFindExploreOn(false);
+    setFindDockOpen(false);
+    setFindDockQuery("");
+    setAiChatActive(true);
+    setAiChatMessages([]);
+    setAiChatLoading(false);
+    setAiChatInput("");
+    setAiNotesContext(null);
+    setParked(true);
+    setPhase("talking");
+    setNode(null);
+    setCardGone(true);
+    setCardBack(false);
+    setCryExit(false);
+    setShowForm(false);
+    setShowIpad(false);
+    setShowCookie(false);
+    setCookiePopup(false);
+    setBalloon(false);
+    setFacing("front");
+    // Extract notes in background
+    extractNotesContext().then((ctx) => {
+      if (aiChatActiveRef.current) setAiNotesContext(ctx);
+    });
+  }, [clearAll, extractNotesContext]);
+
+  /* ── AI CHAT: submit a question ── */
+  const submitAiChat = useCallback(() => {
+    const q = aiChatInput.trim();
+    if (!q || aiChatLoading || !aiNotesContext) return;
+    const newMessages = [...aiChatMessages, { role: "user", content: q }];
+    setAiChatMessages(newMessages);
+    setAiChatInput("");
+    setAiChatLoading(true);
+    setFollowUp(null);
+    // Start thinking animation
+    clearInterval(mt.current);
+    mt.current = setInterval(() => setMouth((p) => !p), SPOCKET_MOUTH_MS);
+    setTyping(true);
+    setTxt("");
+
+    fetch("/api/gemini", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages: newMessages, context: aiNotesContext }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (!aiChatActiveRef.current) return;
+        const reply = data.reply || data.error || "Something went wrong.";
+        setAiChatMessages((prev) => [...prev, { role: "assistant", content: reply }]);
+        // Word-by-word typewriter for the response
+        const words = reply.split(/(\s+)/);
+        let i = 0;
+        let built = "";
+        fullRef.current = reply;
+        clearInterval(tt.current);
+        tt.current = setInterval(() => {
+          if (i < words.length) {
+            built += words[i];
+            i++;
+            setTxt(built);
+          } else {
+            clearInterval(tt.current);
+            clearInterval(mt.current);
+            setMouth(false);
+            setTyping(false);
+            setAiChatLoading(false);
+          }
+        }, SPOCKET_AI_WORD_MS);
+      })
+      .catch((err) => {
+        if (!aiChatActiveRef.current) return;
+        clearInterval(tt.current);
+        clearInterval(mt.current);
+        setMouth(false);
+        setTyping(false);
+        setAiChatLoading(false);
+        setFollowUp("Something went wrong — check your connection and try again.");
+      });
+  }, [aiChatInput, aiChatLoading, aiNotesContext, aiChatMessages]);
+
   useEffect(() => {
     if (!findNotesActive) return;
     fullRef.current = SPOCKET_FIND_INTRO_RAW;
@@ -2625,6 +2789,34 @@ function App() {
       clearInterval(mt.current);
     };
   }, [findNotesActive]);
+
+  /* AI chat intro typewriter effect */
+  useEffect(() => {
+    if (!aiChatActive) return;
+    fullRef.current = SPOCKET_AI_INTRO_RAW;
+    const plain = spocketPlainFromRaw(SPOCKET_AI_INTRO_RAW);
+    setFollowUp(null);
+    setTxt("");
+    setTyping(true);
+    let i = 0;
+    clearInterval(tt.current);
+    clearInterval(mt.current);
+    mt.current = setInterval(() => setMouth((p) => !p), SPOCKET_MOUTH_MS);
+    tt.current = setInterval(() => {
+      i++;
+      setTxt(plain.slice(0, i));
+      if (i >= plain.length) {
+        clearInterval(tt.current);
+        clearInterval(mt.current);
+        setMouth(false);
+        setTyping(false);
+      }
+    }, SPOCKET_TYPING_MS);
+    return () => {
+      clearInterval(tt.current);
+      clearInterval(mt.current);
+    };
+  }, [aiChatActive]);
 
   /* Beta find notice: show after intro typing ends, then auto-hide after 10s. */
   useEffect(() => {
@@ -3226,17 +3418,18 @@ function App() {
     }
     if(o.next==="_parked_dismiss"){dismissParkedQa();return}
     if(o.next==="_find_in_notes"){startFindInNotes();return}
+    if(o.next==="_ai_chat"){startAiChat();return}
     if(o.next==="notes_help_hub"){setParkedNotesHelpOpen(true);setParkedQaOpen(false);}
     else if(o.next==="ask_spocket_unlocked"){setParkedQaOpen(true);setParkedNotesHelpOpen(false);}
     setNode(o.next);
-  },[exit,endConvo,dismissParkedQa,startFindInNotes]);
+  },[exit,endConvo,dismissParkedQa,startFindInNotes,startAiChat]);
   const nd = node ? TREE[node] : null;
   const dialogueRaw = useMemo(() => {
     if (!node || !TREE[node]) return "";
     return applySpocketPlaceholders(TREE[node].msg || "", studentDisplayName);
   }, [node, studentDisplayName]);
   const showUI = phase === "talking" || cryExit || findDockOpen;
-  const cornerUnlockedChat = notesUnlocked && (parkedQaOpen || parkedNotesHelpOpen || findNotesActive);
+  const cornerUnlockedChat = notesUnlocked && (parkedQaOpen || parkedNotesHelpOpen || findNotesActive || aiChatActive);
   const compactParkedUi = notesUnlocked && parked && !roaming && !studyActive && !cornerUnlockedChat;
   const showMainRobot = phase !== "idle" && (phase !== "parked" || cornerUnlockedChat);
   const findFormulaFrameOk =
@@ -3587,7 +3780,7 @@ function App() {
                 style={{
                   flex: "1 1 auto",
                   minWidth: 0,
-                  maxWidth: findNotesActive ? "min(440px, calc(100vw - 120px))" : 300,
+                  maxWidth: (findNotesActive || aiChatActive) ? "min(440px, calc(100vw - 120px))" : 300,
                   marginBottom: CORNER_CHAT_BUBBLE_LIFT,
                   zIndex: 25,
                   animation: "fadeInUp 0.3s ease",
@@ -3596,7 +3789,7 @@ function App() {
                 }}
               >
                 <Bubble
-                  rawMsg={cryExit ? txt : findNotesActive ? SPOCKET_FIND_INTRO_RAW : dialogueRaw}
+                  rawMsg={cryExit ? txt : aiChatActive ? (aiChatMessages.length > 0 && !typing ? aiChatMessages[aiChatMessages.length - 1].content : SPOCKET_AI_INTRO_RAW) : findNotesActive ? SPOCKET_FIND_INTRO_RAW : dialogueRaw}
                   textPlain={txt}
                   isTyping={typing}
                   tiny={cryExit}
@@ -3680,6 +3873,110 @@ function App() {
                     </div>
                   </div>
                 )}
+                {/* ── AI CHAT INPUT ── */}
+                {aiChatActive && !typing && (
+                  <div style={{ marginTop: 12, animation: "fadeInUp 0.25s ease" }}>
+                    {aiNotesContext === null && (
+                      <div style={{ fontSize: 10, color: "#fbbf24", marginBottom: 8, fontWeight: 600 }}>
+                        Loading notes context…
+                      </div>
+                    )}
+                    {aiChatMessages.length > 2 && (
+                      <div style={{
+                        maxHeight: 160,
+                        overflowY: "auto",
+                        marginBottom: 10,
+                        padding: "6px 8px",
+                        borderRadius: 8,
+                        background: "#0b1220",
+                        border: "1px solid #1e293b",
+                        fontSize: 10,
+                        lineHeight: 1.5,
+                      }}>
+                        {aiChatMessages.slice(0, -1).map((m, i) => (
+                          <div key={i} style={{
+                            padding: "4px 0",
+                            borderBottom: i < aiChatMessages.length - 2 ? "1px solid #1e293b" : "none",
+                            color: m.role === "user" ? "#7dd3fc" : "#c8d6e5",
+                          }}>
+                            <span style={{ fontWeight: 700, fontSize: 9, color: m.role === "user" ? "#38bdf8" : "#7fdbca" }}>
+                              {m.role === "user" ? "You" : "Spocket"}:
+                            </span>{" "}
+                            {m.content.length > 120 ? m.content.slice(0, 120) + "…" : m.content}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <label htmlFor="tm-ai-chat-input" style={{ display: "block", fontSize: 10, color: "#94a3b8", marginBottom: 6 }}>
+                      {aiNotesContext === null ? "Extracting notes content…" : "Ask a question about your notes"}
+                    </label>
+                    <textarea
+                      id="tm-ai-chat-input"
+                      value={aiChatInput}
+                      onChange={(e) => setAiChatInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          submitAiChat();
+                        }
+                      }}
+                      disabled={aiChatLoading || aiNotesContext === null}
+                      rows={2}
+                      placeholder="e.g. What is the safety factor formula?"
+                      style={{
+                        width: "100%",
+                        boxSizing: "border-box",
+                        resize: "vertical",
+                        minHeight: 56,
+                        padding: "8px 10px",
+                        borderRadius: 10,
+                        border: "1px solid #334155",
+                        background: "#0b1220",
+                        color: "#e2e8f0",
+                        fontFamily: "'JetBrains Mono',monospace",
+                        fontSize: 11,
+                        lineHeight: 1.45,
+                        marginBottom: 8,
+                      }}
+                    />
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                      <button
+                        type="button"
+                        onClick={() => dismissParkedQa()}
+                        style={{
+                          padding: "6px 12px",
+                          borderRadius: 10,
+                          border: "1px solid #475569",
+                          background: "#0f172a",
+                          color: "#94a3b8",
+                          fontSize: 10,
+                          fontFamily: "'JetBrains Mono',monospace",
+                          cursor: "pointer",
+                        }}
+                      >
+                        Back
+                      </button>
+                      <button
+                        type="button"
+                        disabled={aiChatLoading || !aiChatInput.trim() || aiNotesContext === null}
+                        onClick={() => submitAiChat()}
+                        style={{
+                          padding: "6px 14px",
+                          borderRadius: 10,
+                          border: "none",
+                          background: aiChatLoading || !aiChatInput.trim() || aiNotesContext === null ? "#475569" : "#fbbf24",
+                          color: aiChatLoading || !aiChatInput.trim() || aiNotesContext === null ? "#94a3b8" : "#0a0f1a",
+                          fontSize: 10,
+                          fontWeight: 700,
+                          fontFamily: "'JetBrains Mono',monospace",
+                          cursor: aiChatLoading || !aiChatInput.trim() || aiNotesContext === null ? "not-allowed" : "pointer",
+                        }}
+                      >
+                        {aiChatLoading ? "Thinking…" : "Ask Spocket"}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -3702,7 +3999,7 @@ function App() {
                 {balloon && (
                   <div style={{ position: "absolute", top: -40, left: "50%", transform: "translateX(-50%)", fontSize: 36 }}>🎈</div>
                 )}
-                <Robot eyes={cryExit ? "crying" : findNotesActive ? "thinking" : nd?.eyes || "happy"} mouthOpen={mouth} scale={dynamicScale} showCookie={showCookie} showIpad={showIpad} facing={facing} />
+                <Robot eyes={cryExit ? "crying" : aiChatLoading ? "thinking" : findNotesActive ? "thinking" : nd?.eyes || "happy"} mouthOpen={mouth} scale={dynamicScale} showCookie={showCookie} showIpad={showIpad} facing={facing} />
               </div>
             </div>
           </div>
@@ -3824,7 +4121,7 @@ function App() {
                 cornerUnlockedChat ? dismissParkedQa() : endConvo();
               }}
             >
-              {findDockOpen ? "✕ Done (find)" : findNotesActive ? "✕ Done" : cornerUnlockedChat ? "✕ Close" : "✕ End conversation"}
+              {findDockOpen ? "✕ Done (find)" : findNotesActive ? "✕ Done" : aiChatActive ? "✕ Close AI" : cornerUnlockedChat ? "✕ Close" : "✕ End conversation"}
             </button>
           </div>
         )}
@@ -3887,6 +4184,7 @@ function App() {
             onAskAboutMe={startParkedQa}
             onNotesHelp={startNotesHelp}
             onFindInNotes={startFindInNotes}
+            onAskAboutNotes={startAiChat}
             onLogOut={requestLogout}
           />
         )}
@@ -3911,6 +4209,7 @@ function App() {
           onAskAboutMe={startParkedQa}
           onNotesHelp={startNotesHelp}
           onFindInNotes={startFindInNotes}
+          onAskAboutNotes={startAiChat}
           onLogOut={requestLogout}
         />
       </div>

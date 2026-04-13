@@ -1483,6 +1483,24 @@
         clearSpocketFindHighlights();
         return;
       }
+      if (ev.data.type === 'tm_spocket_extract_text') {
+        try {
+          var plainText = (document.body.innerText || '').slice(0, 40000);
+          window.parent.postMessage({
+            type: 'tm_spocket_extract_text_result',
+            ok: true,
+            text: plainText
+          }, '*');
+        } catch (eExtract) {
+          window.parent.postMessage({
+            type: 'tm_spocket_extract_text_result',
+            ok: false,
+            text: '',
+            message: eExtract && eExtract.message ? String(eExtract.message) : 'Extract failed'
+          }, '*');
+        }
+        return;
+      }
     });
 
     var nodes = [];
