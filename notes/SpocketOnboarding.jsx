@@ -24,6 +24,8 @@ function tmSpocketFindSourceMatchesFrame(frameContentWindow, source) {
 
 const SPOCKET_TYPING_MS = 20;
 const SPOCKET_MOUTH_MS = 80;
+const SPOCKET_AI_WORD_MS = 30;
+const SPOCKET_AI_INTRO_RAW = "I have the notes loaded! **Ask me anything** about the course content and I will find the answer for you. I can only reference what is in these notes — if something is not covered, I will let you know.";
 const LS_SPOCKET_DISPLAY_NAME = "spocket_student_display_name_v1";
 const LS_SPOCKET_SPACE_TIP = "spocket_space_skip_tip_dismissed_v1";
 const LS_SPOCKET_NAME_SKIP = "spocket_name_prompt_skip_v1";
@@ -76,7 +78,7 @@ function spocketBubbleRichNodes(raw, visiblePlainLen) {
 }
 
 const SPOCKET_FIND_INTRO_RAW =
-  "What do you want to know? Type a short question or words you remember from your notes or formula sheet. **I will highlight related spots, then a pink bar at the top will appear with arrows to jump between them and switch workspaces — tap Done on that bar when you are finished.** This finder is still in beta.";
+  "Ask me anything about the course content! Type a question or topic and **I will highlight the relevant sections in the study guide and formula sheet, then explain what I found.** A pink bar will appear at the top with arrows to jump between highlights and switch workspaces — tap Done on that bar when you are finished.";
 
 /* ═══════════════════════════════════════════
    DIALOGUE TREE
@@ -133,7 +135,10 @@ const TREE = {
   unlock_name_saved_ack: {
     msg: "Got it — I'll call you **{name}** here. Use the corner menu if you need workspace help or Find in notes.",
     eyes: "happy",
-    options: [{ label: "Sounds good", next: "_parked_dismiss" }],
+    options: [
+      { label: "What shortcut keys are there?", next: "shortcut_keys_intro" },
+      { label: "Sounds good", next: "_parked_dismiss" },
+    ],
   },
   here_for_notes: {
     msg: "This area is locked for Talia's students. If you are supposed to be in there, use the password on the card, or request a temporary one from her.",
@@ -164,7 +169,7 @@ const TREE = {
     ],
   },
   who_spocket: {
-    msg: "I'm Spocket, the in-page assistant for Talia's Student Resources. **I am not course content: I route people through unlock, explain how the notes workspace behaves, and after unlock I stay in a fixed corner shell.** From there you can open Roam (interactive scene), Study (timers, reminders, session log), structured help for the study guide / formula views, or Find in notes (beta), which posts search steps into the embedded iframes so related passages highlight in sync.",
+    msg: "I'm Spocket, the in-page assistant for Talia's Student Resources. **I help students navigate the notes workspace, and I can answer course-related questions using AI.** From the corner menu you can open Roam (interactive scene), Study (timers, reminders, session log), structured workspace help, Ask AI (I read the course notes and answer questions), or Find in notes (highlights and explains related sections).",
     eyes: "happy",
     options: [
       { label: "What will you be doing here?", next: "what_spocket_does" },
@@ -173,7 +178,7 @@ const TREE = {
     ],
   },
   what_spocket_does: {
-    msg: "Before unlock I run the scripted onboarding tree (access paths, what is locked, where to request a code). **After unlock the same React layer adds a parked UI: Roam and Study are separate layouts with optional full-width chrome; the dialogue hub documents toolbar tools, persistence, and shortcuts, or dispatches tm_spocket_find* messages into the workspace frames for cross-document search.** Roam can toggle the site nav so the iframe column stays readable; full-page Study hides the menu until you leave with ← Leave.",
+    msg: "Before unlock I run scripted onboarding (access paths, what is locked, where to request a code). **After unlock I add a corner menu with: Roam and Study layouts, workspace help and keyboard shortcuts, Find in notes (highlights and explains what you ask about), and Ask AI (I read the course notes and answer freeform questions using Gemini).** Roam can toggle the site nav so the iframe column stays readable; full-page Study hides the menu until you leave.",
     eyes: "happy",
     options: [
       { label: "Who are you?", next: "who_spocket" },
@@ -201,7 +206,7 @@ const TREE = {
     ],
   },
   sq_ai_real: {
-    msg: "No large language model: I am a branching state machine (plain objects in this file), React state for UI modes, and imperative bits for timers and postMessage bridges. If an answer is wrong, it is a content bug—tell Talia.",
+    msg: "I am a mix! My dialogue, onboarding, and workspace tools are a **hand-authored state machine** (React state + scripted nodes). But my **Ask AI** feature connects to Gemini to answer freeform questions grounded in the actual course notes. The AI only sees what is on this page — it does not make things up from the internet.",
     eyes: "nervous",
     options: [
       { label: "Another question", next: "ask_spocket_start" },
@@ -209,7 +214,7 @@ const TREE = {
     ],
   },
   sq_can_do: {
-    msg: "On this page: scripted onboarding, access routing, embedded forms, and this FAQ. After unlock: Roam/Study experiences, reminder scheduling, the structured notes-help tree, and Find in notes (beta) that walks iframe content via typed window messages. Idle motion is CSS + timed state on the SVG puppet—no backend calls.",
+    msg: "On this page: scripted onboarding, access routing, embedded forms, and this FAQ. After unlock: **Ask AI** (I read the course notes and answer questions via Gemini), **Find in notes** (highlights and explains relevant sections), Roam/Study experiences, reminder scheduling, keyboard shortcut reference, and the structured notes-help tree.",
     eyes: "happy",
     options: [
       { label: "Another question", next: "ask_spocket_start" },
@@ -234,7 +239,8 @@ const TREE = {
       { label: "What can you actually do here?", next: "sq_can_do_p" },
       { label: "Where did you come from?", next: "sq_origin_p" },
       { label: "How do the notes tools work?", next: "notes_help_hub" },
-      { label: "Find text in my notes (beta)", next: "_find_in_notes" },
+      { label: "Shortcut keys", next: "shortcut_keys_intro" },
+      { label: "Find & explain in the notes", next: "_find_in_notes" },
       { label: "Done for now", next: "_parked_dismiss" },
     ],
   },
@@ -247,7 +253,7 @@ const TREE = {
     ],
   },
   sq_ai_real_p: {
-    msg: "No large language model: I am a branching state machine (plain objects in this file), React state for UI modes, and imperative bits for timers and postMessage bridges. If an answer is wrong, it is a content bug—tell Talia.",
+    msg: "I am a mix! My dialogue, onboarding, and workspace tools are a **hand-authored state machine** (React state + scripted nodes). But my **Ask AI** feature connects to Gemini to answer freeform questions grounded in the actual course notes. The AI only sees what is on this page — it does not make things up from the internet.",
     eyes: "nervous",
     options: [
       { label: "Another question", next: "ask_spocket_unlocked" },
@@ -255,7 +261,7 @@ const TREE = {
     ],
   },
   sq_can_do_p: {
-    msg: "Locked: onboarding + access paths only. Unlocked: Roam/Study layouts, reminders, structured notes help, and Find in notes (beta) that issues tm_spocket_find / step / clear messages into both workspace frames so highlights stay aligned while you navigate. Roam exposes a control to collapse site nav for a wider iframe; Study is full-page with the menu hidden. Motion is local React/CSS state only.",
+    msg: "Locked: onboarding + access paths only. Unlocked: **Ask AI** (freeform questions answered by Gemini using the course notes), **Find in notes** (highlights and explains relevant sections), Roam/Study layouts, reminders, keyboard shortcuts, and structured workspace help. Roam collapses the site nav for a wider iframe; Study is full-page with the menu hidden.",
     eyes: "happy",
     options: [
       { label: "Another question", next: "ask_spocket_unlocked" },
@@ -315,6 +321,14 @@ const TREE = {
     options: [
       { label: "More topics", next: "notes_help_hub" },
       { label: "Done", next: "_parked_dismiss" },
+    ],
+  },
+  shortcut_keys_intro: {
+    msg: "Here are the shortcuts for annotating the notes workspace: **Ctrl+H** toggles the highlighter, **Ctrl+Shift+S** drops a new sticky note, **Ctrl+A** toggles the arrow pen, **Ctrl+Z** undoes and **Ctrl+Y** redoes a drawing, **Ctrl+C / Ctrl+V** copies a selected shape. On Mac, use **Cmd** instead of Ctrl.",
+    eyes: "happy",
+    options: [
+      { label: "Thanks!", next: "_parked_dismiss" },
+      { label: "What else can I do?", next: "ask_spocket_unlocked" },
     ],
   },
   nh_keys: {
@@ -394,12 +408,14 @@ const TREE = {
 };
 
 const IDLE_JOKES = [
-  "Psst... I'm not fully deployed yet. My developer said 'soon™'.",
-  "Still here! Just oiling my treads and contemplating existence.",
-  "Error 418: I'm a teapot. Just kidding! Still under construction.",
-  "My navigation module is on backorder. For now I just... vibe.",
-  "v2 me is gonna be SO cool. Current me just sits here.",
-  "I tried to deploy myself once. Got a 403 Forbidden. Rude.",
+  "v2 is live! I can actually answer questions now. v3 me is gonna have legs.",
+  "Still here! Oiling my treads between questions. v3 might get a jetpack.",
+  "Error 418: I'm a teapot. Just kidding — I'm a study assistant now!",
+  "They gave me a brain in v2. v3 rumor says I get a laser pointer for the whiteboard.",
+  "v2 me: answers questions, highlights notes. v3 me: probably takes the exam for you.",
+  "I used to just sit here. Now I read the course notes AND sit here. Progress!",
+  "My developer said v3 will be 'transformative'. I asked if that's a pun. She said no.",
+  "Fun fact: I was once just a dialogue tree. Now I have AI. Still no legs though.",
 ];
 
 /* ═══════════════════════════════════════════
@@ -708,7 +724,7 @@ function Robot({ eyes = "happy", mouthOpen = false, scale = 1, style = {}, wavin
 
 /* ── Bubble ──
    tail: "bottom" (default, tail under bubble) | "right" (tail on right edge, points toward robot to the right) */
-function Bubble({ rawMsg, textPlain, text, isTyping, tiny, onSkip, tail = "bottom" }) {
+function Bubble({ rawMsg, textPlain, text, isTyping, tiny, onSkip, tail = "bottom", maxWidth: mw }) {
   const raw = rawMsg != null ? rawMsg : text != null ? text : "";
   const plainLen = isTyping ? (textPlain != null ? textPlain.length : text != null ? text.length : 0) : null;
   const bodyNodes = spocketBubbleRichNodes(raw, plainLen);
@@ -719,9 +735,9 @@ function Bubble({ rawMsg, textPlain, text, isTyping, tiny, onSkip, tail = "botto
         backgroundImage: "linear-gradient(135deg,#1a2538,#121a2e)",
         border: "1px solid #7fdbca30",
         borderRadius: 18,
-        padding: tiny ? (tail === "right" ? "10px 18px 10px 14px" : "10px 16px") : tail === "right" ? "18px 26px 18px 22px" : "18px 24px",
+        padding: tiny ? (tail === "right" ? "10px 18px 10px 14px" : "10px 16px") : tail === "right" ? "18px 26px 18px 22px" : tail === "left" ? "18px 24px 18px 26px" : "18px 24px",
         minWidth: 240,
-        maxWidth: 420,
+        maxWidth: mw || 420,
         fontFamily: "'JetBrains Mono',monospace",
         fontSize: tiny ? 11 : 14,
         color: tiny ? "#7fdbca50" : "#c8d6e5",
@@ -756,6 +772,16 @@ function Bubble({ rawMsg, textPlain, text, isTyping, tiny, onSkip, tail = "botto
           aria-hidden="true"
         >
           <path d="M0 5 L14 11 L0 17 Z" fill="#121a2e" />
+        </svg>
+      ) : tail === "left" ? (
+        <svg
+          width="14"
+          height="22"
+          viewBox="0 0 14 22"
+          style={{ position: "absolute", left: -11, top: 28, pointerEvents: "none" }}
+          aria-hidden="true"
+        >
+          <path d="M14 5 L0 11 L14 17 Z" fill="#121a2e" />
         </svg>
       ) : (
         <svg width="20" height="14" viewBox="0 0 20 14" style={{ position: "absolute", bottom: -13, left: 28 }} aria-hidden="true">
@@ -1944,6 +1970,7 @@ function ParkedRobot({
   onAskAboutMe = () => {},
   onNotesHelp = () => {},
   onFindInNotes = () => {},
+  onAskAboutNotes = () => {},
   onLogOut = () => {},
 }) {
   const [h, setH] = useState(false);
@@ -1999,7 +2026,7 @@ function ParkedRobot({
             border: "1px solid #7fdbca30",
             borderRadius: 14,
             padding: "14px 18px",
-            width: 260,
+            width: "min(260px, calc(100vw - 48px))",
             animation: "fadeInUp 0.2s ease",
             boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
             zIndex: 40,
@@ -2095,7 +2122,19 @@ function ParkedRobot({
                   onMouseOver={(e) => (e.target.style.background = "#38bdf824")}
                   onMouseOut={(e) => (e.target.style.background = "#38bdf812")}
                 >
-                  🔎 What do you want to know? (beta)
+                  🔎 Find & explain in the notes
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAskAboutNotes();
+                  }}
+                  style={{ ...btn, background: "#fbbf2412", border: "1px solid #fbbf2450", color: "#fde68a" }}
+                  onMouseOver={(e) => (e.target.style.background = "#fbbf2428")}
+                  onMouseOut={(e) => (e.target.style.background = "#fbbf2412")}
+                >
+                  ✨ Ask AI about the notes
                 </button>
                 <button
                   type="button"
@@ -2118,9 +2157,9 @@ function ParkedRobot({
         </div>
       )}
       <div style={{ animation: h ? "none" : idle === "sleep" ? "sleepBob 3s ease-in-out infinite" : "idleBob 3s ease-in-out infinite" }}>
-        <Robot eyes={h ? "startled" : "happy"} scale={0.4} startled={h} idleAnim={h ? "none" : idle} />
+        <Robot eyes={h ? "startled" : "happy"} scale={(typeof window !== "undefined" && window.innerWidth <= 480) ? 0.3 : 0.4} startled={h} idleAnim={h ? "none" : idle} />
       </div>
-      <div style={{ textAlign: "center", marginTop: -6, fontSize: 7, color: "#7fdbca35", fontFamily: "monospace" }}>SPOCKET</div>
+      <div style={{ textAlign: "center", marginTop: -6, fontSize: (typeof window !== "undefined" && window.innerWidth <= 480) ? 6 : 7, color: "#7fdbca35", fontFamily: "monospace" }}>SPOCKET</div>
     </div>
   );
 }
@@ -2173,6 +2212,13 @@ function App() {
   const [findBetaBannerVisible, setFindBetaBannerVisible] = useState(false);
   const [findDockOpen, setFindDockOpen] = useState(false);
   const [findDockQuery, setFindDockQuery] = useState("");
+  /* ── AI CHAT STATE ── */
+  const [aiChatActive, setAiChatActive] = useState(false);
+  const [aiChatMessages, setAiChatMessages] = useState([]);
+  const [aiChatLoading, setAiChatLoading] = useState(false);
+  const [aiChatInput, setAiChatInput] = useState("");
+  const [aiNotesContext, setAiNotesContext] = useState(null);
+  const aiChatActiveRef = useRef(false);
   const [studentDisplayName, setStudentDisplayName] = useState(() => {
     try {
       return typeof localStorage !== "undefined" ? localStorage.getItem(LS_SPOCKET_DISPLAY_NAME) || "" : "";
@@ -2197,6 +2243,30 @@ function App() {
     }
   });
 
+  /* ── RESPONSIVE: track viewport size ── */
+  const [vpW, setVpW] = useState(() => typeof window !== "undefined" ? window.innerWidth : 1024);
+  const [vpH, setVpH] = useState(() => typeof window !== "undefined" ? window.innerHeight : 800);
+  useEffect(() => {
+    const onResize = () => { setVpW(window.innerWidth); setVpH(window.innerHeight); };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+  const isMobile = vpW <= 768;
+  const isSmallMobile = vpW <= 480;
+  /* Dynamic robot scale: smoothly scales based on both width and height.
+     On mobile (narrow), width is the limiting factor. On short laptops, height is. */
+  const scaleByH = vpH / 600;
+  const scaleByW = vpW / 500;
+  const dynamicScale = Math.min(1.5, Math.max(0.7, Math.min(scaleByH, scaleByW)));
+  const dynamicRobotH = 200 * dynamicScale; /* Robot component is 200px tall before scale */
+  const NAV_H = 64;
+  /* Available vertical space: viewport minus navbar (top) and buttons area (bottom ~100px) */
+  const availH = vpH - NAV_H - 100;
+  const dynamicRobotW = 140 * dynamicScale;
+  /* Always side-by-side: robot on left, bubble to the right — robot height drives vertical centering */
+  const robotTopPos = NAV_H + Math.max(10, (availH - dynamicRobotH) / 2);
+  const bubbleTopPos = robotTopPos;
+
   const tt=useRef(null);const mt=useRef(null);const timers=useRef([]);const fullRef=useRef("");
   useEffect(() => {
     findNotesActiveRef.current = findNotesActive;
@@ -2204,6 +2274,9 @@ function App() {
   useEffect(() => {
     findDockOpenRef.current = findDockOpen;
   }, [findDockOpen]);
+  useEffect(() => {
+    aiChatActiveRef.current = aiChatActive;
+  }, [aiChatActive]);
   useEffect(() => {
     findNotesBusyRef.current = findNotesBusy;
   }, [findNotesBusy]);
@@ -2382,6 +2455,11 @@ function App() {
     setFollowUp(null);
     setBalloon(false);
     setCryExit(false);
+    setAiChatActive(false);
+    setAiChatMessages([]);
+    setAiChatLoading(false);
+    setAiChatInput("");
+    setAiNotesContext(null);
   }, [clearAll, clearFindHighlightsBoth]);
 
   const endFindDockSession = useCallback(() => {
@@ -2553,6 +2631,140 @@ function App() {
     setFacing("front");
   }, [clearAll]);
 
+  /* ── AI CHAT: extract notes context from iframes ── */
+  const extractNotesContext = useCallback(() => {
+    return new Promise((resolve) => {
+      let notesText = "";
+      let formulaText = "";
+      let responded = 0;
+      const nEl = document.getElementById("notes-frame");
+      const fEl = document.getElementById("formula-frame");
+      const hasN = !!(nEl && nEl.contentWindow);
+      const hasF = !!(fEl && fEl.contentWindow);
+      const needed = (hasN ? 1 : 0) + (hasF ? 1 : 0);
+      if (needed === 0) { resolve(""); return; }
+
+      const onMsg = (ev) => {
+        if (!ev.data || ev.data.type !== "tm_spocket_extract_text_result") return;
+        const nWin = nEl && nEl.contentWindow;
+        const fWin = fEl && fEl.contentWindow;
+        if (nWin && tmSpocketFindSourceMatchesFrame(nWin, ev.source)) {
+          notesText = ev.data.text || "";
+          responded++;
+        } else if (fWin && tmSpocketFindSourceMatchesFrame(fWin, ev.source)) {
+          formulaText = ev.data.text || "";
+          responded++;
+        }
+        if (responded >= needed) {
+          window.removeEventListener("message", onMsg);
+          resolve((notesText + "\n\n--- FORMULA SHEET ---\n\n" + formulaText).slice(0, 30000));
+        }
+      };
+      window.addEventListener("message", onMsg);
+      if (hasN) nEl.contentWindow.postMessage({ type: "tm_spocket_extract_text" }, "*");
+      if (hasF) fEl.contentWindow.postMessage({ type: "tm_spocket_extract_text" }, "*");
+      // Timeout fallback
+      setTimeout(() => {
+        window.removeEventListener("message", onMsg);
+        resolve((notesText + "\n\n" + formulaText).slice(0, 30000));
+      }, 5000);
+    });
+  }, []);
+
+  /* ── AI CHAT: start chat mode ── */
+  const startAiChat = useCallback(() => {
+    clearAll();
+    findSessionGenRef.current += 1;
+    findDockOpenRef.current = false;
+    findNotesBusyRef.current = false;
+    setParkedQaOpen(false);
+    setParkedNotesHelpOpen(false);
+    setFindNotesActive(false);
+    setFindNotesQuery("");
+    setFollowUp(null);
+    setFindNotesBusy(false);
+    setFindExploreOn(false);
+    setFindDockOpen(false);
+    setFindDockQuery("");
+    setAiChatActive(true);
+    setAiChatMessages([]);
+    setAiChatLoading(false);
+    setAiChatInput("");
+    setAiNotesContext(null);
+    setParked(true);
+    setPhase("talking");
+    setNode(null);
+    setCardGone(true);
+    setCardBack(false);
+    setCryExit(false);
+    setShowForm(false);
+    setShowIpad(false);
+    setShowCookie(false);
+    setCookiePopup(false);
+    setBalloon(false);
+    setFacing("front");
+    // Extract notes in background
+    extractNotesContext().then((ctx) => {
+      if (aiChatActiveRef.current) setAiNotesContext(ctx);
+    });
+  }, [clearAll, extractNotesContext]);
+
+  /* ── AI CHAT: submit a question ── */
+  const submitAiChat = useCallback(() => {
+    const q = aiChatInput.trim();
+    if (!q || aiChatLoading || !aiNotesContext) return;
+    const newMessages = [...aiChatMessages, { role: "user", content: q }];
+    setAiChatMessages(newMessages);
+    setAiChatInput("");
+    setAiChatLoading(true);
+    setFollowUp(null);
+    // Start thinking animation
+    clearInterval(mt.current);
+    mt.current = setInterval(() => setMouth((p) => !p), SPOCKET_MOUTH_MS);
+    setTyping(true);
+    setTxt("");
+
+    fetch("/api/gemini", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages: newMessages, context: aiNotesContext }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (!aiChatActiveRef.current) return;
+        const reply = data.reply || data.error || "Something went wrong.";
+        setAiChatMessages((prev) => [...prev, { role: "assistant", content: reply }]);
+        // Word-by-word typewriter for the response
+        const words = reply.split(/(\s+)/);
+        let i = 0;
+        let built = "";
+        fullRef.current = reply;
+        clearInterval(tt.current);
+        tt.current = setInterval(() => {
+          if (i < words.length) {
+            built += words[i];
+            i++;
+            setTxt(built);
+          } else {
+            clearInterval(tt.current);
+            clearInterval(mt.current);
+            setMouth(false);
+            setTyping(false);
+            setAiChatLoading(false);
+          }
+        }, SPOCKET_AI_WORD_MS);
+      })
+      .catch((err) => {
+        if (!aiChatActiveRef.current) return;
+        clearInterval(tt.current);
+        clearInterval(mt.current);
+        setMouth(false);
+        setTyping(false);
+        setAiChatLoading(false);
+        setFollowUp("Something went wrong — check your connection and try again.");
+      });
+  }, [aiChatInput, aiChatLoading, aiNotesContext, aiChatMessages]);
+
   useEffect(() => {
     if (!findNotesActive) return;
     fullRef.current = SPOCKET_FIND_INTRO_RAW;
@@ -2579,6 +2791,34 @@ function App() {
       clearInterval(mt.current);
     };
   }, [findNotesActive]);
+
+  /* AI chat intro typewriter effect */
+  useEffect(() => {
+    if (!aiChatActive) return;
+    fullRef.current = SPOCKET_AI_INTRO_RAW;
+    const plain = spocketPlainFromRaw(SPOCKET_AI_INTRO_RAW);
+    setFollowUp(null);
+    setTxt("");
+    setTyping(true);
+    let i = 0;
+    clearInterval(tt.current);
+    clearInterval(mt.current);
+    mt.current = setInterval(() => setMouth((p) => !p), SPOCKET_MOUTH_MS);
+    tt.current = setInterval(() => {
+      i++;
+      setTxt(plain.slice(0, i));
+      if (i >= plain.length) {
+        clearInterval(tt.current);
+        clearInterval(mt.current);
+        setMouth(false);
+        setTyping(false);
+      }
+    }, SPOCKET_TYPING_MS);
+    return () => {
+      clearInterval(tt.current);
+      clearInterval(mt.current);
+    };
+  }, [aiChatActive]);
 
   /* Beta find notice: show after intro typing ends, then auto-hide after 10s. */
   useEffect(() => {
@@ -2803,6 +3043,7 @@ function App() {
     setFacing("side"); // Robot enters in side profile
 
     const w = window.innerWidth || 900;
+    const h = window.innerHeight || 800;
     const m = measureLockCardForArena();
     if (m) {
       lockCardMetricsRef.current = m;
@@ -2811,9 +3052,12 @@ function App() {
       lockCardMetricsRef.current = { left: w / 2 - CARD_W / 2, centerY: null, width: CARD_W };
       setRobotAnchorY(null);
     }
+    /* Dynamic scale at animation time — matches the render-time dynamicScale formula */
+    const scaleNow = Math.min(1.5, Math.max(0.7, Math.min(h / 600, w / 500)));
+    const renderW = 140 * scaleNow + 40; /* body width + arm extend */
     const cardLeft = lockCardMetricsRef.current.left;
-    const contactX = cardLeft - ROBOT_TOTAL_W;
-    const talkX = 60;
+    const contactX = cardLeft - renderW; /* robot's right edge touches card's left edge */
+    const talkX = Math.max(10, w * 0.04);
 
     // Step 0 (200ms): Mount robot in DOM at off-screen position
     later(()=>{setPhase("entering")},200);
@@ -2851,7 +3095,7 @@ function App() {
     clearAll();
     setPhase("idle");setNode(null);setTxt("");setTyping(false);setMouth(false);
     setCardGone(false);setCardBack(false);setCryExit(false);
-    setRobotX(-ROBOT_TOTAL_W-50);setShowForm(false);setShowIpad(false);setShowCookie(false);
+    setRobotX(-300);setShowForm(false);setShowIpad(false);setShowCookie(false);
     setCookiePopup(false);setBalloon(false);setParked(false);setFollowUp(null);setRoaming(false);setStudyActive(false);setFacing("side");
 
     const m = measureLockCardForArena();
@@ -2864,7 +3108,10 @@ function App() {
       setRobotAnchorY(null);
     }
 
-    const talkX = 60;
+    const wr = window.innerWidth || 900;
+    const hr = window.innerHeight || 800;
+    const scaleNowR = Math.min(1.5, Math.max(0.7, Math.min(hr / 600, wr / 500)));
+    const talkX = Math.max(10, wr * 0.04);
 
     // Pick a random welcome back message
     const welcomeMsg = WELCOME_BACKS[Math.floor(Math.random() * WELCOME_BACKS.length)];
@@ -2873,11 +3120,8 @@ function App() {
 
     // Step 0: Mount robot
     later(()=>{setPhase("entering")},200);
-    // Step 1: Roll to talk position (no card push)
     later(()=>{setRobotX(talkX)},400);
-    // Step 2: Turn to face user
     later(()=>setFacing("front"),2200);
-    // Step 3: Start talking
     later(()=>{setPhase("talking");setNode("returning")},2600);
   },[clearAll, measureLockCardForArena, studentDisplayName]);
 
@@ -3176,17 +3420,18 @@ function App() {
     }
     if(o.next==="_parked_dismiss"){dismissParkedQa();return}
     if(o.next==="_find_in_notes"){startFindInNotes();return}
+    if(o.next==="_ai_chat"){startAiChat();return}
     if(o.next==="notes_help_hub"){setParkedNotesHelpOpen(true);setParkedQaOpen(false);}
     else if(o.next==="ask_spocket_unlocked"){setParkedQaOpen(true);setParkedNotesHelpOpen(false);}
     setNode(o.next);
-  },[exit,endConvo,dismissParkedQa,startFindInNotes]);
+  },[exit,endConvo,dismissParkedQa,startFindInNotes,startAiChat]);
   const nd = node ? TREE[node] : null;
   const dialogueRaw = useMemo(() => {
     if (!node || !TREE[node]) return "";
     return applySpocketPlaceholders(TREE[node].msg || "", studentDisplayName);
   }, [node, studentDisplayName]);
   const showUI = phase === "talking" || cryExit || findDockOpen;
-  const cornerUnlockedChat = notesUnlocked && (parkedQaOpen || parkedNotesHelpOpen || findNotesActive);
+  const cornerUnlockedChat = notesUnlocked && (parkedQaOpen || parkedNotesHelpOpen || findNotesActive || aiChatActive);
   const compactParkedUi = notesUnlocked && parked && !roaming && !studyActive && !cornerUnlockedChat;
   const showMainRobot = phase !== "idle" && (phase !== "parked" || cornerUnlockedChat);
   const findFormulaFrameOk =
@@ -3209,7 +3454,7 @@ function App() {
     fontFamily: "'JetBrains Mono',monospace",
     position: "relative",
     /* overflow:hidden clips position:fixed descendants (e.g. find dock); keep visible while dock open */
-    overflow: compactParkedUi || findDockOpen ? "visible" : "hidden",
+    overflow: compactParkedUi || findDockOpen || isMobile ? "visible" : "hidden",
     pointerEvents: "none",
   };
 
@@ -3220,11 +3465,11 @@ function App() {
           role="status"
           style={{
             position: "fixed",
-            top: 72,
+            bottom: 16,
             left: "50%",
             transform: "translateX(-50%)",
             zIndex: 600,
-            maxWidth: "min(420px, calc(100vw - 24px))",
+            maxWidth: "min(340px, calc(100vw - 24px))",
             padding: "12px 16px",
             borderRadius: 14,
             background: "linear-gradient(135deg,#1e293b,#0f172a)",
@@ -3310,6 +3555,7 @@ function App() {
         @keyframes clawHinge{0%,100%{transform:translateX(-50%) scaleX(1)}50%{transform:translateX(-50%) scaleX(1.25)}}
         .opt-btn{padding:10px 20px;background:#0f172a;border:1px solid #7fdbca50;border-radius:22px;color:#7fdbca;font-size:12px;font-family:'JetBrains Mono',monospace;cursor:pointer;transition:all 0.2s;white-space:nowrap;box-shadow:0 2px 10px rgba(0,0,0,0.4)}
         .opt-btn:hover{background:#152238;border-color:#7fdbca;transform:translateY(-2px);box-shadow:0 4px 16px rgba(127,219,202,0.2)}
+        @media(max-width:768px){.opt-btn{padding:7px 14px;font-size:10px;white-space:normal;text-align:center}}
         .end-btn{padding:6px 14px;background:#0f172a;border:1px solid #ff6b6b30;border-radius:16px;color:#ff6b6b60;font-size:10px;font-family:'JetBrains Mono',monospace;cursor:pointer;transition:all 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.35)}
         .end-btn:hover{background:#1a1218;border-color:#ff6b6b;color:#ff6b6b}
       `}</style>
@@ -3521,10 +3767,10 @@ function App() {
                   pointerEvents: "none",
                 }
               : {
-                  position: "absolute",
-                  top: robotAnchorY != null ? robotAnchorY : "60%",
+                  position: "fixed",
+                  top: robotTopPos,
                   left: robotX,
-                  transform: `translateY(-50%)${phase === "leaving" ? " scaleX(-1)" : ""}`,
+                  transform: phase === "leaving" ? "scaleX(-1)" : "none",
                   transition: "left 1.8s cubic-bezier(0.25,0.46,0.45,0.94)",
                   zIndex: 20,
                   pointerEvents: "none",
@@ -3536,7 +3782,7 @@ function App() {
                 style={{
                   flex: "1 1 auto",
                   minWidth: 0,
-                  maxWidth: findNotesActive ? "min(440px, calc(100vw - 120px))" : 300,
+                  maxWidth: (findNotesActive || aiChatActive) ? "min(440px, calc(100vw - 120px))" : 300,
                   marginBottom: CORNER_CHAT_BUBBLE_LIFT,
                   zIndex: 25,
                   animation: "fadeInUp 0.3s ease",
@@ -3545,7 +3791,7 @@ function App() {
                 }}
               >
                 <Bubble
-                  rawMsg={cryExit ? txt : findNotesActive ? SPOCKET_FIND_INTRO_RAW : dialogueRaw}
+                  rawMsg={cryExit ? txt : aiChatActive ? (aiChatMessages.length > 0 && !typing ? aiChatMessages[aiChatMessages.length - 1].content : SPOCKET_AI_INTRO_RAW) : findNotesActive ? SPOCKET_FIND_INTRO_RAW : dialogueRaw}
                   textPlain={txt}
                   isTyping={typing}
                   tiny={cryExit}
@@ -3629,42 +3875,121 @@ function App() {
                     </div>
                   </div>
                 )}
+                {/* ── AI CHAT INPUT ── */}
+                {aiChatActive && !typing && (
+                  <div style={{ marginTop: 12, animation: "fadeInUp 0.25s ease" }}>
+                    {aiNotesContext === null && (
+                      <div style={{ fontSize: 10, color: "#fbbf24", marginBottom: 8, fontWeight: 600 }}>
+                        Loading notes context…
+                      </div>
+                    )}
+                    {aiChatMessages.length > 2 && (
+                      <div style={{
+                        maxHeight: 160,
+                        overflowY: "auto",
+                        marginBottom: 10,
+                        padding: "6px 8px",
+                        borderRadius: 8,
+                        background: "#0b1220",
+                        border: "1px solid #1e293b",
+                        fontSize: 10,
+                        lineHeight: 1.5,
+                      }}>
+                        {aiChatMessages.slice(0, -1).map((m, i) => (
+                          <div key={i} style={{
+                            padding: "4px 0",
+                            borderBottom: i < aiChatMessages.length - 2 ? "1px solid #1e293b" : "none",
+                            color: m.role === "user" ? "#7dd3fc" : "#c8d6e5",
+                          }}>
+                            <span style={{ fontWeight: 700, fontSize: 9, color: m.role === "user" ? "#38bdf8" : "#7fdbca" }}>
+                              {m.role === "user" ? "You" : "Spocket"}:
+                            </span>{" "}
+                            {m.content.length > 120 ? m.content.slice(0, 120) + "…" : m.content}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <label htmlFor="tm-ai-chat-input" style={{ display: "block", fontSize: 10, color: "#94a3b8", marginBottom: 6 }}>
+                      {aiNotesContext === null ? "Extracting notes content…" : "Ask a question about the course notes"}
+                    </label>
+                    <textarea
+                      id="tm-ai-chat-input"
+                      value={aiChatInput}
+                      onChange={(e) => setAiChatInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          submitAiChat();
+                        }
+                      }}
+                      disabled={aiChatLoading || aiNotesContext === null}
+                      rows={2}
+                      placeholder="e.g. What is the safety factor formula?"
+                      style={{
+                        width: "100%",
+                        boxSizing: "border-box",
+                        resize: "vertical",
+                        minHeight: 56,
+                        padding: "8px 10px",
+                        borderRadius: 10,
+                        border: "1px solid #334155",
+                        background: "#0b1220",
+                        color: "#e2e8f0",
+                        fontFamily: "'JetBrains Mono',monospace",
+                        fontSize: 11,
+                        lineHeight: 1.45,
+                        marginBottom: 8,
+                      }}
+                    />
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                      <button
+                        type="button"
+                        onClick={() => dismissParkedQa()}
+                        style={{
+                          padding: "6px 12px",
+                          borderRadius: 10,
+                          border: "1px solid #475569",
+                          background: "#0f172a",
+                          color: "#94a3b8",
+                          fontSize: 10,
+                          fontFamily: "'JetBrains Mono',monospace",
+                          cursor: "pointer",
+                        }}
+                      >
+                        Back
+                      </button>
+                      <button
+                        type="button"
+                        disabled={aiChatLoading || !aiChatInput.trim() || aiNotesContext === null}
+                        onClick={() => submitAiChat()}
+                        style={{
+                          padding: "6px 14px",
+                          borderRadius: 10,
+                          border: "none",
+                          background: aiChatLoading || !aiChatInput.trim() || aiNotesContext === null ? "#475569" : "#fbbf24",
+                          color: aiChatLoading || !aiChatInput.trim() || aiNotesContext === null ? "#94a3b8" : "#0a0f1a",
+                          fontSize: 10,
+                          fontWeight: 700,
+                          fontFamily: "'JetBrains Mono',monospace",
+                          cursor: aiChatLoading || !aiChatInput.trim() || aiNotesContext === null ? "not-allowed" : "pointer",
+                        }}
+                      >
+                        {aiChatLoading ? "Thinking…" : "Ask Spocket"}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
             <div
               style={{
                 flexShrink: 0,
-                width: cornerUnlockedChat ? 220 : undefined,
+                width: cornerUnlockedChat ? (isMobile ? 120 : 220) : undefined,
                 position: "relative",
               }}
             >
-              {!cornerUnlockedChat && showUI && (
-                <div
-                  style={{
-                    position: "absolute",
-                    bottom: 340,
-                    left: 100,
-                    zIndex: 25,
-                    animation: "fadeInUp 0.3s ease",
-                    width: 440,
-                    pointerEvents: "auto",
-                  }}
-                >
-                  <Bubble
-                    rawMsg={cryExit ? txt : dialogueRaw}
-                    textPlain={txt}
-                    isTyping={typing}
-                    tiny={cryExit}
-                    onSkip={typing && !cryExit ? skipTyping : null}
-                  />
-                  {followUp && (
-                    <div style={{ marginTop: 10, animation: "fadeInUp 0.3s ease" }}>
-                      <Bubble text={followUp} tiny={true} />
-                    </div>
-                  )}
-                </div>
-              )}
+              {/* Desktop bubble now rendered via portal below — see "Speech bubble portaled to body" */}
 
               {/* Robot body */}
               <div
@@ -3676,25 +4001,63 @@ function App() {
                 {balloon && (
                   <div style={{ position: "absolute", top: -40, left: "50%", transform: "translateX(-50%)", fontSize: 36 }}>🎈</div>
                 )}
-                <Robot eyes={cryExit ? "crying" : findNotesActive ? "thinking" : nd?.eyes || "happy"} mouthOpen={mouth} scale={ROBOT_SCALE} showCookie={showCookie} showIpad={showIpad} facing={facing} />
+                <Robot eyes={cryExit ? "crying" : aiChatLoading ? "thinking" : findNotesActive ? "thinking" : nd?.eyes || "happy"} mouthOpen={mouth} scale={dynamicScale} showCookie={showCookie} showIpad={showIpad} facing={facing} />
               </div>
             </div>
           </div>
         )}
 
+        {/* Speech bubble — portaled to body to escape robot container's transform context */}
+        {!cornerUnlockedChat && showUI && showMainRobot && (() => {
+          const bubbleTop = bubbleTopPos;
+          /* Bubble always to the right of robot */
+          const bubbleLeft = robotX + dynamicRobotW + Math.round(14 * dynamicScale);
+          const bubbleW = Math.min(520, vpW - bubbleLeft - 16);
+          return ReactDOM.createPortal(
+          <div
+            style={{
+              position: "fixed",
+              top: bubbleTop,
+              left: bubbleLeft,
+              width: Math.max(180, bubbleW),
+              zIndex: 500,
+              animation: "fadeInUp 0.3s ease",
+              pointerEvents: "auto",
+              fontFamily: "'JetBrains Mono',monospace",
+            }}
+          >
+            <Bubble
+              rawMsg={cryExit ? txt : dialogueRaw}
+              textPlain={txt}
+              isTyping={typing}
+              tiny={cryExit}
+              onSkip={typing && !cryExit ? skipTyping : null}
+              tail="left"
+              maxWidth={Math.max(180, bubbleW)}
+            />
+            {followUp && (
+              <div style={{ marginTop: 10, animation: "fadeInUp 0.3s ease" }}>
+                <Bubble text={followUp} tiny={true} />
+              </div>
+            )}
+          </div>,
+          document.body
+        );
+        })()}
+
         {/* User response options — completely independent, bottom center of screen */}
         {showUI&&!cryExit&&!typing&&(nd&&nd.options.length>0||findNotesActive||findDockOpen)&&(
           <div style={{
             position:"fixed",
-            bottom: findNotesActive || findDockOpen ? 12 : cornerUnlockedChat ? 8 : 40,
-            left:0,
-            right:0,
+            bottom: findNotesActive || findDockOpen ? 12 : cornerUnlockedChat ? 8 : isMobile ? "6%" : 40,
+            left: isMobile ? 8 : 0,
+            right: isMobile ? 8 : 0,
             zIndex: cornerUnlockedChat || findDockOpen ? 90 : 30,
             animation:"fadeInUp 0.3s ease",
             display:"flex",
             flexDirection:"column",
             alignItems:"center",
-            gap:10,
+            gap: isMobile ? 6 : 10,
             pointerEvents:"auto",
           }}>
             {nd && nd.captureName && (
@@ -3746,7 +4109,7 @@ function App() {
               </div>
             )}
             {nd && nd.options.length > 0 && (
-              <div style={{display:"flex",flexWrap:"wrap",gap:10,justifyContent:"center"}}>
+              <div style={{display:"flex",flexWrap:"wrap",gap: isMobile ? 6 : 10,justifyContent:"center",maxWidth: isMobile ? "calc(100vw - 16px)" : "none",padding: isMobile ? "0 4px" : 0}}>
                 {nd.options.map((o,i)=><button key={i} className="opt-btn" onClick={()=>pick(o)}>{o.label}</button>)}
               </div>
             )}
@@ -3760,7 +4123,7 @@ function App() {
                 cornerUnlockedChat ? dismissParkedQa() : endConvo();
               }}
             >
-              {findDockOpen ? "✕ Done (find)" : findNotesActive ? "✕ Done" : cornerUnlockedChat ? "✕ Close" : "✕ End conversation"}
+              {findDockOpen ? "✕ Done (find)" : findNotesActive ? "✕ Done" : aiChatActive ? "✕ Close AI" : cornerUnlockedChat ? "✕ Close" : "✕ End conversation"}
             </button>
           </div>
         )}
@@ -3805,7 +4168,7 @@ function App() {
 
         {/* Cookie popup */}
         {cookiePopup&&(
-          <div style={{position:"fixed",top:70,right:20,background:"#1a2538",border:"1px solid #7fdbca30",borderRadius:14,padding:"16px 24px",display:"flex",alignItems:"center",gap:16,zIndex:50,animation:"fadeInUp 0.5s ease",boxShadow:"0 8px 32px rgba(0,0,0,0.5)",pointerEvents:"auto"}}>
+          <div style={{position:"fixed",bottom:16,right:16,maxWidth:"min(400px, calc(100vw - 32px))",background:"#1a2538",border:"1px solid #7fdbca30",borderRadius:14,padding:"16px 24px",display:"flex",alignItems:"center",gap:16,zIndex:50,animation:"fadeInUp 0.5s ease",boxShadow:"0 8px 32px rgba(0,0,0,0.5)",pointerEvents:"auto"}}>
             <span style={{fontSize:28,animation:"cookieFloat 0.6s ease"}}>🍪</span>
             <div><div style={{color:"#e2e8f0",fontSize:13,fontWeight:600,marginBottom:4}}>Spocket wants to share her cookies with you!</div><div style={{color:"#94a3b8",fontSize:11}}>This site uses cookies for authentication.</div></div>
             <button onClick={()=>setCookiePopup(false)} style={{padding:"8px 18px",background:"#7fdbca",color:"#0a0f1a",border:"none",borderRadius:8,fontWeight:700,fontSize:11,fontFamily:"monospace",cursor:"pointer"}}>Accept 🍪</button>
@@ -3823,6 +4186,7 @@ function App() {
             onAskAboutMe={startParkedQa}
             onNotesHelp={startNotesHelp}
             onFindInNotes={startFindInNotes}
+            onAskAboutNotes={startAiChat}
             onLogOut={requestLogout}
           />
         )}
@@ -3847,6 +4211,7 @@ function App() {
           onAskAboutMe={startParkedQa}
           onNotesHelp={startNotesHelp}
           onFindInNotes={startFindInNotes}
+          onAskAboutNotes={startAiChat}
           onLogOut={requestLogout}
         />
       </div>
