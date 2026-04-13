@@ -25,7 +25,7 @@ function tmSpocketFindSourceMatchesFrame(frameContentWindow, source) {
 const SPOCKET_TYPING_MS = 20;
 const SPOCKET_MOUTH_MS = 80;
 const SPOCKET_AI_WORD_MS = 30;
-const SPOCKET_AI_INTRO_RAW = "I have your notes loaded! **Ask me anything** about the content and I will find the answer for you. I can only reference what is in the notes — if something is not covered, I will let you know.";
+const SPOCKET_AI_INTRO_RAW = "I have the notes loaded! **Ask me anything** about the course content and I will find the answer for you. I can only reference what is in these notes — if something is not covered, I will let you know.";
 const LS_SPOCKET_DISPLAY_NAME = "spocket_student_display_name_v1";
 const LS_SPOCKET_SPACE_TIP = "spocket_space_skip_tip_dismissed_v1";
 const LS_SPOCKET_NAME_SKIP = "spocket_name_prompt_skip_v1";
@@ -78,7 +78,7 @@ function spocketBubbleRichNodes(raw, visiblePlainLen) {
 }
 
 const SPOCKET_FIND_INTRO_RAW =
-  "Ask me anything about your notes! Type a question or topic and **I will highlight the relevant sections in your study guide and formula sheet, then explain what I found.** A pink bar will appear at the top with arrows to jump between highlights and switch workspaces — tap Done on that bar when you are finished.";
+  "Ask me anything about the course content! Type a question or topic and **I will highlight the relevant sections in the study guide and formula sheet, then explain what I found.** A pink bar will appear at the top with arrows to jump between highlights and switch workspaces — tap Done on that bar when you are finished.";
 
 /* ═══════════════════════════════════════════
    DIALOGUE TREE
@@ -169,7 +169,7 @@ const TREE = {
     ],
   },
   who_spocket: {
-    msg: "I'm Spocket, the in-page assistant for Talia's Student Resources. **I help students navigate the notes workspace, and I can answer questions about your notes using AI.** From the corner menu you can open Roam (interactive scene), Study (timers, reminders, session log), structured workspace help, Ask AI about your notes (I read the content and answer questions), or Find in notes (highlights and explains related sections).",
+    msg: "I'm Spocket, the in-page assistant for Talia's Student Resources. **I help students navigate the notes workspace, and I can answer course-related questions using AI.** From the corner menu you can open Roam (interactive scene), Study (timers, reminders, session log), structured workspace help, Ask AI (I read the course notes and answer questions), or Find in notes (highlights and explains related sections).",
     eyes: "happy",
     options: [
       { label: "What will you be doing here?", next: "what_spocket_does" },
@@ -178,7 +178,7 @@ const TREE = {
     ],
   },
   what_spocket_does: {
-    msg: "Before unlock I run scripted onboarding (access paths, what is locked, where to request a code). **After unlock I add a corner menu with: Roam and Study layouts, workspace help and keyboard shortcuts, Find in notes (highlights and explains what you ask about), and Ask AI (I read your notes and answer freeform questions using Gemini).** Roam can toggle the site nav so the iframe column stays readable; full-page Study hides the menu until you leave.",
+    msg: "Before unlock I run scripted onboarding (access paths, what is locked, where to request a code). **After unlock I add a corner menu with: Roam and Study layouts, workspace help and keyboard shortcuts, Find in notes (highlights and explains what you ask about), and Ask AI (I read the course notes and answer freeform questions using Gemini).** Roam can toggle the site nav so the iframe column stays readable; full-page Study hides the menu until you leave.",
     eyes: "happy",
     options: [
       { label: "Who are you?", next: "who_spocket" },
@@ -206,7 +206,7 @@ const TREE = {
     ],
   },
   sq_ai_real: {
-    msg: "I am a mix! My dialogue, onboarding, and workspace tools are a **hand-authored state machine** (React state + scripted nodes). But my **Ask AI about your notes** feature connects to Gemini to answer freeform questions grounded in the actual notes content. The AI only sees what is in your notes — it does not make things up from the internet.",
+    msg: "I am a mix! My dialogue, onboarding, and workspace tools are a **hand-authored state machine** (React state + scripted nodes). But my **Ask AI** feature connects to Gemini to answer freeform questions grounded in the actual course notes. The AI only sees what is on this page — it does not make things up from the internet.",
     eyes: "nervous",
     options: [
       { label: "Another question", next: "ask_spocket_start" },
@@ -214,7 +214,7 @@ const TREE = {
     ],
   },
   sq_can_do: {
-    msg: "On this page: scripted onboarding, access routing, embedded forms, and this FAQ. After unlock: **Ask AI about your notes** (I read the content and answer questions via Gemini), **Find in notes** (highlights and explains relevant sections), Roam/Study experiences, reminder scheduling, keyboard shortcut reference, and the structured notes-help tree.",
+    msg: "On this page: scripted onboarding, access routing, embedded forms, and this FAQ. After unlock: **Ask AI** (I read the course notes and answer questions via Gemini), **Find in notes** (highlights and explains relevant sections), Roam/Study experiences, reminder scheduling, keyboard shortcut reference, and the structured notes-help tree.",
     eyes: "happy",
     options: [
       { label: "Another question", next: "ask_spocket_start" },
@@ -240,7 +240,7 @@ const TREE = {
       { label: "Where did you come from?", next: "sq_origin_p" },
       { label: "How do the notes tools work?", next: "notes_help_hub" },
       { label: "Shortcut keys", next: "shortcut_keys_intro" },
-      { label: "Find & explain in my notes", next: "_find_in_notes" },
+      { label: "Find & explain in the notes", next: "_find_in_notes" },
       { label: "Done for now", next: "_parked_dismiss" },
     ],
   },
@@ -253,7 +253,7 @@ const TREE = {
     ],
   },
   sq_ai_real_p: {
-    msg: "I am a mix! My dialogue, onboarding, and workspace tools are a **hand-authored state machine** (React state + scripted nodes). But my **Ask AI about your notes** feature connects to Gemini to answer freeform questions grounded in the actual notes content. The AI only sees what is in your notes — it does not make things up from the internet.",
+    msg: "I am a mix! My dialogue, onboarding, and workspace tools are a **hand-authored state machine** (React state + scripted nodes). But my **Ask AI** feature connects to Gemini to answer freeform questions grounded in the actual course notes. The AI only sees what is on this page — it does not make things up from the internet.",
     eyes: "nervous",
     options: [
       { label: "Another question", next: "ask_spocket_unlocked" },
@@ -261,7 +261,7 @@ const TREE = {
     ],
   },
   sq_can_do_p: {
-    msg: "Locked: onboarding + access paths only. Unlocked: **Ask AI about your notes** (freeform questions answered by Gemini using your actual notes), **Find in notes** (highlights and explains relevant sections), Roam/Study layouts, reminders, keyboard shortcuts, and structured workspace help. Roam collapses the site nav for a wider iframe; Study is full-page with the menu hidden.",
+    msg: "Locked: onboarding + access paths only. Unlocked: **Ask AI** (freeform questions answered by Gemini using the course notes), **Find in notes** (highlights and explains relevant sections), Roam/Study layouts, reminders, keyboard shortcuts, and structured workspace help. Roam collapses the site nav for a wider iframe; Study is full-page with the menu hidden.",
     eyes: "happy",
     options: [
       { label: "Another question", next: "ask_spocket_unlocked" },
@@ -413,7 +413,7 @@ const IDLE_JOKES = [
   "Error 418: I'm a teapot. Just kidding — I'm a study assistant now!",
   "They gave me a brain in v2. v3 rumor says I get a laser pointer for the whiteboard.",
   "v2 me: answers questions, highlights notes. v3 me: probably takes the exam for you.",
-  "I used to just sit here. Now I read your notes AND sit here. Progress!",
+  "I used to just sit here. Now I read the course notes AND sit here. Progress!",
   "My developer said v3 will be 'transformative'. I asked if that's a pun. She said no.",
   "Fun fact: I was once just a dialogue tree. Now I have AI. Still no legs though.",
 ];
@@ -2122,7 +2122,7 @@ function ParkedRobot({
                   onMouseOver={(e) => (e.target.style.background = "#38bdf824")}
                   onMouseOut={(e) => (e.target.style.background = "#38bdf812")}
                 >
-                  🔎 Find & explain in my notes
+                  🔎 Find & explain in the notes
                 </button>
                 <button
                   type="button"
@@ -2134,7 +2134,7 @@ function ParkedRobot({
                   onMouseOver={(e) => (e.target.style.background = "#fbbf2428")}
                   onMouseOut={(e) => (e.target.style.background = "#fbbf2412")}
                 >
-                  ✨ Ask AI about your notes
+                  ✨ Ask AI about the notes
                 </button>
                 <button
                   type="button"
@@ -3910,7 +3910,7 @@ function App() {
                       </div>
                     )}
                     <label htmlFor="tm-ai-chat-input" style={{ display: "block", fontSize: 10, color: "#94a3b8", marginBottom: 6 }}>
-                      {aiNotesContext === null ? "Extracting notes content…" : "Ask a question about your notes"}
+                      {aiNotesContext === null ? "Extracting notes content…" : "Ask a question about the course notes"}
                     </label>
                     <textarea
                       id="tm-ai-chat-input"
