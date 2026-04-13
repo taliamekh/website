@@ -133,7 +133,10 @@ const TREE = {
   unlock_name_saved_ack: {
     msg: "Got it — I'll call you **{name}** here. Use the corner menu if you need workspace help or Find in notes.",
     eyes: "happy",
-    options: [{ label: "Sounds good", next: "_parked_dismiss" }],
+    options: [
+      { label: "What shortcut keys are there?", next: "shortcut_keys_intro" },
+      { label: "Sounds good", next: "_parked_dismiss" },
+    ],
   },
   here_for_notes: {
     msg: "This area is locked for Talia's students. If you are supposed to be in there, use the password on the card, or request a temporary one from her.",
@@ -234,6 +237,7 @@ const TREE = {
       { label: "What can you actually do here?", next: "sq_can_do_p" },
       { label: "Where did you come from?", next: "sq_origin_p" },
       { label: "How do the notes tools work?", next: "notes_help_hub" },
+      { label: "Shortcut keys", next: "shortcut_keys_intro" },
       { label: "Find text in my notes (beta)", next: "_find_in_notes" },
       { label: "Done for now", next: "_parked_dismiss" },
     ],
@@ -315,6 +319,14 @@ const TREE = {
     options: [
       { label: "More topics", next: "notes_help_hub" },
       { label: "Done", next: "_parked_dismiss" },
+    ],
+  },
+  shortcut_keys_intro: {
+    msg: "Here are the shortcuts for annotating the notes workspace: **Ctrl+H** toggles the highlighter, **Ctrl+Shift+S** drops a new sticky note, **Ctrl+A** toggles the arrow pen, **Ctrl+Z** undoes and **Ctrl+Y** redoes a drawing, **Ctrl+C / Ctrl+V** copies a selected shape. On Mac, use **Cmd** instead of Ctrl.",
+    eyes: "happy",
+    options: [
+      { label: "Thanks!", next: "_parked_dismiss" },
+      { label: "What else can I do?", next: "ask_spocket_unlocked" },
     ],
   },
   nh_keys: {
@@ -2128,9 +2140,9 @@ function ParkedRobot({
         </div>
       )}
       <div style={{ animation: h ? "none" : idle === "sleep" ? "sleepBob 3s ease-in-out infinite" : "idleBob 3s ease-in-out infinite" }}>
-        <Robot eyes={h ? "startled" : "happy"} scale={0.4} startled={h} idleAnim={h ? "none" : idle} />
+        <Robot eyes={h ? "startled" : "happy"} scale={(typeof window !== "undefined" && window.innerWidth <= 480) ? 0.3 : 0.4} startled={h} idleAnim={h ? "none" : idle} />
       </div>
-      <div style={{ textAlign: "center", marginTop: -6, fontSize: 7, color: "#7fdbca35", fontFamily: "monospace" }}>SPOCKET</div>
+      <div style={{ textAlign: "center", marginTop: -6, fontSize: (typeof window !== "undefined" && window.innerWidth <= 480) ? 6 : 7, color: "#7fdbca35", fontFamily: "monospace" }}>SPOCKET</div>
     </div>
   );
 }
@@ -3258,11 +3270,11 @@ function App() {
           role="status"
           style={{
             position: "fixed",
-            top: 72,
+            bottom: 16,
             left: "50%",
             transform: "translateX(-50%)",
             zIndex: 600,
-            maxWidth: "min(420px, calc(100vw - 24px))",
+            maxWidth: "min(340px, calc(100vw - 24px))",
             padding: "12px 16px",
             borderRadius: 14,
             background: "linear-gradient(135deg,#1e293b,#0f172a)",
@@ -3857,7 +3869,7 @@ function App() {
 
         {/* Cookie popup */}
         {cookiePopup&&(
-          <div style={{position:"fixed",top:70,right:20,background:"#1a2538",border:"1px solid #7fdbca30",borderRadius:14,padding:"16px 24px",display:"flex",alignItems:"center",gap:16,zIndex:50,animation:"fadeInUp 0.5s ease",boxShadow:"0 8px 32px rgba(0,0,0,0.5)",pointerEvents:"auto"}}>
+          <div style={{position:"fixed",bottom:16,right:16,maxWidth:"min(400px, calc(100vw - 32px))",background:"#1a2538",border:"1px solid #7fdbca30",borderRadius:14,padding:"16px 24px",display:"flex",alignItems:"center",gap:16,zIndex:50,animation:"fadeInUp 0.5s ease",boxShadow:"0 8px 32px rgba(0,0,0,0.5)",pointerEvents:"auto"}}>
             <span style={{fontSize:28,animation:"cookieFloat 0.6s ease"}}>🍪</span>
             <div><div style={{color:"#e2e8f0",fontSize:13,fontWeight:600,marginBottom:4}}>Spocket wants to share her cookies with you!</div><div style={{color:"#94a3b8",fontSize:11}}>This site uses cookies for authentication.</div></div>
             <button onClick={()=>setCookiePopup(false)} style={{padding:"8px 18px",background:"#7fdbca",color:"#0a0f1a",border:"none",borderRadius:8,fontWeight:700,fontSize:11,fontFamily:"monospace",cursor:"pointer"}}>Accept 🍪</button>
