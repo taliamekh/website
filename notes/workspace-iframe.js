@@ -1485,7 +1485,7 @@
       }
       if (ev.data.type === 'tm_spocket_extract_text') {
         try {
-          var plainText = (document.body.innerText || '').slice(0, 40000);
+          var plainText = (document.body.innerText || '').slice(0, 15000);
           window.parent.postMessage({
             type: 'tm_spocket_extract_text_result',
             ok: true,
