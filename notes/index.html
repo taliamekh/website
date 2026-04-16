@@ -358,13 +358,27 @@
     border: 1px solid var(--border);
     border-radius: 6px;
     padding: 22px;
-    transition: border-color 0.2s;
+    cursor: pointer;
+    position: relative;
+    z-index: 1;
+    transition: border-color 0.2s, transform 0.15s ease, background 0.15s ease;
+  }
+  .course-card:hover {
+    border-color: rgba(0, 212, 255, 0.55);
+    transform: translateY(-1px);
+    background: rgba(17, 30, 51, 0.85);
+  }
+  .course-card:focus-visible {
+    outline: 2px solid rgba(0, 212, 255, 0.75);
+    outline-offset: 3px;
   }
   .course-card.active {
     border-color: var(--cyan);
   }
   .course-card.placeholder {
     opacity: 0.55;
+    pointer-events: none;
+    cursor: default;
   }
   .course-code {
     font-family: 'JetBrains Mono', monospace;
@@ -1583,12 +1597,12 @@
     <article class="course-card active" role="button" tabindex="0" data-course-id="ecor2050" aria-pressed="true">
       <div class="course-code">ECOR 2050</div>
       <div class="course-name">Design &amp; Communication</div>
-      <div class="course-meta">Final exam notes · Topics 4–6</div>
+      <div class="course-meta">Final exam notes</div>
     </article>
     <article class="course-card" role="button" tabindex="0" data-course-id="maae2202" aria-pressed="false">
       <div class="course-code">MAAE 2202</div>
       <div class="course-name">Mechanics of Solids</div>
-      <div class="course-meta">Course notes · Highlights &amp; drawings persist</div>
+      <div class="course-meta">Final exam notes</div>
     </article>
     <article class="course-card placeholder">
       <div class="course-code">Coming soon</div>
@@ -4651,10 +4665,7 @@
   }
 
   function bindCourseCards() {
-    var cards = document.querySelectorAll('.course-card[data-course-id]');
-    function activateFromEl(card) {
-      if (!card) return;
-      var id = card.getAttribute('data-course-id');
+    function activateCourseById(id) {
       if (!id || !COURSES[id]) return;
       if (id === activeCourseId) return;
       setActiveCourseId(id);
@@ -4663,16 +4674,27 @@
       // Re-init stickies/images after iframe reload to match the new course storage.
       setTimeout(initStickyWorkspaceFromStorage, 0);
     }
-    cards.forEach(function (card) {
-      card.addEventListener('click', function () { activateFromEl(card); });
-      card.addEventListener('keydown', function (e) {
-        var k = e.key || '';
-        if (k === 'Enter' || k === ' ') {
-          e.preventDefault();
-          activateFromEl(card);
-        }
+
+    // Event delegation (more reliable than per-card listeners).
+    var grid = document.querySelector('.course-grid');
+    if (grid && !grid._tmBoundCourses) {
+      grid._tmBoundCourses = true;
+      grid.addEventListener('click', function (e) {
+        var t = e.target;
+        var card = t && t.closest ? t.closest('.course-card[data-course-id]') : null;
+        if (!card || !grid.contains(card)) return;
+        activateCourseById(card.getAttribute('data-course-id'));
       });
-    });
+      grid.addEventListener('keydown', function (e) {
+        var k = e.key || '';
+        if (k !== 'Enter' && k !== ' ') return;
+        var t = e.target;
+        var card = t && t.closest ? t.closest('.course-card[data-course-id]') : null;
+        if (!card || !grid.contains(card)) return;
+        e.preventDefault();
+        activateCourseById(card.getAttribute('data-course-id'));
+      });
+    }
   }
 
   if (isUnlocked()) {
