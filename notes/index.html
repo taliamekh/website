@@ -1576,14 +1576,19 @@
   <div class="page-head">
     <span class="section-num">Student Resources</span>
     <h1 class="page-title">Student Resources</h1>
-    <p class="page-sub">Materials organized by course code. ECOR 2050 notes are synced from the public study guide repository.</p>
+    <p class="page-sub">Materials organized by course code. Select a course to load its notes workspace.</p>
   </div>
 
   <div class="course-grid" aria-label="Courses">
-    <article class="course-card active">
+    <article class="course-card active" role="button" tabindex="0" data-course-id="ecor2050" aria-pressed="true">
       <div class="course-code">ECOR 2050</div>
       <div class="course-name">Design &amp; Communication</div>
       <div class="course-meta">Final exam notes · Topics 4–6</div>
+    </article>
+    <article class="course-card" role="button" tabindex="0" data-course-id="maae2202" aria-pressed="false">
+      <div class="course-code">MAAE 2202</div>
+      <div class="course-name">Mechanics of Solids</div>
+      <div class="course-meta">Course notes · Highlights &amp; drawings persist</div>
     </article>
     <article class="course-card placeholder">
       <div class="course-code">Coming soon</div>
@@ -1794,9 +1799,68 @@
   var STORAGE_KEY = 'tm_notes_session_ok';
 
   /** README shown above the big iframe when you are viewing the normal ECOR 2050 learning notes. */
-  var README_URL = 'https://raw.githubusercontent.com/taliamekh/ECOR2050_Final_Notes/main/README.md';
-  /** The full study guide HTML pulled from GitHub, then shown inside the iframe with workspace tools added. */
-  var NOTES_HTML_URL = 'https://raw.githubusercontent.com/taliamekh/ECOR2050_Final_Notes/main/ECOR2050_Final_Notes.html';
+  var COURSES = {
+    ecor2050: {
+      id: 'ecor2050',
+      code: 'ECOR 2050',
+      name: 'Design & Communication',
+      readmeUrl: 'https://raw.githubusercontent.com/taliamekh/ECOR2050_Final_Notes/main/README.md',
+      notesHtmlUrl: 'https://raw.githubusercontent.com/taliamekh/ECOR2050_Final_Notes/main/ECOR2050_Final_Notes.html',
+      storage: {
+        // Keep existing keys so current ECOR users retain their data.
+        highlights: 'tm_student_resources_notes_ecor2050_highlights_v1',
+        stickies: 'tm_student_workspace_sticky_notes_v1',
+        drawings: 'tm_workspace_drawings_v1',
+        style: 'tm_workspace_global_style_v1',
+        images: 'tm_workspace_images_v1'
+      }
+    },
+    maae2202: {
+      id: 'maae2202',
+      code: 'MAAE 2202',
+      name: 'Mechanics of Solids',
+      readmeUrl: 'https://raw.githubusercontent.com/taliamekh/MAAE-2202-notes/main/README.md',
+      notesHtmlUrl: 'https://raw.githubusercontent.com/taliamekh/MAAE-2202-notes/main/maae2202%20notes',
+      storage: {
+        highlights: 'tm_student_resources_notes_maae2202_highlights_v1',
+        stickies: 'tm_student_resources_notes_maae2202_stickies_v1',
+        drawings: 'tm_student_resources_notes_maae2202_drawings_v1',
+        style: 'tm_student_resources_notes_maae2202_style_v1',
+        images: 'tm_student_resources_notes_maae2202_images_v1'
+      }
+    }
+  };
+  var ACTIVE_COURSE_KEY = 'tm_student_resources_active_course_v1';
+  var activeCourseId = (function () {
+    try {
+      var v = localStorage.getItem(ACTIVE_COURSE_KEY);
+      return v && COURSES[v] ? v : 'ecor2050';
+    } catch (e) {
+      return 'ecor2050';
+    }
+  })();
+
+  function getActiveCourse() {
+    return COURSES[activeCourseId] || COURSES.ecor2050;
+  }
+  function applyActiveCourseStorageKeys() {
+    HL_PARENT_KEY = keyHighlights();
+    STICKY_WORKSPACE_KEY = keyStickies();
+    DRAWINGS_KEY = keyDrawings();
+    GLOBAL_STYLE_KEY = keyStyle();
+    WORKSPACE_IMAGES_KEY = keyImages();
+  }
+  function setActiveCourseId(id) {
+    if (!id || !COURSES[id]) return;
+    activeCourseId = id;
+    try { localStorage.setItem(ACTIVE_COURSE_KEY, id); } catch (e) { /* ignore */ }
+    applyActiveCourseStorageKeys();
+  }
+  function keyHighlights() { return getActiveCourse().storage.highlights; }
+  function keyStickies() { return getActiveCourse().storage.stickies; }
+  function keyDrawings() { return getActiveCourse().storage.drawings; }
+  function keyStyle() { return getActiveCourse().storage.style; }
+  function keyImages() { return getActiveCourse().storage.images; }
 
   /** Formula sheet page file (no .html in the repo) — same “download → patch → show in iframe” path as NOTES_HTML_URL. */
   var FORMULA_SHEET_HTML_URL = 'https://raw.githubusercontent.com/taliamekh/Ecor2050-formula-sheet/main/Ecor2050-formula-sheet';
@@ -1805,7 +1869,7 @@
   /** If the URL contains this (e.g. shared link), the formula panel opens automatically after unlock. */
   var FORMULA_VIEW_HREF = '?view=formula';
   /** Local script that draws the floating toolbar and tools inside the notes iframe. Bump ?v= after edits so fetches are not stuck on an old cached copy. */
-  var WORKSPACE_IFRAME_URL = 'workspace-iframe.js?v=6';
+  var WORKSPACE_IFRAME_URL = 'workspace-iframe.js?v=7';
   var overlay = document.getElementById('lock-overlay');
   var main = document.getElementById('main-content');
   var form = document.getElementById('unlock-form');
@@ -1838,7 +1902,7 @@
   var btnResizeW = document.getElementById('notes-resize-w');
   var btnResizeE = document.getElementById('notes-resize-e');
   /** Parent-origin storage for iframe highlights (blob origins do not persist reliably). */
-  var HL_PARENT_KEY = 'tm_student_resources_notes_ecor2050_highlights_v1';
+  var HL_PARENT_KEY = keyHighlights();
   /** Same shape as HL_PARENT_KEY but for the formula-sheet iframe only. */
   var HL_FORMULA_PARENT_KEY = 'tm_student_resources_formula_highlights_v1';
   var HL_BAR_KEY = 'tm_hl_bar_position_v1';
@@ -1848,15 +1912,15 @@
   var WORKSPACE_RESUME_TOOL_NOTES_KEY = 'tm_workspace_resume_tool_notes_v1';
   var WORKSPACE_RESUME_TOOL_FORMULA_KEY = 'tm_workspace_resume_tool_formula_v1';
   var EXPAND_COL_KEY = 'tm_notes_expand_col_pct_v1';
-  var STICKY_WORKSPACE_KEY = 'tm_student_workspace_sticky_notes_v1';
-  var DRAWINGS_KEY = 'tm_workspace_drawings_v1';
+  var STICKY_WORKSPACE_KEY = keyStickies();
+  var DRAWINGS_KEY = keyDrawings();
   var ARROWS_KEY_LEGACY = 'tm_workspace_arrows_v1';
-  var GLOBAL_STYLE_KEY = 'tm_workspace_global_style_v1';
+  var GLOBAL_STYLE_KEY = keyStyle();
   var COLOR_SLOTS_KEY = 'tm_workspace_color_slots_v1';
   var COLOR_RECENT_KEY = 'tm_workspace_color_recent_v1';
   // Saved list of extra text-highlighter colors (iframe toolbar sends updates here).
   var HL_COLOR_SLOTS_KEY = 'tm_workspace_hl_color_slots_v1';
-  var WORKSPACE_IMAGES_KEY = 'tm_workspace_images_v1';
+  var WORKSPACE_IMAGES_KEY = keyImages();
   var stickySaveTimer = null;
   var activeStickyWrap = null;
   var stickyCtxMenu = document.getElementById('tm-sticky-ctx');
@@ -1912,6 +1976,9 @@
   function getStickyHostEl() {
     return notesSplitMain || notesWorkspace;
   }
+
+  // Ensure the initial active course’s storage keys are applied before any loads.
+  applyActiveCourseStorageKeys();
 
   function getIframeDoc() {
     try {
@@ -3880,6 +3947,7 @@
 
   function migrateLegacyHighlightKey() {
     try {
+      if (activeCourseId !== 'ecor2050') return;
       if (!localStorage.getItem(HL_PARENT_KEY)) {
         var legacy = localStorage.getItem('ecor2050_hl');
         if (legacy) localStorage.setItem(HL_PARENT_KEY, legacy);
@@ -4285,6 +4353,7 @@
   }
 
   function openFormulaDock() {
+    if (activeCourseId !== 'ecor2050') return;
     if (!formulaSheetPanel) return;
     document.body.classList.add('sr-formula-dock-open');
     formulaSheetPanel.removeAttribute('hidden');
@@ -4321,6 +4390,10 @@
    */
   window.tmEnsureFormulaSheetReady = function () {
     return new Promise(function (resolve) {
+      if (activeCourseId !== 'ecor2050') {
+        resolve();
+        return;
+      }
       if (_formulaSheetLoadState === 'done') {
         resolve();
         return;
@@ -4491,7 +4564,15 @@
 
   /** README above the iframes always describes the learning-notes repo (study guide stays primary). */
   function loadReadmeBlock() {
-    var readmeUrl = README_URL;
+    if (!readmeOut) return;
+    var c = getActiveCourse();
+    var readmeUrl = c && c.readmeUrl ? String(c.readmeUrl) : '';
+    if (!readmeUrl) {
+      readmeOut.innerHTML = '';
+      readmeOut.hidden = true;
+      return;
+    }
+    readmeOut.hidden = false;
     fetch(readmeUrl)
       .then(function (r) { return r.ok ? r.text() : Promise.reject(new Error('README fetch failed')); })
       .then(function (text) {
@@ -4509,8 +4590,17 @@
       frameStatus.classList.remove('err');
     }
     loadReadmeBlock();
+    var c = getActiveCourse();
+    var notesUrl = c && c.notesHtmlUrl ? String(c.notesHtmlUrl) : '';
+    if (!notesUrl) {
+      if (frameStatus) {
+        frameStatus.textContent = 'No notes URL configured for this course.';
+        frameStatus.classList.add('err');
+      }
+      return;
+    }
     Promise.all([
-      fetch(NOTES_HTML_URL).then(function (r) {
+      fetch(notesUrl).then(function (r) {
         return r.ok ? r.text() : Promise.reject(new Error('Notes HTML fetch failed'));
       }),
       fetch(WORKSPACE_IFRAME_URL, { cache: 'no-store' }).then(function (r) {
@@ -4519,8 +4609,9 @@
     ])
       .then(function (pair) {
         var html = prepareHtmlWithWorkspace(pair[0], pair[1]);
-        assignFrameFromProcessedHtml(html, 'ECOR 2050 complete learning notes');
-        ensureFormulaSheetInDockLoaded();
+        assignFrameFromProcessedHtml(html, (c && c.code ? c.code + ' notes' : 'Course notes'));
+        // Formula sheet is ECOR2050-only for now.
+        if (activeCourseId === 'ecor2050') ensureFormulaSheetInDockLoaded();
       })
       .catch(function () {
         frameStatus.textContent =
@@ -4534,11 +4625,60 @@
    */
   function loadMainWorkspaceContent() {
     loadRepoContent();
-    if (isFormulaView()) openFormulaDock();
+    if (activeCourseId === 'ecor2050' && isFormulaView()) openFormulaDock();
+  }
+
+  function syncCourseUi() {
+    var c = getActiveCourse();
+    var cards = document.querySelectorAll('.course-card[data-course-id]');
+    cards.forEach(function (card) {
+      var id = card.getAttribute('data-course-id');
+      var isActive = id === activeCourseId;
+      if (isActive) card.classList.add('active');
+      else card.classList.remove('active');
+      card.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    });
+
+    // Update section heading (keeps the same DOM structure/styles).
+    var heading = document.getElementById('ecor-heading');
+    if (heading && c && c.code) heading.textContent = c.code;
+
+    // ECOR-only formula controls.
+    var formulaWrap = document.querySelector('.formula-sheet-launch-wrap');
+    var showFormula = activeCourseId === 'ecor2050';
+    if (formulaWrap) formulaWrap.hidden = !showFormula;
+    if (!showFormula) closeFormulaDock();
+  }
+
+  function bindCourseCards() {
+    var cards = document.querySelectorAll('.course-card[data-course-id]');
+    function activateFromEl(card) {
+      if (!card) return;
+      var id = card.getAttribute('data-course-id');
+      if (!id || !COURSES[id]) return;
+      if (id === activeCourseId) return;
+      setActiveCourseId(id);
+      syncCourseUi();
+      loadMainWorkspaceContent();
+      // Re-init stickies/images after iframe reload to match the new course storage.
+      setTimeout(initStickyWorkspaceFromStorage, 0);
+    }
+    cards.forEach(function (card) {
+      card.addEventListener('click', function () { activateFromEl(card); });
+      card.addEventListener('keydown', function (e) {
+        var k = e.key || '';
+        if (k === 'Enter' || k === ' ') {
+          e.preventDefault();
+          activateFromEl(card);
+        }
+      });
+    });
   }
 
   if (isUnlocked()) {
     showApp();
+    syncCourseUi();
+    bindCourseCards();
     loadMainWorkspaceContent();
   } else {
     showLock();
