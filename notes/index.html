@@ -246,6 +246,18 @@
     min-height: 0;
     overflow: visible;
   }
+  /* AI chat panel: shrink the notes column to leave room for the side panel */
+  body.sr-ai-panel-open .ecor-panel {
+    padding-right: var(--ai-panel-width, 35vw);
+    transition: padding-right 0.15s ease;
+    box-sizing: border-box;
+  }
+  @media (max-width: 768px) {
+    body.sr-ai-panel-open .ecor-panel {
+      padding-right: 0;
+      padding-bottom: 45vh;
+    }
+  }
   body.sr-notes-expand .page-head,
   body.sr-notes-expand .course-grid {
     display: none;
@@ -1183,6 +1195,11 @@
     transform: translate(0, 0) rotate(0deg);
     opacity: 1;
   }
+  /* When AI chat is active, raise spocket-root above the nav so the panel is never clipped */
+  body.sr-ai-chat-active #spocket-root {
+    z-index: 530;
+  }
+
   /* Spocket layer: fixed below site nav, outside lock-overlay so it stays visible when unlocked */
   /* Pass-through by default; Spocket sets pointer-events: auto only on real controls (see SpocketOnboarding.jsx). */
   #spocket-root {

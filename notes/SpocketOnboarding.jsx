@@ -24,7 +24,7 @@ function tmSpocketFindSourceMatchesFrame(frameContentWindow, source) {
 
 const SPOCKET_TYPING_MS = 20;
 const SPOCKET_MOUTH_MS = 80;
-const SPOCKET_AI_WORD_MS = 30;
+const SPOCKET_AI_WORD_MS = 8;
 const SPOCKET_AI_INTRO_RAW = "I have the notes loaded! **Ask me anything** about the course content and I will find the answer for you. I can only reference what is in these notes — if something is not covered, I will let you know.";
 const LS_SPOCKET_DISPLAY_NAME = "spocket_student_display_name_v1";
 const LS_SPOCKET_SPACE_TIP = "spocket_space_skip_tip_dismissed_v1";
@@ -86,11 +86,11 @@ const SPOCKET_FIND_INTRO_RAW =
 
 /* Random welcome-back messages for returning users */
 const WELCOME_BACKS = [
-  "Welcome back. Pick up where you left off in the workspace whenever you are ready.",
-  "Back again—use the menu if you need workspace help or Find in notes.",
-  "Welcome back. Your local notes data is still in this browser unless you cleared it.",
-  "Hi again. If anything in the study guide changed, skim the help topics from the corner menu.",
-  "Welcome back. Timers and session history are in Study mode if you use that.",
+  "Pick up where you left off in the workspace whenever you are ready.",
+  "Use the menu if you need workspace help or Find in notes.",
+  "Your local notes data is still in this browser unless you cleared it.",
+  "If anything in the study guide changed, skim the help topics from the corner menu.",
+  "Timers and session history are in Study mode if you use that.",
 ];
 
 const TREE = {
@@ -103,27 +103,14 @@ const TREE = {
 
   /* ── FIRST-TIME USER FLOW (visitor unknown to Spocket) ── */
   start: {
-    msg: "I don't recognize you. What are you doing here?",
+    msg: "Looks like your first visit! I'm Spocket — I help Talia's students navigate their course notes. The password card is right there if you have one, otherwise I can point you in the right direction.",
     eyes: "curious",
     options: [
-      { label: "Who are you?", next: "who_spocket" },
-      { label: "I'm one of Talia's students", next: "student_claim" },
-      { label: "PLEASE I NEED A TUTOR!!!", next: "tutor_me" },
-      { label: "Just looking around", next: "just_browsing" },
-    ],
-  },
-  /* Same choices as start, after detours */
-  start_repeat: {
-    msg: "So I still don't know you. What's your story?",
-    eyes: "curious",
-    options: [
-      { label: "Who are you?", next: "who_spocket" },
-      { label: "I'm one of Talia's students", next: "student_claim" },
-      { label: "I'm trying to get to the notes", next: "here_for_notes" },
-      { label: "PLEASE I NEED A TUTOR!!!", next: "tutor_me" },
-      { label: "Just looking around", next: "just_browsing" },
-      { label: "…I brought cookies?", next: "all_cookies" },
-      { label: "I don't care, you're wasting my time", next: "end_convo" },
+      { label: "I'm a student", next: "student_claim" },
+      { label: "I need a tutor", next: "tutor_me" },
+      { label: "I'm recruiting / need access", next: "recruiter" },
+      { label: "Tell me about yourself", next: "about_spocket" },
+      { label: "Just browsing", next: "casual_bye" },
     ],
   },
   unlock_name_entry: {
@@ -140,139 +127,69 @@ const TREE = {
       { label: "Sounds good", next: "_parked_dismiss" },
     ],
   },
-  here_for_notes: {
-    msg: "This area is locked for Talia's students. If you are supposed to be in there, use the password on the card, or request a temporary one from her.",
-    eyes: "happy",
-    options: [
-      { label: "How do I get access?", next: "recruiter" },
-      { label: "Who are you?", next: "who_spocket" },
-      { label: "Other replies…", next: "start_repeat" },
-    ],
-  },
   student_claim: {
-    msg: "If you are in her class, you are in the right neighborhood. I still need you to unlock with the password or a temp code she emailed you.",
+    msg: "Great — the password card is right there, type it in whenever you are ready. If you need a temp code, I can help with that.",
     eyes: "happy",
     options: [
-      { label: "I have the password", next: "has_password" },
       { label: "I need to request access", next: "no_password" },
-      { label: "Back", next: "start_repeat" },
+      { label: "Tell me about yourself", next: "about_spocket" },
+      { label: "Got it, thanks", next: "_exit" },
     ],
   },
-  just_browsing: {
-    msg: "Fair enough, the internet is a big place. You are still outside a locked study lounge though. What do you want from it?",
-    eyes: "curious",
-    options: [
-      { label: "I'm trying to get to the notes", next: "here_for_notes" },
-      { label: "Could you tutor me?", next: "tutor_me" },
-      { label: "I'm recruiting / hiring", next: "recruiter" },
-      { label: "Nothing, bye", next: "end_convo" },
-    ],
-  },
-  who_spocket: {
-    msg: "I'm Spocket, the in-page assistant for Talia's Student Resources. **I help students navigate the notes workspace, and I can answer course-related questions using AI.** From the corner menu you can open Roam (interactive scene), Study (timers, reminders, session log), structured workspace help, Ask AI (I read the course notes and answer questions), or Find in notes (highlights and explains related sections).",
+  casual_bye: {
+    msg: "No worries — feel free to look around the portfolio! The projects and resume are on the main page.",
     eyes: "happy",
-    options: [
-      { label: "What will you be doing here?", next: "what_spocket_does" },
-      { label: "What you are / how you work", next: "ask_spocket_start" },
-      { label: "Okay, back to your question", next: "start_repeat" },
-    ],
+    returnCard: true,
+    options: [{ label: "Thanks!", next: "_exit" }],
   },
-  what_spocket_does: {
-    msg: "Before unlock I run scripted onboarding (access paths, what is locked, where to request a code). **After unlock I add a corner menu with: Roam and Study layouts, workspace help and keyboard shortcuts, Find in notes (highlights and explains what you ask about), and Ask AI (I read the course notes and answer freeform questions using Gemini).** Roam can toggle the site nav so the iframe column stays readable; full-page Study hides the menu until you leave.",
+  /* Shared info hub — used both pre-unlock (from start) and post-unlock (from ask_spocket_unlocked).
+     Sub-questions use _info_back / _info_done which pick() resolves dynamically. */
+  about_spocket: {
+    msg: "I'm the study assistant for this page! My dialogue is hand-scripted, but after you unlock I have an AI mode that reads the course notes and answers questions using Gemini. I also do Find in notes, study timers, and workspace tools. Anything else you want to know?",
     eyes: "happy",
-    options: [
-      { label: "Who are you?", next: "who_spocket" },
-      { label: "What you are / how you work", next: "ask_spocket_start" },
-      { label: "Okay, back to your question", next: "start_repeat" },
-    ],
-  },
-  ask_spocket_start: {
-    msg: "Quick technical FAQ—everything here is hand-authored dialogue plus a few hooks into the page. Pick a topic.",
-    eyes: "curious",
     options: [
       { label: "Why a robot?", next: "sq_why_robot" },
-      { label: "Are you AI / \"real\"?", next: "sq_ai_real" },
-      { label: "What can you actually do here?", next: "sq_can_do" },
+      { label: "Are you AI?", next: "sq_ai_real" },
       { label: "Where did you come from?", next: "sq_origin" },
-      { label: "That's enough about you", next: "start_repeat" },
+      { label: "Let me go unlock", next: "_exit" },
+      { label: "I need access", next: "recruiter" },
     ],
   },
   sq_why_robot: {
     msg: "The robot look is just a consistent visual anchor: students get a single recognizable control for help, immersive modes, and find-in-notes instead of hunting for a generic FAQ link. The face is an SVG component with expression props tied to dialogue nodes.",
     eyes: "happy",
     options: [
-      { label: "Another question", next: "ask_spocket_start" },
-      { label: "Back to your question", next: "start_repeat" },
+      { label: "Another question", next: "_info_back" },
+      { label: "Done", next: "_info_done" },
     ],
   },
   sq_ai_real: {
     msg: "I am a mix! My dialogue, onboarding, and workspace tools are a **hand-authored state machine** (React state + scripted nodes). But my **Ask AI** feature connects to Gemini to answer freeform questions grounded in the actual course notes. The AI only sees what is on this page — it does not make things up from the internet.",
     eyes: "nervous",
     options: [
-      { label: "Another question", next: "ask_spocket_start" },
-      { label: "Back to your question", next: "start_repeat" },
-    ],
-  },
-  sq_can_do: {
-    msg: "On this page: scripted onboarding, access routing, embedded forms, and this FAQ. After unlock: **Ask AI** (I read the course notes and answer questions via Gemini), **Find in notes** (highlights and explains relevant sections), Roam/Study experiences, reminder scheduling, keyboard shortcut reference, and the structured notes-help tree.",
-    eyes: "happy",
-    options: [
-      { label: "Another question", next: "ask_spocket_start" },
-      { label: "Back to your question", next: "start_repeat" },
+      { label: "Another question", next: "_info_back" },
+      { label: "Done", next: "_info_done" },
     ],
   },
   sq_origin: {
     msg: "Authored for this site as a JSX bundle (Babel in-browser on Student Resources) mounting into #spocket-root, alongside the lock overlay and dual iframes for the study guide. Styling mixes inline layout objects with the page CSS. Iterations add features (immersive modes, find bridge) without changing the hosting model.",
     eyes: "happy",
     options: [
-      { label: "Another question", next: "ask_spocket_start" },
-      { label: "Back to your question", next: "start_repeat" },
+      { label: "Another question", next: "_info_back" },
+      { label: "Done", next: "_info_done" },
     ],
   },
-  /* Post-unlock corner menu — same Q&A, dismiss returns to parked without lock-card theatrics */
+  /* Post-unlock corner menu — uses shared sq_* nodes via dynamic _info_back/_info_done targets */
   ask_spocket_unlocked: {
     msg: "Workspace FAQ—same scripted tree as before unlock, plus notes topics and Find in notes. Pick one; I will keep it short.",
     eyes: "curious",
     options: [
-      { label: "Why a robot?", next: "sq_why_robot_p" },
-      { label: "Are you AI / \"real\"?", next: "sq_ai_real_p" },
-      { label: "What can you actually do here?", next: "sq_can_do_p" },
-      { label: "Where did you come from?", next: "sq_origin_p" },
+      { label: "Why a robot?", next: "sq_why_robot" },
+      { label: "Are you AI / \"real\"?", next: "sq_ai_real" },
+      { label: "Where did you come from?", next: "sq_origin" },
       { label: "How do the notes tools work?", next: "notes_help_hub" },
       { label: "Shortcut keys", next: "shortcut_keys_intro" },
       { label: "Find & explain in the notes", next: "_find_in_notes" },
-      { label: "Done for now", next: "_parked_dismiss" },
-    ],
-  },
-  sq_why_robot_p: {
-    msg: "The robot look is just a consistent visual anchor: students get a single recognizable control for help, immersive modes, and find-in-notes instead of hunting for a generic FAQ link. The face is an SVG component with expression props tied to dialogue nodes.",
-    eyes: "happy",
-    options: [
-      { label: "Another question", next: "ask_spocket_unlocked" },
-      { label: "Done for now", next: "_parked_dismiss" },
-    ],
-  },
-  sq_ai_real_p: {
-    msg: "I am a mix! My dialogue, onboarding, and workspace tools are a **hand-authored state machine** (React state + scripted nodes). But my **Ask AI** feature connects to Gemini to answer freeform questions grounded in the actual course notes. The AI only sees what is on this page — it does not make things up from the internet.",
-    eyes: "nervous",
-    options: [
-      { label: "Another question", next: "ask_spocket_unlocked" },
-      { label: "Done for now", next: "_parked_dismiss" },
-    ],
-  },
-  sq_can_do_p: {
-    msg: "Locked: onboarding + access paths only. Unlocked: **Ask AI** (freeform questions answered by Gemini using the course notes), **Find in notes** (highlights and explains relevant sections), Roam/Study layouts, reminders, keyboard shortcuts, and structured workspace help. Roam collapses the site nav for a wider iframe; Study is full-page with the menu hidden.",
-    eyes: "happy",
-    options: [
-      { label: "Another question", next: "ask_spocket_unlocked" },
-      { label: "Done for now", next: "_parked_dismiss" },
-    ],
-  },
-  sq_origin_p: {
-    msg: "Authored for this site as a JSX bundle (Babel in-browser on Student Resources) mounting into #spocket-root, alongside the lock overlay and dual iframes for the study guide. Styling mixes inline layout objects with the page CSS. Iterations add features (immersive modes, find bridge) without changing the hosting model.",
-    eyes: "happy",
-    options: [
-      { label: "Another question", next: "ask_spocket_unlocked" },
       { label: "Done for now", next: "_parked_dismiss" },
     ],
   },
@@ -355,15 +272,6 @@ const TREE = {
       { label: "Done", next: "_parked_dismiss" },
     ],
   },
-  not_student: {
-    msg: "Interesting... so what do you want?",
-    eyes: "curious",
-    options: [
-      { label: "PLEASE TUTOR ME!", next: "tutor_me" },
-      { label: "I'm a recruiter / hiring manager", next: "recruiter" },
-      { label: "idk", next: "recruiter" },
-    ],
-  },
   tutor_me: {
     msg: "Shoot me an email, you'll hear back ASAP. I promise I don't byte... get it?",
     eyes: "happy",
@@ -381,15 +289,9 @@ const TREE = {
     msg: "Have you contacted me for a temporary access password?",
     eyes: "nervous",
     options: [
-      { label: "Yes, I have one", next: "has_password" },
+      { label: "Yes, I have one", next: "student_claim" },
       { label: "No, not yet", next: "no_password" },
     ],
-  },
-  has_password: {
-    msg: "Go ahead and take a look!",
-    eyes: "happy",
-    returnCard: true,
-    options: [{ label: "Thanks!", next: "_exit" }],
   },
   no_password: {
     msg: "No worries! Fill this out and you'll get a temp password sent to your email!",
@@ -2176,6 +2078,371 @@ const ROBOT_TOTAL_W = ROBOT_RENDER_W + ARM_EXTEND; // 250px — rightmost point 
 const CARD_W = 340;                        // Fallback width if #lock-card is not measurable
 /* Robot.jsx layout box height 200; head block ends at y≈84. Scale origin is bottom-center, so lift bubble by this much to align bubble bottom with head bottom. */
 const CORNER_CHAT_BUBBLE_LIFT = Math.round((200 - 84) * ROBOT_SCALE);
+const AI_PANEL_LS_KEY = 'spocket_ai_panel_width_v1';
+const AI_PANEL_DEFAULT_PCT = 35;
+const AI_PANEL_MIN_PCT = 25;
+const AI_PANEL_MAX_PCT = 55;
+const AI_PANEL_DEFAULT_H_PCT = 45;
+const AI_PANEL_MIN_H_PCT = 30;
+const AI_PANEL_MAX_H_PCT = 70;
+
+function AiChatPanel({ messages, loading, input, onInputChange, onSubmit, onClose, notesContext, isMobile }) {
+  const threadRef = useRef(null);
+  const inputRef = useRef(null);
+  const panelWidthRef = useRef(AI_PANEL_DEFAULT_PCT);
+  const panelHeightRef = useRef(AI_PANEL_DEFAULT_H_PCT);
+  const [panelWidth, setPanelWidth] = useState(() => {
+    try {
+      const s = localStorage.getItem(AI_PANEL_LS_KEY);
+      return s ? Math.min(AI_PANEL_MAX_PCT, Math.max(AI_PANEL_MIN_PCT, parseFloat(s))) : AI_PANEL_DEFAULT_PCT;
+    } catch (e) { return AI_PANEL_DEFAULT_PCT; }
+  });
+  const [panelHeight, setPanelHeight] = useState(AI_PANEL_DEFAULT_H_PCT);
+
+  // Keep ref in sync
+  useEffect(() => { panelWidthRef.current = panelWidth; }, [panelWidth]);
+  useEffect(() => { panelHeightRef.current = panelHeight; }, [panelHeight]);
+
+  // Update CSS variable so the iframe column shrinks to match
+  useEffect(() => {
+    document.documentElement.style.setProperty('--ai-panel-width', panelWidth + 'vw');
+    document.body.classList.add('sr-ai-panel-open');
+    return () => {
+      document.documentElement.style.removeProperty('--ai-panel-width');
+      document.body.classList.remove('sr-ai-panel-open');
+    };
+  }, [panelWidth]);
+
+  // Auto-scroll thread to bottom on new messages
+  useEffect(() => {
+    if (threadRef.current) {
+      threadRef.current.scrollTop = threadRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  // Focus input when panel opens
+  useEffect(() => {
+    if (inputRef.current) inputRef.current.focus();
+  }, []);
+
+  // Desktop vertical resize handle (drag left edge of panel)
+  const startDesktopResize = useCallback((e) => {
+    e.preventDefault();
+    const startX = e.clientX != null ? e.clientX : (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+    const startPct = panelWidthRef.current;
+    const vpW = window.innerWidth;
+    const onMove = (ev) => {
+      const x = ev.clientX != null ? ev.clientX : (ev.touches && ev.touches[0] ? ev.touches[0].clientX : startX);
+      const deltaPct = (startX - x) / vpW * 100;
+      const next = Math.min(AI_PANEL_MAX_PCT, Math.max(AI_PANEL_MIN_PCT, startPct + deltaPct));
+      setPanelWidth(next);
+    };
+    const onUp = () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('touchend', onUp);
+      try { localStorage.setItem(AI_PANEL_LS_KEY, String(panelWidthRef.current)); } catch (e) {}
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('touchend', onUp);
+  }, []);
+
+  const resetDesktopWidth = useCallback(() => {
+    setPanelWidth(AI_PANEL_DEFAULT_PCT);
+    try { localStorage.setItem(AI_PANEL_LS_KEY, String(AI_PANEL_DEFAULT_PCT)); } catch (e) {}
+  }, []);
+
+  // Mobile horizontal resize handle (drag top edge of panel)
+  const startMobileResize = useCallback((e) => {
+    e.preventDefault();
+    const startY = e.clientY != null ? e.clientY : (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+    const startPct = panelHeightRef.current;
+    const vpH = window.innerHeight;
+    const onMove = (ev) => {
+      const y = ev.clientY != null ? ev.clientY : (ev.touches && ev.touches[0] ? ev.touches[0].clientY : startY);
+      const deltaPct = (startY - y) / vpH * 100;
+      const next = Math.min(AI_PANEL_MAX_H_PCT, Math.max(AI_PANEL_MIN_H_PCT, startPct + deltaPct));
+      setPanelHeight(next);
+    };
+    const onUp = () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('touchend', onUp);
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('touchend', onUp);
+  }, []);
+
+  const handleKeyDown = useCallback((e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      onSubmit();
+    }
+  }, [onSubmit]);
+
+  const panelStyle = isMobile
+    ? {
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: panelHeight + 'vh',
+        zIndex: 82,
+        display: 'flex',
+        flexDirection: 'column',
+        background: 'linear-gradient(180deg, #0f172a, #0b1220)',
+        border: '1px solid rgba(127,219,202,0.2)',
+        borderRadius: '12px 12px 0 0',
+        overflow: 'hidden',
+        pointerEvents: 'auto',
+        fontFamily: "'JetBrains Mono', monospace",
+      }
+    : {
+        position: 'fixed',
+        top: 64,
+        right: 0,
+        bottom: 0,
+        width: panelWidth + 'vw',
+        zIndex: 82,
+        display: 'flex',
+        flexDirection: 'column',
+        background: 'linear-gradient(180deg, #0f172a, #0b1220)',
+        border: '1px solid rgba(127,219,202,0.2)',
+        borderRadius: '12px 0 0 12px',
+        overflow: 'hidden',
+        pointerEvents: 'auto',
+        fontFamily: "'JetBrains Mono', monospace",
+      };
+
+  const resizeHandleStyle = isMobile
+    ? {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: 16,
+        cursor: 'ns-resize',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 2,
+        userSelect: 'none',
+      }
+    : {
+        position: 'absolute',
+        top: 0,
+        bottom: 0,
+        left: 0,
+        width: 8,
+        cursor: 'ew-resize',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 2,
+        userSelect: 'none',
+      };
+
+  return (
+    <div style={panelStyle}>
+      {/* Resize handle */}
+      <div
+        style={resizeHandleStyle}
+        onMouseDown={isMobile ? startMobileResize : startDesktopResize}
+        onTouchStart={isMobile ? startMobileResize : startDesktopResize}
+        onDoubleClick={!isMobile ? resetDesktopWidth : undefined}
+        title={isMobile ? "Drag to resize" : "Drag to resize · Double-click to reset"}
+      >
+        <div style={{
+          background: '#334155',
+          borderRadius: 4,
+          width: isMobile ? 36 : 4,
+          height: isMobile ? 4 : 36,
+          flexShrink: 0,
+        }} />
+      </div>
+
+      {/* Header */}
+      <div style={{
+        paddingLeft: isMobile ? 12 : 20,
+        paddingRight: 12,
+        paddingTop: isMobile ? 18 : 8,
+        paddingBottom: 8,
+        borderBottom: '1px solid #1e293b',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexShrink: 0,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{
+            width: 18, height: 18, borderRadius: '50%',
+            background: 'linear-gradient(135deg, #e8c0c8, #c9909c)',
+            flexShrink: 0,
+          }} />
+          <span style={{ color: '#7fdbca', fontSize: 11, fontWeight: 600, letterSpacing: '0.04em' }}>
+            Ask Spocket
+          </span>
+          {notesContext === null && (
+            <span style={{ color: '#fbbf24', fontSize: 9, fontWeight: 600, marginLeft: 4 }}>
+              Loading notes…
+            </span>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: '#475569',
+            cursor: 'pointer',
+            fontSize: 11,
+            fontFamily: "'JetBrains Mono', monospace",
+            padding: '4px 8px',
+            borderRadius: 6,
+            lineHeight: 1,
+          }}
+          onMouseEnter={e => e.target.style.color = '#f87171'}
+          onMouseLeave={e => e.target.style.color = '#475569'}
+        >
+          ✕ Close
+        </button>
+      </div>
+
+      {/* Message thread */}
+      <div
+        ref={threadRef}
+        style={{
+          flex: 1,
+          overflowY: 'auto',
+          padding: '10px 12px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 8,
+          minHeight: 0,
+        }}
+      >
+        {messages.length === 0 && (
+          <div style={{ color: '#475569', fontSize: 10, textAlign: 'center', marginTop: 16 }}>
+            {notesContext === null
+              ? 'Extracting course notes content…'
+              : 'Ask me anything about the course notes.'}
+          </div>
+        )}
+        {messages.map((m, i) => (
+          <div
+            key={i}
+            style={m.role === 'user'
+              ? {
+                  background: '#1e3a5f',
+                  color: '#7dd3fc',
+                  alignSelf: 'flex-end',
+                  borderRadius: '12px 12px 2px 12px',
+                  padding: '8px 12px',
+                  fontSize: 12,
+                  lineHeight: 1.55,
+                  maxWidth: '85%',
+                  wordWrap: 'break-word',
+                }
+              : {
+                  background: '#1a2538',
+                  color: '#c8d6e5',
+                  alignSelf: 'flex-start',
+                  borderRadius: '12px 12px 12px 2px',
+                  border: '1px solid #1e293b',
+                  padding: '8px 12px',
+                  fontSize: 12,
+                  lineHeight: 1.55,
+                  maxWidth: '90%',
+                  wordWrap: 'break-word',
+                }
+            }
+          >
+            {m.role === 'assistant'
+              ? spocketBubbleRichNodes(m.content)
+              : m.content}
+          </div>
+        ))}
+        {loading && (
+          <div style={{
+            background: '#1a2538',
+            color: '#475569',
+            alignSelf: 'flex-start',
+            borderRadius: '12px 12px 12px 2px',
+            border: '1px solid #1e293b',
+            padding: '8px 12px',
+            fontSize: 11,
+          }}>
+            Thinking…
+          </div>
+        )}
+      </div>
+
+      {/* Input bar */}
+      <div style={{
+        padding: '8px 10px',
+        borderTop: '1px solid #1e293b',
+        display: 'flex',
+        gap: 8,
+        alignItems: 'flex-end',
+        flexShrink: 0,
+      }}>
+        <textarea
+          ref={inputRef}
+          value={input}
+          onChange={e => onInputChange(e.target.value)}
+          onKeyDown={handleKeyDown}
+          disabled={loading || notesContext === null}
+          rows={1}
+          placeholder={notesContext === null ? 'Loading notes…' : 'Ask about the course notes…'}
+          style={{
+            flex: 1,
+            resize: 'none',
+            padding: '8px 10px',
+            borderRadius: 10,
+            border: '1px solid #334155',
+            background: '#0b1220',
+            color: '#e2e8f0',
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: 11,
+            lineHeight: 1.45,
+            overflowY: 'hidden',
+            minHeight: 34,
+            maxHeight: 72,
+          }}
+        />
+        <button
+          type="button"
+          onClick={onSubmit}
+          disabled={loading || !input.trim() || notesContext === null}
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: '50%',
+            border: 'none',
+            background: (loading || !input.trim() || notesContext === null) ? '#475569' : '#fbbf24',
+            color: (loading || !input.trim() || notesContext === null) ? '#94a3b8' : '#0a0f1a',
+            cursor: (loading || !input.trim() || notesContext === null) ? 'not-allowed' : 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            fontSize: 14,
+            fontWeight: 700,
+          }}
+        >
+          ›
+        </button>
+      </div>
+    </div>
+  );
+}
 
 function App() {
   const [phase, setPhase] = useState("idle");
@@ -2219,6 +2486,7 @@ function App() {
   const [aiChatInput, setAiChatInput] = useState("");
   const [aiNotesContext, setAiNotesContext] = useState(null);
   const aiChatActiveRef = useRef(false);
+  const cachedNotesContextRef = useRef(null);
   const [studentDisplayName, setStudentDisplayName] = useState(() => {
     try {
       return typeof localStorage !== "undefined" ? localStorage.getItem(LS_SPOCKET_DISPLAY_NAME) || "" : "";
@@ -2276,7 +2544,21 @@ function App() {
   }, [findDockOpen]);
   useEffect(() => {
     aiChatActiveRef.current = aiChatActive;
+    document.body.classList.toggle('sr-ai-chat-active', aiChatActive);
   }, [aiChatActive]);
+  useEffect(() => {
+    if (notesUnlocked && !cachedNotesContextRef.current) {
+      extractNotesContext().then((ctx) => {
+        cachedNotesContextRef.current = ctx;
+      });
+    }
+  }, [notesUnlocked, extractNotesContext]);
+  // Auto-dismiss pre-unlock dialogue if the page unlocks while Spocket is talking
+  useEffect(() => {
+    if (notesUnlocked && phase === "talking" && !parked) {
+      exit();
+    }
+  }, [notesUnlocked, phase, parked, exit]);
   useEffect(() => {
     findNotesBusyRef.current = findNotesBusy;
   }, [findNotesBusy]);
@@ -2703,10 +2985,15 @@ function App() {
     setCookiePopup(false);
     setBalloon(false);
     setFacing("front");
-    // Extract notes in background
-    extractNotesContext().then((ctx) => {
-      if (aiChatActiveRef.current) setAiNotesContext(ctx);
-    });
+    // Use pre-cached context if available, otherwise extract on demand
+    if (cachedNotesContextRef.current) {
+      setAiNotesContext(cachedNotesContextRef.current);
+    } else {
+      extractNotesContext().then((ctx) => {
+        cachedNotesContextRef.current = ctx;
+        if (aiChatActiveRef.current) setAiNotesContext(ctx);
+      });
+    }
   }, [clearAll, extractNotesContext]);
 
   /* ── AI CHAT: submit a question ── */
@@ -3062,8 +3349,7 @@ function App() {
     // Step 0 (200ms): Mount robot in DOM at off-screen position
     later(()=>{setPhase("entering")},200);
     later(()=>{setRobotX(contactX)},400);
-    /* Push real #lock-card off-screen (CSS class), same beat as original MiniCard */
-    later(()=>setCardGone(true),2300);
+    // Don't push the lock card away — let the student type the password at any time
     later(()=>setRobotX(talkX),2900);
     later(()=>setFacing("front"),3500);
     later(()=>{setPhase("talking");setNode("start")},3900);
@@ -3116,7 +3402,7 @@ function App() {
     // Pick a random welcome back message
     const welcomeMsg = WELCOME_BACKS[Math.floor(Math.random() * WELCOME_BACKS.length)];
     const nick = (studentDisplayName || "").trim();
-    TREE.returning.msg = nick ? `Welcome back, ${nick}. ${welcomeMsg}` : welcomeMsg;
+    TREE.returning.msg = nick ? `Welcome back, ${nick}. ${welcomeMsg}` : `Welcome back. ${welcomeMsg}`;
 
     // Step 0: Mount robot
     later(()=>{setPhase("entering")},200);
@@ -3411,6 +3697,15 @@ function App() {
   const pick=useCallback((o)=>{
     if(o.next==="_exit"){exit();return}
     if(o.next==="end_convo"){endConvo();return}
+    if(o.next==="_info_back"){
+      setNode(notesUnlocked ? "ask_spocket_unlocked" : "about_spocket");
+      return;
+    }
+    if(o.next==="_info_done"){
+      if(notesUnlocked){dismissParkedQa();}
+      else{exit();}
+      return;
+    }
     if (o.next === "_unlock_name_dismiss") {
       try {
         localStorage.setItem(LS_SPOCKET_NAME_SKIP, "1");
@@ -3454,7 +3749,7 @@ function App() {
     fontFamily: "'JetBrains Mono',monospace",
     position: "relative",
     /* overflow:hidden clips position:fixed descendants (e.g. find dock); keep visible while dock open */
-    overflow: compactParkedUi || findDockOpen || isMobile ? "visible" : "hidden",
+    overflow: compactParkedUi || findDockOpen || aiChatActive || isMobile ? "visible" : "hidden",
     pointerEvents: "none",
   };
 
@@ -3776,13 +4071,13 @@ function App() {
                   pointerEvents: "none",
                 }
           }>
-            {/* Corner Q&A: bubble left of big Spocket, tail points right toward robot */}
-            {cornerUnlockedChat && showUI && (
+            {/* Corner Q&A / Find in Notes: bubble left of big Spocket (AI chat uses dedicated panel instead) */}
+            {cornerUnlockedChat && showUI && !aiChatActive && (
               <div
                 style={{
                   flex: "1 1 auto",
                   minWidth: 0,
-                  maxWidth: (findNotesActive || aiChatActive) ? "min(440px, calc(100vw - 120px))" : 300,
+                  maxWidth: findNotesActive ? "min(440px, calc(100vw - 120px))" : 300,
                   marginBottom: CORNER_CHAT_BUBBLE_LIFT,
                   zIndex: 25,
                   animation: "fadeInUp 0.3s ease",
@@ -3791,7 +4086,7 @@ function App() {
                 }}
               >
                 <Bubble
-                  rawMsg={cryExit ? txt : aiChatActive ? (aiChatMessages.length > 0 && !typing ? aiChatMessages[aiChatMessages.length - 1].content : SPOCKET_AI_INTRO_RAW) : findNotesActive ? SPOCKET_FIND_INTRO_RAW : dialogueRaw}
+                  rawMsg={cryExit ? txt : findNotesActive ? SPOCKET_FIND_INTRO_RAW : dialogueRaw}
                   textPlain={txt}
                   isTyping={typing}
                   tiny={cryExit}
@@ -3875,110 +4170,6 @@ function App() {
                     </div>
                   </div>
                 )}
-                {/* ── AI CHAT INPUT ── */}
-                {aiChatActive && !typing && (
-                  <div style={{ marginTop: 12, animation: "fadeInUp 0.25s ease" }}>
-                    {aiNotesContext === null && (
-                      <div style={{ fontSize: 10, color: "#fbbf24", marginBottom: 8, fontWeight: 600 }}>
-                        Loading notes context…
-                      </div>
-                    )}
-                    {aiChatMessages.length > 2 && (
-                      <div style={{
-                        maxHeight: 160,
-                        overflowY: "auto",
-                        marginBottom: 10,
-                        padding: "6px 8px",
-                        borderRadius: 8,
-                        background: "#0b1220",
-                        border: "1px solid #1e293b",
-                        fontSize: 10,
-                        lineHeight: 1.5,
-                      }}>
-                        {aiChatMessages.slice(0, -1).map((m, i) => (
-                          <div key={i} style={{
-                            padding: "4px 0",
-                            borderBottom: i < aiChatMessages.length - 2 ? "1px solid #1e293b" : "none",
-                            color: m.role === "user" ? "#7dd3fc" : "#c8d6e5",
-                          }}>
-                            <span style={{ fontWeight: 700, fontSize: 9, color: m.role === "user" ? "#38bdf8" : "#7fdbca" }}>
-                              {m.role === "user" ? "You" : "Spocket"}:
-                            </span>{" "}
-                            {m.content.length > 120 ? m.content.slice(0, 120) + "…" : m.content}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    <label htmlFor="tm-ai-chat-input" style={{ display: "block", fontSize: 10, color: "#94a3b8", marginBottom: 6 }}>
-                      {aiNotesContext === null ? "Extracting notes content…" : "Ask a question about the course notes"}
-                    </label>
-                    <textarea
-                      id="tm-ai-chat-input"
-                      value={aiChatInput}
-                      onChange={(e) => setAiChatInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey) {
-                          e.preventDefault();
-                          submitAiChat();
-                        }
-                      }}
-                      disabled={aiChatLoading || aiNotesContext === null}
-                      rows={2}
-                      placeholder="e.g. What is the safety factor formula?"
-                      style={{
-                        width: "100%",
-                        boxSizing: "border-box",
-                        resize: "vertical",
-                        minHeight: 56,
-                        padding: "8px 10px",
-                        borderRadius: 10,
-                        border: "1px solid #334155",
-                        background: "#0b1220",
-                        color: "#e2e8f0",
-                        fontFamily: "'JetBrains Mono',monospace",
-                        fontSize: 11,
-                        lineHeight: 1.45,
-                        marginBottom: 8,
-                      }}
-                    />
-                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
-                      <button
-                        type="button"
-                        onClick={() => dismissParkedQa()}
-                        style={{
-                          padding: "6px 12px",
-                          borderRadius: 10,
-                          border: "1px solid #475569",
-                          background: "#0f172a",
-                          color: "#94a3b8",
-                          fontSize: 10,
-                          fontFamily: "'JetBrains Mono',monospace",
-                          cursor: "pointer",
-                        }}
-                      >
-                        Back
-                      </button>
-                      <button
-                        type="button"
-                        disabled={aiChatLoading || !aiChatInput.trim() || aiNotesContext === null}
-                        onClick={() => submitAiChat()}
-                        style={{
-                          padding: "6px 14px",
-                          borderRadius: 10,
-                          border: "none",
-                          background: aiChatLoading || !aiChatInput.trim() || aiNotesContext === null ? "#475569" : "#fbbf24",
-                          color: aiChatLoading || !aiChatInput.trim() || aiNotesContext === null ? "#94a3b8" : "#0a0f1a",
-                          fontSize: 10,
-                          fontWeight: 700,
-                          fontFamily: "'JetBrains Mono',monospace",
-                          cursor: aiChatLoading || !aiChatInput.trim() || aiNotesContext === null ? "not-allowed" : "pointer",
-                        }}
-                      >
-                        {aiChatLoading ? "Thinking…" : "Ask Spocket"}
-                      </button>
-                    </div>
-                  </div>
-                )}
               </div>
             )}
 
@@ -4006,6 +4197,23 @@ function App() {
             </div>
           </div>
         )}
+
+        {/* ── AI CHAT PANEL — dedicated full-height side panel, replaces bubble for AI mode ── */}
+        {aiChatActive && SpocketReactDOM && typeof SpocketReactDOM.createPortal === "function" &&
+          SpocketReactDOM.createPortal(
+            <AiChatPanel
+              messages={aiChatMessages}
+              loading={aiChatLoading}
+              input={aiChatInput}
+              onInputChange={setAiChatInput}
+              onSubmit={submitAiChat}
+              onClose={dismissParkedQa}
+              notesContext={aiNotesContext}
+              isMobile={isMobile}
+            />,
+            document.body
+          )
+        }
 
         {/* Speech bubble — portaled to body to escape robot container's transform context */}
         {!cornerUnlockedChat && showUI && showMainRobot && (() => {
