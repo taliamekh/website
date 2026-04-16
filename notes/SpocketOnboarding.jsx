@@ -2552,13 +2552,17 @@ function App() {
         cachedNotesContextRef.current = ctx;
       });
     }
-  }, [notesUnlocked, extractNotesContext]);
+  // extractNotesContext is a stable useCallback(()=>{},[]) — safe to omit
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [notesUnlocked]);
   // Auto-dismiss pre-unlock dialogue if the page unlocks while Spocket is talking
   useEffect(() => {
     if (notesUnlocked && phase === "talking" && !parked) {
       exit();
     }
-  }, [notesUnlocked, phase, parked, exit]);
+  // exit is defined later in App(); omitting it avoids TDZ ReferenceError
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [notesUnlocked, phase, parked]);
   useEffect(() => {
     findNotesBusyRef.current = findNotesBusy;
   }, [findNotesBusy]);
