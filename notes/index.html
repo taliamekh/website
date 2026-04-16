@@ -252,6 +252,13 @@
     transition: padding-right 0.15s ease;
     box-sizing: border-box;
   }
+  /* Force notes-column-inner to fill the narrowed container (no gap) */
+  body.sr-ai-panel-open .notes-column-inner {
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
   @media (max-width: 768px) {
     body.sr-ai-panel-open .ecor-panel {
       padding-right: 0;

@@ -86,11 +86,13 @@ const SPOCKET_FIND_INTRO_RAW =
 
 /* Random welcome-back messages for returning users */
 const WELCOME_BACKS = [
-  "Pick up where you left off in the workspace whenever you are ready.",
-  "Use the menu if you need workspace help or Find in notes.",
-  "Your local notes data is still in this browser unless you cleared it.",
-  "If anything in the study guide changed, skim the help topics from the corner menu.",
-  "Timers and session history are in Study mode if you use that.",
+  "You've got this — consistent study sessions beat last-minute cramming every time.",
+  "Tip: after reading a section, close the notes and try to recall the key ideas from memory.",
+  "Struggling with a concept? Try explaining it out loud as if you are teaching someone else.",
+  "Short on time? Prioritize the topics you are least confident in first.",
+  "Taking breaks actually helps — 25 minutes of focus, 5 minutes off keeps the brain sharp.",
+  "If something isn't clicking, try a different angle: diagrams, examples, or just asking me.",
+  "Reviewing your notes within 24 hours of a lecture locks in retention significantly.",
 ];
 
 const TREE = {
@@ -2288,6 +2290,9 @@ function AiChatPanel({ messages, loading, input, onInputChange, onSubmit, onClos
           <span style={{ color: '#7fdbca', fontSize: 11, fontWeight: 600, letterSpacing: '0.04em' }}>
             Ask Spocket
           </span>
+          <span style={{ color: '#64748b', fontSize: 9, fontWeight: 500, marginLeft: 6, background: '#1e293b', padding: '1px 5px', borderRadius: 4, letterSpacing: '0.03em' }}>
+            BETA
+          </span>
           {notesContext === null && (
             <span style={{ color: '#fbbf24', fontSize: 9, fontWeight: 600, marginLeft: 4 }}>
               Loading notes…
@@ -2439,6 +2444,20 @@ function AiChatPanel({ messages, loading, input, onInputChange, onSubmit, onClos
         >
           ›
         </button>
+      </div>
+
+      {/* Beta disclaimer */}
+      <div style={{
+        padding: '4px 10px 6px',
+        borderTop: '1px solid #0f172a',
+        flexShrink: 0,
+        textAlign: 'center',
+        color: '#334155',
+        fontSize: 9,
+        lineHeight: 1.4,
+        fontFamily: "'JetBrains Mono', monospace",
+      }}>
+        Beta · AI answers may be inaccurate — always verify against the actual notes
       </div>
     </div>
   );
@@ -4340,39 +4359,39 @@ function App() {
           </div>
         )}
 
-        {/* ── PHONE FORM — fixed right side, vertically centered via flexbox ── */}
+        {/* ── PHONE FORM — centered on screen, does not overlap lock card on small screens ── */}
         {showUI&&showIpad&&(
           <div style={{
             position:"fixed",
-            top:0,
-            bottom:0,
-            left:"50%",
+            inset:0,
             zIndex:30,
             animation:"fadeInUp 0.4s ease",
             display:"flex",
             alignItems:"center",
-            pointerEvents:"auto",
+            justifyContent:"center",
+            padding:"80px 16px 16px",
+            pointerEvents:"none",
           }}>
-            <div style={{pointerEvents:"auto"}}>
+            <div style={{pointerEvents:"auto",maxWidth:"100%"}}>
               <IpadForm/>
             </div>
           </div>
         )}
 
-        {/* ── EMAIL FORM (temp password) — fixed right side, vertically centered ── */}
+        {/* ── EMAIL FORM (temp password) — centered on screen, does not overlap lock card ── */}
         {showUI&&showForm&&(
           <div style={{
             position:"fixed",
-            top:0,
-            bottom:0,
-            left:"50%",
+            inset:0,
             zIndex:30,
             animation:"fadeInUp 0.3s ease",
             display:"flex",
             alignItems:"center",
-            pointerEvents:"auto",
+            justifyContent:"center",
+            padding:"80px 16px 16px",
+            pointerEvents:"none",
           }}>
-            <div style={{pointerEvents:"auto"}}>
+            <div style={{pointerEvents:"auto",maxWidth:"100%"}}>
               <EmailForm onSubmit={()=>later(exit,2000)}/>
             </div>
           </div>
