@@ -61,9 +61,9 @@
   var chromeRoot = null;
   var wrapShapesRoot = null;
   var wrapStyleRoot = null;
-  // --- Undo / redo memory (steps of the drawing list, not separate files) ---
-  var MAX_UNDO = 40;
-  var undoStack = [];
+  // --- Undo / redo memory (tagged: drawings OR highlights, chronological) ---
+  var MAX_UNDO = 80;
+  var undoStack = []; // entries: { kind: 'draw'|'hl', snap: ... }
   var redoStack = [];
   var btnUndo = null;
   var btnRedo = null;
@@ -143,6 +143,40 @@
   function snapshotItemsDeep() {
     return JSON.parse(JSON.stringify(items));
   }
+  // Snapshot all highlight marks (text + slot) so we can undo highlight creation/removal.
+  function snapshotHlMarks() {
+    try {
+      return Array.prototype.map.call(document.querySelectorAll('mark.usr'), function (m) {
+        var slot = parseInt(m.getAttribute('data-slot') || '0', 10);
+        if (isNaN(slot) || slot < 0 || slot > 4) slot = 0;
+        return { text: m.textContent, slot: slot };
+      });
+    } catch (e) { return []; }
+  }
+  // Restore marks from a snapshot (used by undoDraw/redoDraw when entry.kind === 'hl').
+  function restoreHlFromSnapshot(snap) {
+    if (!Array.isArray(snap)) return;
+    try {
+      // Strip existing marks first
+      if (window.__TM_SR_HL && typeof window.__TM_SR_HL.strip === 'function') {
+        window.__TM_SR_HL.strip();
+      } else {
+        document.querySelectorAll('mark.usr').forEach(function (m) {
+          var p = m.parentNode; if (!p) return;
+          while (m.firstChild) p.insertBefore(m.firstChild, m);
+          p.removeChild(m);
+        });
+      }
+      // Re-wrap
+      var wrap = (window.__TM_SR_HL && window.__TM_SR_HL.wrapOnce) || null;
+      for (var i = 0; i < snap.length; i++) {
+        var it = snap[i]; if (!it || it.text == null) continue;
+        if (wrap) wrap(String(it.text), (typeof it.slot === 'number' ? it.slot : 0));
+      }
+      if (typeof window.__TM_SR_HL_REWIRE === 'function') window.__TM_SR_HL_REWIRE();
+      if (typeof saveHL === 'function') saveHL();
+    } catch (e) { /* ignore */ }
+  }
   function resetDrawHistory() {
     undoStack = [];
     redoStack = [];
@@ -164,25 +198,47 @@
   }
   // Snapshot drawings before a change so Undo can restore them.
   function pushDrawHistory() {
-    undoStack.push(snapshotItemsDeep());
+    undoStack.push({ kind: 'draw', snap: snapshotItemsDeep() });
     if (undoStack.length > MAX_UNDO) undoStack.shift();
     redoStack = [];
     syncUndoRedoBtns();
   }
+  // Snapshot highlight marks before a change so Undo can restore them.
+  function pushHlHistory() {
+    undoStack.push({ kind: 'hl', snap: snapshotHlMarks() });
+    if (undoStack.length > MAX_UNDO) undoStack.shift();
+    redoStack = [];
+    syncUndoRedoBtns();
+  }
+  // Bridge for the in-iframe persistence script (eraser click path) — must match what
+  // injectHighlightPersistence in index.html looks up (window.__TM_PUSH_HL_HISTORY).
+  window.__TM_PUSH_HL_HISTORY = pushHlHistory;
   function undoDraw() {
     if (!undoStack.length) return;
-    redoStack.push(snapshotItemsDeep());
-    items = migrateItems(undoStack.pop());
-    saveDrawings();
-    render();
+    var entry = undoStack.pop();
+    if (entry && entry.kind === 'hl') {
+      redoStack.push({ kind: 'hl', snap: snapshotHlMarks() });
+      restoreHlFromSnapshot(entry.snap);
+    } else {
+      redoStack.push({ kind: 'draw', snap: snapshotItemsDeep() });
+      items = migrateItems(entry && entry.snap ? entry.snap : []);
+      saveDrawings();
+      render();
+    }
     syncUndoRedoBtns();
   }
   function redoDraw() {
     if (!redoStack.length) return;
-    undoStack.push(snapshotItemsDeep());
-    items = migrateItems(redoStack.pop());
-    saveDrawings();
-    render();
+    var entry = redoStack.pop();
+    if (entry && entry.kind === 'hl') {
+      undoStack.push({ kind: 'hl', snap: snapshotHlMarks() });
+      restoreHlFromSnapshot(entry.snap);
+    } else {
+      undoStack.push({ kind: 'draw', snap: snapshotItemsDeep() });
+      items = migrateItems(entry && entry.snap ? entry.snap : []);
+      saveDrawings();
+      render();
+    }
     syncUndoRedoBtns();
   }
   function positionPopNear(anchor, pop) {
@@ -771,9 +827,41 @@
   function setCollapsed(c) {
     collapsed = !!c;
     if (collapsed) closeAllPops();
-    if (bar) bar.classList.toggle('tm-ws-collapsed', collapsed);
+    if (bar) {
+      bar.classList.toggle('tm-ws-collapsed', collapsed);
+      // When collapsing, immediately go to idle (dots-only). When expanding, clear idle.
+      if (collapsed) bar.classList.add('tm-ws-idle');
+      else bar.classList.remove('tm-ws-idle');
+    }
     if (btnCollapse) btnCollapse.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
     saveBarState();
+  }
+
+  // Idle state is the super-compact "just dots" look when the toolbar is collapsed
+  // and the pointer isn't near it. Hover lifts idle; after a short leave delay or
+  // after the tap-timeout, we re-enter idle. This is only meaningful when `collapsed`.
+  var idleLiftTimer = null;
+  function scheduleIdleLift(ms) {
+    if (!bar || !collapsed) return;
+    bar.classList.remove('tm-ws-idle');
+    if (idleLiftTimer) { clearTimeout(idleLiftTimer); idleLiftTimer = null; }
+    idleLiftTimer = setTimeout(function () {
+      if (collapsed && bar) bar.classList.add('tm-ws-idle');
+      idleLiftTimer = null;
+    }, ms || 2800);
+  }
+  function liftIdleNow() {
+    if (!bar || !collapsed) return;
+    bar.classList.remove('tm-ws-idle');
+    if (idleLiftTimer) { clearTimeout(idleLiftTimer); idleLiftTimer = null; }
+  }
+  function returnToIdleSoon(ms) {
+    if (!bar || !collapsed) return;
+    if (idleLiftTimer) clearTimeout(idleLiftTimer);
+    idleLiftTimer = setTimeout(function () {
+      if (collapsed && bar) bar.classList.add('tm-ws-idle');
+      idleLiftTimer = null;
+    }, ms || 450);
   }
   function clearShapeModeUi() {
     if (popShapes) popShapes.querySelectorAll('button[data-mode]').forEach(function (b) {
@@ -998,6 +1086,21 @@
       'border:none;border-radius:8px;background:transparent;color:rgba(255,255,255,.95);cursor:pointer}' +
       '.tm-ws-head-btn:hover{color:#fff;background:rgba(255,255,255,.1)}' +
       '.tm-ws-head-btn:disabled,.tm-ws-head-btn.tm-ws-head-btn--disabled{opacity:.26;cursor:not-allowed}' +
+      /* Idle dots icon — when collapsed AND not hovered/peeked, only this button shows. */
+      '.tm-ws-idle-btn{display:none;width:34px;height:34px;min-width:34px;padding:0;' +
+      'border:none;border-radius:8px;background:transparent;color:rgba(255,255,255,.92);cursor:pointer;' +
+      'align-items:center;justify-content:center;}' +
+      '.tm-ws-idle-btn:hover{color:#fff;background:rgba(255,255,255,.1);}' +
+      'html.sr-light .tm-ws-idle-btn{color:rgba(20,30,60,0.88);}' +
+      'html.sr-light .tm-ws-idle-btn:hover{color:#0f1f38;background:rgba(10,20,50,0.07);}' +
+      '.tm-ws-collapsed.tm-ws-idle .tm-ws-idle-btn{display:inline-flex;}' +
+      /* Hide the rest of chrome-head buttons and the main row while idle. */
+      '.tm-ws-collapsed.tm-ws-idle .tm-ws-chrome-head > .tm-ws-head-btn{display:none!important;}' +
+      '.tm-ws-collapsed.tm-ws-idle .tm-ws-main{display:none!important;}' +
+      /* Squish the pill down so the idle state is just the size of one button. */
+      '.tm-ws-collapsed.tm-ws-idle .tm-ws-chrome{padding:3px;background:rgba(22,26,38,.72);transition:padding 0.18s ease, background 0.18s ease;}' +
+      'html.sr-light .tm-ws-collapsed.tm-ws-idle .tm-ws-chrome{background:rgba(248,250,255,0.88);}' +
+      '.tm-ws-collapsed .tm-ws-chrome{transition:padding 0.18s ease, background 0.18s ease;}' +
       '.tm-ws-main{display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;gap:8px;width:100%;' +
       'min-width:0;box-sizing:border-box}' +
       '.tm-ws-tail{display:flex;flex-direction:row;flex-wrap:nowrap;align-items:stretch;gap:6px;flex:1 1 auto;min-width:0}' +
@@ -1126,7 +1229,42 @@
       'mark.tm-spocket-find-mark.tm-spocket-find-active{box-shadow:0 0 0 4px #fff,0 0 26px rgba(255,20,147,.9)!important}' +
       '.tm-spocket-find-outline{animation:tmSpocketFindPulse 2.5s ease-in-out infinite;outline:3px solid rgba(255,45,160,.65)!important;outline-offset:3px;box-shadow:0 0 0 1px rgba(255,255,255,.25)}' +
       '.tm-spocket-find-outline.tm-spocket-find-active{outline-color:#ff2da0!important;outline-width:4px!important;box-shadow:0 0 0 2px rgba(255,255,255,.45),0 0 22px rgba(255,45,160,.7)}' +
-      '@keyframes tmSpocketFindPulse{0%,100%{opacity:1}50%{opacity:.78}}';
+      '@keyframes tmSpocketFindPulse{0%,100%{opacity:1}50%{opacity:.78}}' +
+      /* Light-mode overrides — warm paper beige palette for the floating toolbar.
+       * All declarations are !important because the upstream notes CSS uses id-based
+       * selectors like `#hl-bar button` which otherwise beat our class-only rules. */
+      'html.sr-light .tm-ws-chrome{background:rgba(244,236,216,0.94)!important;border-color:rgba(82,60,20,0.22)!important;box-shadow:0 6px 22px rgba(82,60,20,0.18)!important;color:#14100a!important;}' +
+      'html.sr-light .tm-ws-head-btn{color:#14100a!important;background:transparent!important;}' +
+      'html.sr-light .tm-ws-head-btn:hover{color:#080604!important;background:rgba(82,60,20,0.08)!important;}' +
+      'html.sr-light .tm-ic-btn{background:#faf3e0!important;border-color:#bcaa7f!important;color:#14100a!important;}' +
+      'html.sr-light .tm-ic-btn:hover{border-color:rgba(17,85,212,0.55)!important;color:#080604!important;}' +
+      'html.sr-light .tm-ic-btn.tm-ic--on{background:rgba(17,85,212,0.12)!important;border-color:#1155d4!important;color:#1155d4!important;}' +
+      'html.sr-light .tm-pop{background:#faf3e0!important;border-color:#bcaa7f!important;color:#14100a!important;box-shadow:0 12px 36px rgba(82,60,20,0.18)!important;}' +
+      'html.sr-light .tm-drawing-ctx{background:#faf3e0!important;color:#14100a!important;border-color:#bcaa7f!important;box-shadow:0 16px 40px rgba(82,60,20,0.22)!important;}' +
+      'html.sr-light .tm-drawing-ctx button:hover{background:rgba(17,85,212,0.12)!important;}' +
+      'html.sr-light .tm-drawing-ctx .tm-d-ctx-hdr{color:#4a3f2a!important;}' +
+      'html.sr-light .tm-ws-div{background:rgba(82,60,20,0.22)!important;}' +
+      'html.sr-light .tm-ws-hl-toggle{background:#faf3e0!important;border-color:#bcaa7f!important;color:#14100a!important;}' +
+      'html.sr-light .tm-ws-hl-toggle:hover{border-color:rgba(17,85,212,0.55)!important;color:#080604!important;}' +
+      'html.sr-light .tm-ws-hl-toggle.tm-ic--on{background:rgba(17,85,212,0.12)!important;color:#1155d4!important;border-color:#1155d4!important;}' +
+      'html.sr-light .tm-txt-btn{background:#faf3e0!important;border-color:#bcaa7f!important;color:#14100a!important;}' +
+      'html.sr-light .tm-txt-btn:hover{color:#080604!important;border-color:rgba(17,85,212,0.5)!important;}' +
+      'html.sr-light .tm-ws-drag{color:#4a3f2a!important;}' +
+      'html.sr-light .tm-ws-collapse{background:#faf3e0!important;border-color:#bcaa7f!important;color:#14100a!important;}' +
+      'html.sr-light .tm-ws-collapse:hover{color:#1155d4!important;}' +
+      'html.sr-light .tm-color-manage-pop,html.sr-light .tm-hl-manage-pop{background:#faf3e0!important;border-color:#bcaa7f!important;color:#14100a!important;box-shadow:0 16px 40px rgba(82,60,20,0.22)!important;}' +
+      'html.sr-light input[type="number"].tm-ws-num{background:#faf3e0!important;border-color:#bcaa7f!important;color:#14100a!important;}' +
+      'html.sr-light .tm-dash-row button{background:#faf3e0!important;border-color:#bcaa7f!important;color:#14100a!important;}' +
+      'html.sr-light .tm-dash-row button.on{color:#1155d4!important;border-color:#1155d4!important;}' +
+      'html.sr-light .tm-ws-stack-label,html.sr-light .tm-ws-hl-heading,html.sr-light .tm-ws-inline-label{color:#4a3f2a!important;}' +
+      /* Idle "dots" pill blends into the beige page when collapsed. */
+      'html.sr-light .tm-ws-collapsed.tm-ws-idle .tm-ws-chrome{background:rgba(244,236,216,0.88)!important;}' +
+      'html.sr-light .tm-ws-idle-btn{color:#14100a!important;background:transparent!important;}' +
+      'html.sr-light .tm-ws-idle-btn:hover{color:#080604!important;background:rgba(82,60,20,0.10)!important;}' +
+      /* Highlight mark CSS — mirrored from index.html so marks still render correctly even when
+       * the unified core CSS hasn't loaded yet (defensive for quick dev reloads). */
+      ':root{--tm-hl-slot-0:#fff59d;--tm-hl-slot-1:#ffcc80;--tm-hl-slot-2:#a5d6a7;--tm-hl-slot-3:#90caf9;--tm-hl-slot-4:#ce93d8;}' +
+      'html.sr-light{--tm-hl-slot-0:#ffe08a;--tm-hl-slot-1:#ffb27a;--tm-hl-slot-2:#7fd48a;--tm-hl-slot-3:#7fb4ef;--tm-hl-slot-4:#c48ad1;}';
     document.head.appendChild(st);
   }
 
@@ -1421,9 +1559,38 @@
         hideShapeCtxMenu();
         return;
       }
+      // Parent toggled light/dark; mirror the class on <html> here.
+      if (ev.data.type === 'tm_sr_theme' && (ev.data.theme === 'light' || ev.data.theme === 'dark')) {
+        try {
+          document.documentElement.classList.toggle('sr-light', ev.data.theme === 'light');
+          document.documentElement.setAttribute('data-sr-theme', ev.data.theme);
+          document.documentElement.setAttribute('data-theme', ev.data.theme);
+        } catch (eTheme) { /* ignore */ }
+        return;
+      }
       // First load / refresh: parent sends colors, drawings, toolbar position, etc.
       if (ev.data.type === 'tm_iframe_workspace_boot' && ev.data.payload) {
         var p = ev.data.payload;
+        // Apply theme from boot payload (first paint was handled by injectThemeBootstrap).
+        if (p.theme === 'light' || p.theme === 'dark') {
+          try {
+            document.documentElement.classList.toggle('sr-light', p.theme === 'light');
+            document.documentElement.setAttribute('data-sr-theme', p.theme);
+            document.documentElement.setAttribute('data-theme', p.theme);
+          } catch (eTh) { /* ignore */ }
+        }
+        // Hydrate highlight marks from saved payload (slot-indexed + legacy {text,bg}).
+        if (typeof p.highlights === 'string' && p.highlights && window.__TM_SR_HL) {
+          try {
+            var parsed = JSON.parse(p.highlights);
+            if (Array.isArray(parsed)) {
+              // Store into the local backing key so restoreHL reads the same data.
+              try { localStorage.setItem(window.__TM_SR_HL.LS_KEY, p.highlights); } catch (eLS) { /* ignore */ }
+              if (typeof window.restoreHL === 'function') window.restoreHL();
+              if (typeof window.__TM_SR_HL_REWIRE === 'function') window.__TM_SR_HL_REWIRE();
+            }
+          } catch (eHL) { /* ignore */ }
+        }
         if (p.globalStyle && typeof p.globalStyle === 'object') {
           Object.assign(activeStyle, p.globalStyle);
           if (activeStyle.fontSizePt == null || isNaN(activeStyle.fontSizePt)) activeStyle.fontSizePt = 14;
@@ -1585,6 +1752,33 @@
       },
       true
     );
+    // Idle icon (dots-in-square): the only control visible when the toolbar is
+    // collapsed and hasn't been hovered recently. Hover over the pill (desktop)
+    // or tap the icon (mobile) to reveal undo/redo/drag/collapse.
+    var btnIdle = document.createElement('button');
+    btnIdle.type = 'button';
+    btnIdle.className = 'tm-ws-idle-btn';
+    btnIdle.setAttribute('aria-label', 'Show toolbar controls');
+    btnIdle.title = 'Show toolbar controls';
+    btnIdle.innerHTML =
+      '<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">' +
+      '<circle cx="6" cy="6" r="1.7" fill="currentColor"/>' +
+      '<circle cx="12" cy="6" r="1.7" fill="currentColor"/>' +
+      '<circle cx="18" cy="6" r="1.7" fill="currentColor"/>' +
+      '<circle cx="6" cy="12" r="1.7" fill="currentColor"/>' +
+      '<circle cx="12" cy="12" r="1.7" fill="currentColor"/>' +
+      '<circle cx="18" cy="12" r="1.7" fill="currentColor"/>' +
+      '<circle cx="6" cy="18" r="1.7" fill="currentColor"/>' +
+      '<circle cx="12" cy="18" r="1.7" fill="currentColor"/>' +
+      '<circle cx="18" cy="18" r="1.7" fill="currentColor"/>' +
+      '</svg>';
+    btnIdle.addEventListener('click', function (ev) {
+      ev.stopPropagation();
+      // On touch, click temporarily lifts idle for a few seconds so the user can tap
+      // undo/redo/collapse. On desktop, pointer-over-the-pill already does this via CSS hover.
+      scheduleIdleLift(2800);
+    });
+    chromeHead.appendChild(btnIdle);
     chromeHead.appendChild(btnUndo);
     chromeHead.appendChild(btnRedo);
     chromeRoot.appendChild(chromeHead);
@@ -2359,10 +2553,35 @@
 
     var hop = document.getElementById('hl-op');
     if (hop) {
-      hop.min = '60';
+      // Widen the range so dragging produces a visible change. Previously capped at 60-100
+      // which was only 40% of slider travel and made the effect look broken.
+      hop.min = '20';
       hop.max = '100';
+      hop.step = '1';
       var hv = parseInt(hop.value, 10);
-      if (!isNaN(hv) && hv < 60) hop.value = '70';
+      if (isNaN(hv) || hv < 20) hop.value = '85';
+      // The unified highlight core uses color-mix() with a CSS var --tm-hl-alpha (percent),
+      // so dragging this slider re-tints every highlight in place. Also persist the choice
+      // to localStorage so it survives reloads.
+      var HL_OP_KEY = 'tm_hl_opacity_v1';
+      function applyHlAlpha(v) {
+        var pct = Math.max(10, Math.min(100, parseInt(v, 10) || 85));
+        document.documentElement.style.setProperty('--tm-hl-alpha', String(pct));
+      }
+      try {
+        var savedOp = localStorage.getItem(HL_OP_KEY);
+        if (savedOp) { hop.value = savedOp; }
+      } catch (eOpRead) { /* ignore */ }
+      applyHlAlpha(hop.value);
+      hop.addEventListener('input', function () {
+        applyHlAlpha(hop.value);
+        try { localStorage.setItem(HL_OP_KEY, String(hop.value)); } catch (eOp) { /* ignore */ }
+      });
+      // Some upstream HTML also wires `change` — mirror it so both events apply.
+      hop.addEventListener('change', function () {
+        applyHlAlpha(hop.value);
+        try { localStorage.setItem(HL_OP_KEY, String(hop.value)); } catch (eOp2) { /* ignore */ }
+      });
     }
 
     var dragOn = false;
@@ -2752,11 +2971,123 @@
     postHlGlobals();
     updateDrawCursor();
     postActiveToolToParent();
+    installReliableHighlightListener();
+    // Enter idle (dots only) when starting collapsed — happens after layout so user sees the full
+    // pill for a brief moment before it shrinks, avoiding a flash of "missing controls" during boot.
+    if (bar && collapsed) {
+      setTimeout(function () { if (bar && collapsed) bar.classList.add('tm-ws-idle'); }, 600);
+    }
+    // Hover: lift idle while pointer is over the pill; leave: schedule a return.
+    if (bar) {
+      bar.addEventListener('mouseenter', liftIdleNow);
+      bar.addEventListener('mouseleave', function () { returnToIdleSoon(500); });
+      // Any pointerdown inside the pill (touch or pen) also lifts idle.
+      bar.addEventListener('pointerdown', function () {
+        if (collapsed) scheduleIdleLift(2800);
+      }, true);
+    }
     requestAnimationFrame(function () {
       clampBarIntoView();
       syncUndoRedoBtns();
       saveBarState();
     });
+  }
+
+  /**
+   * Installs a single document-wide mouseup listener that creates highlight marks.
+   * Runs in every iframe (MAAE, ECOR, formula). Gated by window.__TM_HIGHLIGHT_ARMED
+   * so it only activates when the highlighter tool is on. Stores slot index instead
+   * of raw color so theme flips recolor marks through CSS variables.
+   *
+   * If surroundContents() throws (selection crossed element boundaries), falls back
+   * to a TreeWalker that wraps each intersecting text node individually — this is
+   * what makes highlighting "just work" even for selections crossing <strong>, <code>,
+   * <span>, etc.
+   */
+  function installReliableHighlightListener() {
+    if (window.__TM_HL_ML_INSTALLED) return;
+    window.__TM_HL_ML_INSTALLED = true;
+
+    function activeSlotIndex() {
+      // Try to match current hlColor to an existing slot; fall back to 0.
+      var cur = (typeof window.hlColor === 'string' && window.hlColor) ? window.hlColor.toLowerCase() : '';
+      if (!cur) return 0;
+      for (var i = 0; i < hlColorSlots.length && i < 5; i++) {
+        if (hlColorSlots[i] && String(hlColorSlots[i]).toLowerCase() === cur) return i;
+      }
+      if (window.__TM_SR_HL && typeof window.__TM_SR_HL.nearestSlot === 'function') {
+        return window.__TM_SR_HL.nearestSlot(cur);
+      }
+      return 0;
+    }
+
+    function wrapRangeReliably(range, slotIndex) {
+      // Single-node case: try the fast path.
+      var mk = document.createElement('mark');
+      mk.className = 'usr';
+      mk.setAttribute('data-slot', String(slotIndex | 0));
+      try {
+        range.surroundContents(mk);
+        return [mk];
+      } catch (e) {
+        // Multi-node fallback: walk text nodes inside the range's common ancestor
+        // and wrap each portion that intersects the range in its own <mark>.
+        return wrapRangeByWalkingTextNodes(range, slotIndex);
+      }
+    }
+
+    function wrapRangeByWalkingTextNodes(range, slotIndex) {
+      var produced = [];
+      try {
+        var root = range.commonAncestorContainer;
+        if (root.nodeType === 3) root = root.parentNode;
+        if (!root) return produced;
+        var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+          acceptNode: function (n) {
+            try { return range.intersectsNode(n) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT; }
+            catch (e) { return NodeFilter.FILTER_REJECT; }
+          }
+        });
+        var nodes = [];
+        while (walker.nextNode()) nodes.push(walker.currentNode);
+        for (var i = 0; i < nodes.length; i++) {
+          var tn = nodes[i];
+          if (!tn.nodeValue) continue;
+          // Don't wrap text inside existing highlights or toolbar chrome.
+          if (tn.parentNode && tn.parentNode.closest && tn.parentNode.closest('mark.usr,#hl-bar,.tm-ws-host,.tm-sr-sidebar,.tm-pop,.tm-drawing-ctx')) continue;
+          var sOffset = (tn === range.startContainer) ? range.startOffset : 0;
+          var eOffset = (tn === range.endContainer) ? range.endOffset : tn.nodeValue.length;
+          if (eOffset <= sOffset) continue;
+          var sub = document.createRange();
+          try { sub.setStart(tn, sOffset); sub.setEnd(tn, eOffset); } catch (e2) { continue; }
+          var mk = document.createElement('mark');
+          mk.className = 'usr';
+          mk.setAttribute('data-slot', String(slotIndex | 0));
+          try { sub.surroundContents(mk); produced.push(mk); } catch (e3) { /* skip this node */ }
+        }
+      } catch (eWalk) { /* ignore */ }
+      return produced;
+    }
+
+    document.addEventListener('mouseup', function (ev) {
+      if (!window.__TM_HIGHLIGHT_ARMED) return;
+      var tgt = ev.target;
+      if (tgt && tgt.closest && tgt.closest('#hl-bar,.tm-ws-host,.tm-pop,.tm-popwrap,.tm-drawing-ctx,.tm-sr-sidebar,.tm-sr-sidebar-host,.tm-sr-hamburger,.tm-sr-sidebar-toggle')) return;
+      var sel;
+      try { sel = window.getSelection(); } catch (eSel) { return; }
+      if (!sel || sel.isCollapsed || sel.rangeCount === 0) return;
+      var rng;
+      try { rng = sel.getRangeAt(0); } catch (eR) { return; }
+      if (!rng || !document.body.contains(rng.commonAncestorContainer)) return;
+      // Snapshot BEFORE mutation so undo can restore pre-highlight state.
+      try { pushHlHistory(); } catch (eH) { /* ignore */ }
+      var slot = activeSlotIndex();
+      var produced = wrapRangeReliably(rng, slot);
+      if (!produced.length) return;
+      try { sel.removeAllRanges(); } catch (eRm) { /* ignore */ }
+      try { if (typeof window.__TM_SR_HL_REWIRE === 'function') window.__TM_SR_HL_REWIRE(); } catch (eRW) { /* ignore */ }
+      try { if (typeof saveHL === 'function') saveHL(); } catch (eS) { /* ignore */ }
+    }, true);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();

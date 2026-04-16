@@ -21,8 +21,27 @@
     --err: #f87171;
   }
 
+  /* Light-mode variable overrides — activated by toggling html.sr-light.
+     Warm beige palette instead of cool white so the notes look like paper, not a UI panel.
+     Text colors tuned to stay comfortably readable on beige (WCAG AA body + 4.5:1 muted). */
+  html.sr-light {
+    --navy: #f4ecd8;
+    --deep: #ede4c9;
+    --mid: #e3d8b9;
+    --panel: #faf3e0;
+    --border: #bcaa7f;
+    --border2: #967f4b;
+    --blue: #0a4bb8;
+    --cyan: #0a5680;
+    --text: #14100a;
+    --text-muted: #4a3f2a;
+    --white: #0b1220;
+    --err: #a02020;
+  }
+
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
+  html { scroll-behavior: smooth; transition: background-color 0.22s ease, color 0.22s ease; }
+  body { transition: background-color 0.22s ease, color 0.22s ease; }
 
   body {
     background: var(--navy);
@@ -48,6 +67,11 @@
     z-index: 0;
     transition: opacity 0.45s ease;
   }
+  /* Soften the blueprint grid on beige backgrounds so its inverted blue hue doesn't clash. */
+  html.sr-light body::before {
+    opacity: 0.32;
+    filter: invert(1) hue-rotate(180deg) saturate(0.35) sepia(0.2);
+  }
   body.sr-notes-expand::before {
     opacity: 0;
   }
@@ -70,7 +94,56 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease, visibility 0s linear 0s;
+    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease, visibility 0s linear 0s, background-color 0.22s ease, border-color 0.22s ease;
+  }
+  html.sr-light nav {
+    background: rgba(244,236,216,0.94);
+    border-bottom-color: var(--border);
+  }
+  /* Notes workspace panel had hardcoded dark backgrounds — force the warm paper equivalents. */
+  html.sr-light .notes-frame-wrap,
+  html.sr-light .notes-frame,
+  html.sr-light .formula-frame {
+    background: #ede4c9 !important;
+  }
+  html.sr-light .ecor-panel {
+    background: var(--panel);
+    border-color: var(--border);
+  }
+  html.sr-light .ecor-panel-head {
+    background: #faf3e0;
+    border-bottom-color: var(--border);
+  }
+  html.sr-light .ecor-panel-head h2 {
+    color: #080604;
+  }
+  html.sr-light .course-card {
+    background: #faf3e0;
+    border-color: var(--border);
+  }
+  html.sr-light .course-card:hover {
+    background: #f4ecd8;
+    border-color: rgba(17, 85, 212, 0.55);
+  }
+  html.sr-light .course-code {
+    color: var(--cyan);
+  }
+  html.sr-light .course-name,
+  html.sr-light .course-meta {
+    color: var(--text);
+  }
+  /* Expand/Full-screen buttons and small action chips above the iframe. */
+  html.sr-light .ecor-panel-head .btn,
+  html.sr-light .ecor-panel-head button {
+    background: #faf3e0;
+    border-color: var(--border);
+    color: var(--text);
+  }
+  html.sr-light .readme-block {
+    color: var(--text-muted);
+  }
+  html.sr-light .readme-block h3 {
+    color: var(--cyan);
   }
   body.sr-spocket-immersive nav {
     transform: translateY(-100%);
@@ -400,8 +473,9 @@
   }
 
   /* --- Formula sheet: big teal button + optional banner when ?view=formula (tweak colors/sizes here) --- */
+  /* Legacy launch button is retired — access is now via the sidebar inside the notes iframe. */
   .formula-sheet-launch-wrap {
-    margin: -12px 0 28px;
+    display: none !important;
   }
   .formula-sheet-launch-btn {
     display: flex;
@@ -1611,9 +1685,12 @@
     </article>
   </div>
 
-  <!-- Switches the big workspace to the formula sheet (study guide is hidden until you close). Click again to return. -->
-  <div class="formula-sheet-launch-wrap">
-    <button type="button" id="formula-sheet-launch" class="formula-sheet-launch-btn" aria-expanded="false" aria-controls="formula-sheet-panel">
+  <!-- Formula sheet access now lives inside the sidebar (tm-sr-sidebar). The old launch
+       button above the iframe was removed — the wrapper is kept only so the startup code
+       at initFormulaDockControls() and syncCourseUi() don't need to be rewritten; its
+       contents are hidden via [hidden] / the wrapper being empty. -->
+  <div class="formula-sheet-launch-wrap" hidden>
+    <button type="button" id="formula-sheet-launch" class="formula-sheet-launch-btn" hidden aria-expanded="false" aria-controls="formula-sheet-panel">
       ECOR 2050 formula sheet
     </button>
   </div>
@@ -1856,6 +1933,52 @@
     }
   })();
 
+  /* ---------- Student Resources theme (dark / light) ----------
+   * Stored in localStorage under THEME_KEY. Default dark. Toggles `sr-light`
+   * class on <html> for both the parent page and every notes/formula iframe
+   * (via postMessage). Spocket (React, parent DOM) listens for the
+   * custom `tm-sr-theme` event to re-render its own colors.
+   */
+  var THEME_KEY = 'tm_student_resources_theme_v1';
+  var SIDEBAR_STATE_KEY_PREFIX = 'tm_student_resources_sidebar_v1_';
+  var currentTheme = (function () {
+    try {
+      var t = localStorage.getItem(THEME_KEY);
+      if (t === 'light' || t === 'dark') return t;
+    } catch (e) { /* ignore */ }
+    return 'dark';
+  })();
+  function applyThemeToDocument() {
+    var root = document.documentElement;
+    if (currentTheme === 'light') root.classList.add('sr-light');
+    else root.classList.remove('sr-light');
+    root.setAttribute('data-sr-theme', currentTheme);
+    try { document.body && document.body.setAttribute('data-sr-theme', currentTheme); } catch (e) { /* ignore */ }
+  }
+  function broadcastThemeToIframes() {
+    try {
+      if (frame && frame.contentWindow) {
+        frame.contentWindow.postMessage({ type: 'tm_sr_theme', theme: currentTheme }, '*');
+      }
+    } catch (e0) { /* ignore */ }
+    try {
+      if (formulaFrame && formulaFrame.contentWindow) {
+        formulaFrame.contentWindow.postMessage({ type: 'tm_sr_theme', theme: currentTheme }, '*');
+      }
+    } catch (e1) { /* ignore */ }
+    try { window.dispatchEvent(new CustomEvent('tm-sr-theme', { detail: { theme: currentTheme } })); } catch (e2) { /* ignore */ }
+  }
+  function setTheme(t) {
+    if (t !== 'light' && t !== 'dark') return;
+    currentTheme = t;
+    try { localStorage.setItem(THEME_KEY, t); } catch (e) { /* ignore */ }
+    applyThemeToDocument();
+    broadcastThemeToIframes();
+  }
+  window.tmSetTheme = setTheme;
+  window.tmGetTheme = function () { return currentTheme; };
+  applyThemeToDocument();
+
   function getActiveCourse() {
     return COURSES[activeCourseId] || COURSES.ecor2050;
   }
@@ -1886,7 +2009,7 @@
   /** If the URL contains this (e.g. shared link), the formula panel opens automatically after unlock. */
   var FORMULA_VIEW_HREF = '?view=formula';
   /** Local script that draws the floating toolbar and tools inside the notes iframe. Bump ?v= after edits so fetches are not stuck on an old cached copy. */
-  var WORKSPACE_IFRAME_URL = 'workspace-iframe.js?v=7';
+  var WORKSPACE_IFRAME_URL = 'workspace-iframe.js?v=24';
   var overlay = document.getElementById('lock-overlay');
   var main = document.getElementById('main-content');
   var form = document.getElementById('unlock-form');
@@ -3308,6 +3431,12 @@
     overlay.setAttribute('inert', '');
     lockError.textContent = '';
     initStickyWorkspaceFromStorage();
+    // Course card click/keydown handlers. bindCourseCards is idempotent (guards on _tmBoundCourses),
+    // and syncCourseUi paints the active highlight — both must run whether the user refreshed an
+    // already-unlocked session OR just entered the password. Previously only the refresh path
+    // called them, which left MAAE2202 unclickable on a fresh unlock.
+    try { syncCourseUi(); } catch (e1) { /* ignore */ }
+    try { bindCourseCards(); } catch (e2) { /* ignore */ }
     try {
       window.dispatchEvent(new CustomEvent('sr-notes-unlocked'));
     } catch (e) { /* ignore */ }
@@ -3474,6 +3603,105 @@
     });
   }
 
+  /**
+   * Tiny inline script injected as the first thing in <head> so the iframe's
+   * very first paint matches the currently-saved theme. Also sets MAAE's own
+   * data-theme attribute so any upstream CSS that keys off [data-theme="light"]
+   * updates in lockstep. The main theme listener (in workspace-iframe.js) takes
+   * over after boot.
+   */
+  function injectThemeBootstrap(html, theme) {
+    var boot =
+      '<script>try{' +
+      'var __tmT=' + JSON.stringify(theme) + ';' +
+      'document.documentElement.classList.toggle("sr-light",__tmT==="light");' +
+      'document.documentElement.setAttribute("data-sr-theme",__tmT);' +
+      'document.documentElement.setAttribute("data-theme",__tmT);' +
+      '}catch(e){}</scr' + 'ipt>';
+    if (/<head[^>]*>/i.test(html)) {
+      return html.replace(/<head[^>]*>/i, function (m) { return m + boot; });
+    }
+    return boot + html;
+  }
+
+  /**
+   * Light-mode overrides applied to the notes CONTENT inside each iframe.
+   * Upstream notes HTML assumes dark-only styling; this rewrites the essentials
+   * (body background, text, links, code blocks, tables, borders) whenever our
+   * sr-light class is on the iframe's <html>. Matches the parent-page palette.
+   */
+  function injectContentThemeOverrides(html) {
+    var css =
+      '<style id="tm-sr-content-theme">' +
+      /* Light-mode content overrides — warm beige paper palette, !important to win over upstream dark styles. */
+      'html.sr-light,html.sr-light body{background:#f4ecd8 !important;color:#14100a !important;}' +
+      'html.sr-light h1,html.sr-light h2,html.sr-light h3,html.sr-light h4,html.sr-light h5,html.sr-light h6{color:#080604 !important;}' +
+      'html.sr-light p,html.sr-light li,html.sr-light dd,html.sr-light dt,html.sr-light td,html.sr-light th,html.sr-light label,html.sr-light caption,html.sr-light figcaption,html.sr-light blockquote,html.sr-light address{color:#14100a !important;}' +
+      'html.sr-light small,html.sr-light .small,html.sr-light .muted,html.sr-light .tt-sym{color:#4a3f2a !important;}' +
+      'html.sr-light a{color:#1155d4 !important;}' +
+      'html.sr-light a:visited{color:#6a3bb5 !important;}' +
+      'html.sr-light code,html.sr-light kbd,html.sr-light samp,html.sr-light pre{background:rgba(82,60,20,0.08) !important;color:#14100a !important;border-color:rgba(82,60,20,0.18) !important;}' +
+      'html.sr-light table,html.sr-light td,html.sr-light th{border-color:rgba(82,60,20,0.22) !important;}' +
+      'html.sr-light th{background:rgba(82,60,20,0.06) !important;}' +
+      'html.sr-light hr{border-color:rgba(82,60,20,0.20) !important;background:rgba(82,60,20,0.20) !important;}' +
+      'html.sr-light blockquote{border-left-color:rgba(82,60,20,0.26) !important;}' +
+      /* Common custom classes in these notes: */
+      'html.sr-light .sidebar,html.sr-light .main,html.sr-light .nav,html.sr-light .nav-item,html.sr-light .nav-section,html.sr-light .nav-section-label,html.sr-light .page-title,html.sr-light .page-subtitle,html.sr-light .section-title,html.sr-light .section-num,html.sr-light .eq-number,html.sr-light .eq-formula,html.sr-light .eq-left,html.sr-light .eq-right,html.sr-light .sidebar-logo,html.sr-light .sidebar-brand,html.sr-light .tab-btn,html.sr-light .tab-pane,html.sr-light .click-hint,html.sr-light .click-hint span{color:#14100a !important;}' +
+      'html.sr-light .sidebar,html.sr-light .sidebar-brand,html.sr-light .sidebar-scroll,html.sr-light .sidebar-logo{background:#ede4c9 !important;border-color:#bcaa7f !important;}' +
+      'html.sr-light .main{background:transparent !important;}' +
+      /* ECOR uses short utility classnames for dark "card" boxes (e.g. .s, #toc, #f-pop, .ebox,
+       * .fm / .wn / .fm.wn for formula-with-notation blocks). Remap to warm cream surfaces. */
+      'html.sr-light .s,html.sr-light #toc,html.sr-light #f-pop,html.sr-light .card,html.sr-light .box,html.sr-light .panel,html.sr-light .ebox,html.sr-light .fm,html.sr-light .wn,html.sr-light .fm.wn,html.sr-light .pattern,html.sr-light .wp,html.sr-light .worked,html.sr-light .example,html.sr-light .ex,html.sr-light .callout,html.sr-light .topic>div,html.sr-light details,html.sr-light summary,html.sr-light .special-header,html.sr-light .page-head,html.sr-light .hero,html.sr-light .banner{background:#faf3e0 !important;border-color:#bcaa7f !important;color:#14100a !important;box-shadow:0 1px 2px rgba(82,60,20,0.08) !important;}' +
+      /* Inside .special-header the "s-label" chip (ASSESSMENT / QUICK REFERENCE) stays orange; its
+       * sibling h2 becomes the main dark heading. */
+      'html.sr-light .special-header .s-label{color:#b85500!important;}' +
+      'html.sr-light .special-header h1,html.sr-light .special-header h2,html.sr-light .special-header h3,html.sr-light .page-head h1,html.sr-light .page-head h2{color:#080604!important;}' +
+      'html.sr-light .hdr,html.sr-light header,html.sr-light .header{background:transparent !important;color:#080604 !important;}' +
+      /* Tabs / pills used in the content header (Contents, Foundations, T4 etc.) — covers both
+       * dedicated classes AND plain anchor tags that behave as tabs in these notes. */
+      'html.sr-light .tab,html.sr-light .pill,html.sr-light .chip,html.sr-light .hdr a,html.sr-light .tabs a,html.sr-light nav a.tab,html.sr-light [role="tablist"] a,html.sr-light .nav a,html.sr-light #topnav a,html.sr-light #subnav a,html.sr-light .sn a,html.sr-light .topic a[href^="#"],html.sr-light .w > .topic a[href^="#"]{background:#ede4c9 !important;color:#14100a !important;border-color:#bcaa7f !important;}' +
+      'html.sr-light .tab.active,html.sr-light .tab[aria-selected="true"],html.sr-light .pill.active,html.sr-light .chip.active,html.sr-light .hdr a.active,html.sr-light .hdr a[aria-selected="true"],html.sr-light [role="tablist"] a.active,html.sr-light [role="tablist"] a[aria-selected="true"],html.sr-light .nav a.active,html.sr-light #topnav a.active,html.sr-light #subnav a.active{background:#e3d8b9 !important;color:#1155d4 !important;border-color:#1155d4 !important;}' +
+      /* Input/search boxes in the content. */
+      'html.sr-light input,html.sr-light textarea,html.sr-light select{background:#faf3e0 !important;color:#14100a !important;border-color:#bcaa7f !important;}' +
+      'html.sr-light input::placeholder,html.sr-light textarea::placeholder{color:#8c7f65 !important;}' +
+      /* Generic buttons (e.g. "Skip for now", "Close" in prompts) — exclude our own toolbar/sidebar UI
+       * AND color swatches (.tm-slot, .hlc) whose whole purpose is to show an inline color. */
+      'html.sr-light button:not(.tm-sr-sidebar-theme-btn):not(.tm-sr-sidebar-toggle):not(.tm-sr-sidebar-extra-btn):not(.tm-ws-idle-btn):not(.tm-ic-btn):not(.tm-ws-head-btn):not(.tm-ws-collapse):not(.tm-slot):not(.hlc):not(.tm-slot-add){background:#ede4c9 !important;color:#14100a !important;border-color:#bcaa7f !important;}' +
+      /* MAAE / ECOR use various CSS variable names — remap so any upstream var-based rule warms up.
+       * Also includes MAAE-specific sidebar vars (--sb-*, --text-primary/-secondary, --bg-card/-hover)
+       * because MAAE\'s own light-mode declaration leaves the sidebar dark, which makes the
+       * chapter-toggle text unreadable and the hover state go fully black. */
+      'html.sr-light{--bg:#f4ecd8;--fg:#14100a;--text:#14100a;--muted:#4a3f2a;--surface:#faf3e0;--surface2:#ede4c9;--border:#bcaa7f;--accent:#1155d4;--accent2:#0a6fa8;--accent3:#1e8449;--col-stats:#c08a00;--col-prob:#1155d4;--col-normal:#1e8449;--col-sampling:#c13259;--col-ci:#6a3bb5;--col-ht:#b85500;--col-anova:#0b6e85;--col-reg:#b8326e;--col-tables:#4a7a0d;--sb-bg:#ede4c9;--sb-text:#14100a;--sb-muted:#6b5f47;--sb-hover-bg:rgba(82,60,20,0.08);--text-primary:#14100a;--text-secondary:#4a3f2a;--bg-card:#faf3e0;--bg-hover:rgba(82,60,20,0.08);}' +
+      /* MAAE hardcodes the hover text color on .chapter-toggle / .nav-item so it doesn\'t pick up
+       * the variable change — override explicitly for light mode. */
+      'html.sr-light .chapter-toggle,html.sr-light .nav-item,html.sr-light .sub-item,html.sr-light .nav-section-label{color:#14100a!important;}' +
+      'html.sr-light .nav-num,html.sr-light .sub-num,html.sr-light .ch-arrow{color:#6b5f47!important;}' +
+      'html.sr-light .chapter-toggle:hover,html.sr-light .nav-item:hover,html.sr-light .sub-item:hover{color:#080604!important;background:rgba(82,60,20,0.08)!important;}' +
+      'html.sr-light .nav-item.active,html.sr-light .sub-item.active,html.sr-light .chapter-toggle.active{color:#0a4bb8!important;background:rgba(10,75,184,0.10)!important;}' +
+      /* Sidebar background panel itself — upstream is dark (#171512), swap to warm beige. */
+      'html.sr-light nav#sidebar,html.sr-light aside#sidebar,html.sr-light #sidebar,html.sr-light .sidebar{background:#ede4c9!important;}' +
+      'html.sr-light .sidebar-brand,html.sr-light .sidebar-scroll{background:transparent!important;}' +
+      'html.sr-light .sidebar-brand{color:#080604!important;}' +
+      'html.sr-light .nav-item.active::before,html.sr-light .sub-item.active::before{background:#0a4bb8!important;}' +
+      /* Tighten page tail — MAAE\'s upstream .page has padding-bottom:88px and the last
+       * descendant (section-block → worked-example etc.) has margin-bottom up to 40px,
+       * giving every page a ~128px empty tail. Reduce the padding and zero out the
+       * terminal margins on the last descendants (up to 3 levels) so pages end right
+       * where the content ends. */
+      '.page{padding-bottom:16px!important;}' +
+      '.page>:last-child,' +
+      '.page>:last-child>:last-child,' +
+      '.page>:last-child>:last-child>:last-child,' +
+      '.page>.section-block:last-child,' +
+      '.page .worked-example:last-child' +
+      '{margin-bottom:0!important;}' +
+      '</style>';
+    if (/<\/head>/i.test(html)) {
+      return html.replace(/<\/head>/i, function (m) { return css + m; });
+    }
+    return html.replace(/<\/body>/i, function (m) { return css + m; });
+  }
+
   /* Small edits to the downloaded study-guide HTML so it cooperates with our toolbar (usually leave these alone). */
   function patchEcorHighlightGate(html) {
     if (
@@ -3532,18 +3760,41 @@
   }
 
   function injectHighlightContrastCss(html) {
+    /* Theme-reactive highlight CSS.
+     * - Slot-indexed: marks carry data-slot="0..4"; background is driven by
+     *   a CSS variable so theme flips recolor instantly with no DOM rewrite.
+     * - Dark mode uses plus-lighter (keeps white text visible over bright pastels).
+     * - Light mode uses multiply + darker saturated colors (keeps dark text readable).
+     */
     var css =
       '<style id="tm-hl-contrast">' +
+      ':root{' +
+      '--tm-hl-slot-0:#fff59d;--tm-hl-slot-1:#ffcc80;--tm-hl-slot-2:#a5d6a7;' +
+      '--tm-hl-slot-3:#90caf9;--tm-hl-slot-4:#ce93d8;' +
+      /* Default alpha in percent (0..100). #hl-op slider updates this on input. */
+      '--tm-hl-alpha:85;' +
+      '}' +
+      'html.sr-light{' +
+      '--tm-hl-slot-0:#ffe08a;--tm-hl-slot-1:#ffb27a;--tm-hl-slot-2:#7fd48a;' +
+      '--tm-hl-slot-3:#7fb4ef;--tm-hl-slot-4:#c48ad1;' +
+      '}' +
       'mark.usr{' +
-      'position:relative;' +
-      'border-radius:2px;' +
-      'mix-blend-mode:plus-lighter;' +
-      '-webkit-mix-blend-mode:plus-lighter;' +
-      'isolation:isolate;' +
-      'text-shadow:0 0 1px rgba(0,0,0,.92),0 1px 3px rgba(0,0,0,.72);' +
+      'position:relative;border-radius:2px;isolation:isolate;' +
+      /* color-mix keeps text fully opaque while only fading the background color. */
+      'background:color-mix(in srgb, var(--tm-hl, #fff59d) calc(var(--tm-hl-alpha, 85) * 1%), transparent);' +
       'color:inherit;' +
-      '-webkit-box-decoration-break:clone;' +
-      'box-decoration-break:clone;' +
+      '-webkit-box-decoration-break:clone;box-decoration-break:clone;' +
+      'mix-blend-mode:plus-lighter;-webkit-mix-blend-mode:plus-lighter;' +
+      'text-shadow:0 0 1px rgba(0,0,0,.92),0 1px 3px rgba(0,0,0,.72);' +
+      '}' +
+      'mark.usr[data-slot="0"]{--tm-hl:var(--tm-hl-slot-0);}' +
+      'mark.usr[data-slot="1"]{--tm-hl:var(--tm-hl-slot-1);}' +
+      'mark.usr[data-slot="2"]{--tm-hl:var(--tm-hl-slot-2);}' +
+      'mark.usr[data-slot="3"]{--tm-hl:var(--tm-hl-slot-3);}' +
+      'mark.usr[data-slot="4"]{--tm-hl:var(--tm-hl-slot-4);}' +
+      'html.sr-light mark.usr{' +
+      'mix-blend-mode:multiply;-webkit-mix-blend-mode:multiply;' +
+      'text-shadow:none;' +
       '}' +
       '@supports not (mix-blend-mode:plus-lighter){mark.usr{mix-blend-mode:screen;-webkit-mix-blend-mode:screen;}}' +
       '</style>';
@@ -3693,30 +3944,374 @@
   }
 
   /**
+   * Injects sidebar chrome into a notes iframe (MAAE or ECOR).
+   *
+   * For MAAE: finds the existing `.sidebar` element (shipped in the GitHub
+   * notes HTML) and bolts on a collapse chevron + hamburger fallback + theme
+   * button. Original sidebar content is preserved; only display controls are
+   * overlaid.
+   *
+   * For ECOR: builds a brand-new sidebar from scratch, walking all h2 (and
+   * h3) headings in the document to auto-generate a TOC. Adds a "Formula
+   * Sheet" button at the bottom that posts tm_formula_sheet_toggle.
+   *
+   * Both share the same toggle state key (tm_student_resources_sidebar_v1_<course>),
+   * the same theme button that posts tm_sr_theme_request to the parent, and
+   * the same responsive hamburger behavior.
+   */
+  function injectSidebarChrome(html, opts) {
+    opts = opts || {};
+    var course = opts.course || 'ecor2050';
+    var css =
+      '<style id="tm-sr-sidebar-css">' +
+      ':root{--tm-sr-side-w:260px;}' +
+      /* For MAAE: only add the transform on collapse — don't override position/width. */
+      '.tm-sr-sidebar-host{transition:transform 0.28s cubic-bezier(.22,1,.36,1);}' +
+      '.tm-sr-sidebar-host[data-collapsed="true"]{transform:translateX(-102%);}' +
+      /* ECOR-built sidebar: full positioning. */
+      '.tm-sr-sidebar{' +
+      'position:fixed;top:0;left:0;bottom:0;width:var(--tm-sr-side-w);max-width:86vw;' +
+      'z-index:9990;background:rgba(10,14,24,0.94);' +
+      'border-right:1px solid rgba(255,255,255,0.08);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);' +
+      'color:rgba(240,245,255,0.92);font-family:"Outfit",system-ui,-apple-system,sans-serif;' +
+      'display:flex;flex-direction:column;' +
+      'transition:transform 0.28s cubic-bezier(.22,1,.36,1);transform:translateX(0);' +
+      '}' +
+      '.tm-sr-sidebar[data-collapsed="true"]{transform:translateX(-102%);}' +
+      'html.sr-light .tm-sr-sidebar{background:rgba(252,253,255,0.96);border-right-color:rgba(10,20,40,0.10);color:#1a2438;}' +
+      /* Chevron toggle: a fixed-position button that stays visible in both collapsed and
+       * expanded states. When expanded it sits on the right edge of the sidebar; when
+       * collapsed it anchors to the left edge of the viewport so the user can always open
+       * the sidebar back up. No hamburger — this is the single control. */
+      '.tm-sr-sidebar-toggle{' +
+      'position:fixed;top:50%;transform:translateY(-50%);' +
+      'width:24px;height:56px;' +
+      'background:rgba(10,14,24,0.94);' +
+      'border:1px solid rgba(255,255,255,0.16);border-left:none;' +
+      'border-radius:0 10px 10px 0;' +
+      'color:rgba(240,245,255,0.92);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;' +
+      'font-size:15px;line-height:1;padding:0;z-index:9995;' +
+      'transition:left 0.28s cubic-bezier(.22,1,.36,1),background 0.18s,color 0.18s;' +
+      'left:var(--tm-sr-side-w);' +
+      '}' +
+      '.tm-sr-sidebar-toggle:hover{color:#7ec7ff;}' +
+      '.tm-sr-sidebar-toggle:focus-visible{outline:2px solid #2b7fff;outline-offset:2px;}' +
+      'html.sr-light .tm-sr-sidebar-toggle{background:rgba(252,253,255,0.96);color:#1a2438;border-color:rgba(10,20,40,0.14);}' +
+      /* When sidebar is collapsed, anchor the chevron to the left edge of the viewport. */
+      'body.tm-sr-sidebar-collapsed .tm-sr-sidebar-toggle{left:0;}' +
+      /* On narrow viewports, sidebar overlays content — keep chevron visible against the sidebar edge. */
+      '@media (max-width:720px){' +
+      '.tm-sr-sidebar-toggle{left:var(--tm-sr-side-w);}' +
+      'body.tm-sr-sidebar-collapsed .tm-sr-sidebar-toggle{left:0;}' +
+      '}' +
+      /* Push main content when ECOR sidebar is open (desktop only). MAAE's existing layout
+       * already accounts for its sidebar, so we only push when our auto-built sidebar exists. */
+      '@media (min-width:721px){' +
+      'body.tm-sr-has-ecor-sidebar:not(.tm-sr-sidebar-collapsed){padding-left:var(--tm-sr-side-w)!important;transition:padding-left 0.28s cubic-bezier(.22,1,.36,1);}' +
+      /* Shift the floating toolbar clear of the sidebar while it is open. */
+      'body.tm-sr-has-ecor-sidebar:not(.tm-sr-sidebar-collapsed) #hl-bar.tm-ws-host{left:calc(var(--tm-sr-side-w) + 12px)!important;transition:left 0.28s cubic-bezier(.22,1,.36,1);}' +
+      '}' +
+      /* MAAE reserves 284px margin-left on its main content to make room for its fixed sidebar.
+       * When we collapse the sidebar, clear that margin so the notes fill the iframe width. */
+      'body.tm-sr-sidebar-collapsed main,body.tm-sr-sidebar-collapsed .main,body.tm-sr-sidebar-collapsed #main{margin-left:0!important;transition:margin-left 0.28s cubic-bezier(.22,1,.36,1);}' +
+      'body:not(.tm-sr-sidebar-collapsed) main,body:not(.tm-sr-sidebar-collapsed) .main,body:not(.tm-sr-sidebar-collapsed) #main{transition:margin-left 0.28s cubic-bezier(.22,1,.36,1);}' +
+      /* ECOR-specific sidebar structure */
+      '.tm-sr-sidebar-brand{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;gap:10px;}' +
+      'html.sr-light .tm-sr-sidebar-brand{border-bottom-color:rgba(10,20,40,0.10);}' +
+      '.tm-sr-sidebar-title{font-size:13px;letter-spacing:0.12em;text-transform:uppercase;opacity:0.85;font-weight:600;}' +
+      '.tm-sr-sidebar-theme-btn{' +
+      'margin-left:auto;width:30px;height:30px;border-radius:8px;' +
+      'background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.14);color:inherit;' +
+      'cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:14px;padding:0;' +
+      'transition:background 0.18s;' +
+      '}' +
+      '.tm-sr-sidebar-theme-btn:hover{background:rgba(255,255,255,0.14);}' +
+      'html.sr-light .tm-sr-sidebar-theme-btn{background:rgba(10,20,40,0.05);border-color:rgba(10,20,40,0.14);}' +
+      'html.sr-light .tm-sr-sidebar-theme-btn:hover{background:rgba(10,20,40,0.10);}' +
+      '.tm-sr-sidebar-scroll{flex:1 1 auto;overflow-y:auto;padding:12px 8px 16px;}' +
+      '.tm-sr-nav-section{font-size:10px;letter-spacing:0.08em;text-transform:uppercase;opacity:0.55;padding:10px 10px 4px;}' +
+      '.tm-sr-nav-item{display:block;padding:6px 10px;margin:1px 4px;border-radius:6px;color:inherit;text-decoration:none;' +
+      'font-size:13px;line-height:1.4;cursor:pointer;transition:background 0.15s;}' +
+      '.tm-sr-nav-item:hover{background:rgba(40,110,220,0.14);}' +
+      '.tm-sr-nav-item.is-active{background:rgba(40,110,220,0.22);color:#a7d0ff;}' +
+      'html.sr-light .tm-sr-nav-item.is-active{color:#1155d4;background:rgba(40,110,220,0.14);}' +
+      '.tm-sr-nav-item.is-sub{margin-left:18px;font-size:12px;opacity:0.85;}' +
+      '.tm-sr-nav-item.is-subsub{margin-left:30px;font-size:11px;opacity:0.75;}' +
+      /* "Final exam topics" pinned links at the top of the ECOR sidebar. */
+      '.tm-sr-nav-item.tm-sr-topic-pin{font-weight:600;color:#a7d0ff;background:rgba(40,110,220,0.12);border:1px solid rgba(40,110,220,0.22);margin:2px 4px;}' +
+      '.tm-sr-nav-item.tm-sr-topic-pin:hover{background:rgba(40,110,220,0.22);}' +
+      'html.sr-light .tm-sr-nav-item.tm-sr-topic-pin{color:#0a4bb8;background:rgba(10,75,184,0.08);border-color:rgba(10,75,184,0.35);}' +
+      'html.sr-light .tm-sr-nav-item.tm-sr-topic-pin:hover{background:rgba(10,75,184,0.16);}' +
+      /* Detail density: slightly tighter per-line so longer TOCs fit without more scrolling. */
+      '.tm-sr-sidebar-scroll .tm-sr-nav-item{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}' +
+      '.tm-sr-sidebar-extras{padding:8px 10px 14px;border-top:1px solid rgba(255,255,255,0.08);display:flex;flex-direction:column;gap:6px;}' +
+      'html.sr-light .tm-sr-sidebar-extras{border-top-color:rgba(10,20,40,0.10);}' +
+      '.tm-sr-sidebar-extra-btn{' +
+      'padding:9px 12px;border-radius:8px;' +
+      'background:rgba(40,110,220,0.10);border:1px solid rgba(40,110,220,0.40);color:inherit;' +
+      'text-align:left;cursor:pointer;font:inherit;font-size:12px;font-weight:500;' +
+      'transition:background 0.15s;' +
+      '}' +
+      '.tm-sr-sidebar-extra-btn:hover{background:rgba(40,110,220,0.20);}' +
+      /* For MAAE: hide its built-in theme toggle (parent-backed theme is authoritative). */
+      '.sidebar #theme-toggle,.sidebar .theme-toggle,#theme-toggle.tm-sr-hide{display:none!important;}' +
+      '</style>';
+
+    // Inline the course id safely for the script.
+    var courseJs = JSON.stringify(course);
+    var scr =
+      '<script>' +
+      '(function(){' +
+      'var COURSE=' + courseJs + ';' +
+      'var IS_ECOR=COURSE==="ecor2050";' +
+      'var IS_FORMULA=COURSE==="formula";' +
+      'var STATE_KEY="tm_student_resources_sidebar_v1_"+COURSE;' +
+      'function readCollapsed(){try{var v=localStorage.getItem(STATE_KEY);return v==="closed";}catch(e){return false;}}' +
+      'function writeCollapsed(c){try{localStorage.setItem(STATE_KEY,c?"closed":"open");}catch(e){}' +
+      'try{window.parent.postMessage({type:"tm_sr_sidebar_state",course:COURSE,collapsed:!!c},"*");}catch(e2){}}' +
+
+      /* Shared TOC builder: scans h2/h3/h4 and appends nav items to the given scroll root.
+       * Used by both the ECOR sidebar (course notes) and the formula sheet sidebar, so the
+       * sidebar is just as detailed (h4 gets its own sub-sub indent) whichever iframe you are in. */
+      'function buildTocInto(scroll){' +
+      'var idCount=0;' +
+      'var headings=document.querySelectorAll("h2,h3,h4");' +
+      'if(!headings.length)return 0;' +
+      'var added=0;' +
+      'Array.prototype.forEach.call(headings,function(h){' +
+      '/* skip headings inside our own sidebar chrome */' +
+      'if(h.closest&&h.closest(".tm-sr-sidebar"))return;' +
+      'var tag=h.tagName;' +
+      'if(!h.id)h.id="tm-sr-hh-"+(idCount++);' +
+      'var txt=(h.textContent||"").trim();' +
+      'if(!txt)return;' +
+      'var a=document.createElement("a");' +
+      'a.className="tm-sr-nav-item"+(tag==="H3"?" is-sub":tag==="H4"?" is-sub is-subsub":"");' +
+      'a.href="#"+h.id;a.textContent=txt;a.title=txt;' +
+      '(function(target){a.addEventListener("click",function(e){' +
+      'e.preventDefault();' +
+      'var el=document.getElementById(target);' +
+      'if(el){el.scrollIntoView({behavior:"smooth",block:"start"});}' +
+      'Array.prototype.forEach.call(scroll.querySelectorAll(".tm-sr-nav-item.is-active"),function(x){x.classList.remove("is-active");});' +
+      'a.classList.add("is-active");' +
+      '});})(h.id);' +
+      'scroll.appendChild(a);added++;' +
+      '});' +
+      'return added;' +
+      '}' +
+
+      'function buildAutoSidebar(titleTxt){' +
+      'if(document.getElementById("tm-sr-sidebar"))return document.getElementById("tm-sr-sidebar");' +
+      'var side=document.createElement("aside");' +
+      'side.id="tm-sr-sidebar";side.className="tm-sr-sidebar";' +
+      'side.setAttribute("role","navigation");side.setAttribute("aria-label","Course contents");' +
+
+      'var brand=document.createElement("div");brand.className="tm-sr-sidebar-brand";' +
+      'var title=document.createElement("span");title.className="tm-sr-sidebar-title";title.textContent=titleTxt;brand.appendChild(title);' +
+      'var tbtn=document.createElement("button");tbtn.type="button";tbtn.className="tm-sr-sidebar-theme-btn";tbtn.setAttribute("data-tm-theme-btn","1");' +
+      'tbtn.setAttribute("aria-label","Toggle light/dark mode");tbtn.innerHTML="<span class=\\"tm-theme-icon\\">\u263E</span>";brand.appendChild(tbtn);' +
+      'side.appendChild(brand);' +
+
+      'var scroll=document.createElement("div");scroll.className="tm-sr-sidebar-scroll";scroll.id="tm-sr-sidebar-scroll";' +
+
+      /* ECOR-specific: final exam covers Topics 4/5/6. Add a prominent quick-access block
+       * at the top of the scroll area so these headline sections are one click away. */
+      'if(IS_ECOR){' +
+      'var topicEls=[' +
+      '{id:"prereq",label:"\u2605 Prereq \u2014 Chapters 1\u20133"},' +
+      '{id:"t4",label:"\u2605 Topic 4 \u2014 Hypothesis Testing"},' +
+      '{id:"t5",label:"\u2605 Topic 5 \u2014 ANOVA"},' +
+      '{id:"t6",label:"\u2605 Topic 6 \u2014 Regression"}' +
+      '];' +
+      'var hasAnyTopic=topicEls.some(function(t){return !!document.getElementById(t.id);});' +
+      'if(hasAnyTopic){' +
+      'var topicSection=document.createElement("div");topicSection.className="tm-sr-nav-section";topicSection.textContent="Final exam topics";scroll.appendChild(topicSection);' +
+      'topicEls.forEach(function(t){' +
+      'var el=document.getElementById(t.id);if(!el)return;' +
+      'var a=document.createElement("a");a.className="tm-sr-nav-item tm-sr-topic-pin";a.href="#"+t.id;a.textContent=t.label;' +
+      'a.addEventListener("click",function(e){e.preventDefault();el.scrollIntoView({behavior:"smooth",block:"start"});' +
+      'Array.prototype.forEach.call(scroll.querySelectorAll(".tm-sr-nav-item.is-active"),function(x){x.classList.remove("is-active");});' +
+      'a.classList.add("is-active");' +
+      '});' +
+      'scroll.appendChild(a);' +
+      '});' +
+      '}' +
+      '}' +
+
+      'var section=document.createElement("div");section.className="tm-sr-nav-section";section.textContent="Contents";scroll.appendChild(section);' +
+
+      'var added=buildTocInto(scroll);' +
+      'if(!added){' +
+      'var empty=document.createElement("div");' +
+      'empty.style.cssText="padding:10px 12px;font-size:12px;opacity:0.6;";' +
+      'empty.textContent=IS_FORMULA?"No sections detected in this sheet yet.":"No sections detected in these notes yet.";' +
+      'scroll.appendChild(empty);' +
+      '}' +
+      'side.appendChild(scroll);' +
+
+      'var extras=document.createElement("div");extras.className="tm-sr-sidebar-extras";' +
+      'if(IS_FORMULA){' +
+      '/* Primary action in formula-sheet sidebar: return to the notes view. */' +
+      'var back=document.createElement("button");back.type="button";back.className="tm-sr-sidebar-extra-btn";' +
+      'back.textContent="\u2190 Back to notes";' +
+      'back.addEventListener("click",function(){try{window.parent.postMessage({type:"tm_formula_sheet_toggle"},"*");}catch(e){}});' +
+      'extras.appendChild(back);' +
+      '}else if(IS_ECOR){' +
+      '/* On ECOR notes: offer the formula-sheet jump. */' +
+      'var fbtn=document.createElement("button");fbtn.type="button";fbtn.className="tm-sr-sidebar-extra-btn";' +
+      'fbtn.textContent="\ud83d\udcd0 Formula sheet";' +
+      'fbtn.addEventListener("click",function(){try{window.parent.postMessage({type:"tm_formula_sheet_toggle"},"*");}catch(e){}});' +
+      'extras.appendChild(fbtn);' +
+      '}' +
+      'side.appendChild(extras);' +
+
+      'document.body.appendChild(side);' +
+      'return side;' +
+      '}' +
+      'function buildEcorSidebar(){return buildAutoSidebar("ECOR 2050");}' +
+      'function buildFormulaSidebar(){return buildAutoSidebar("Formula sheet");}' +
+
+      'function hookExistingMaaeSidebar(){' +
+      /* MAAE notes ship their sidebar as either a <nav id="sidebar"> or a <div class="sidebar">
+       * depending on version; match both. Also accept any #sidebar id. Content stays exactly
+       * as the upstream authors shipped it — we only add a collapse/theme-toggle chrome around it. */
+      'var s=document.querySelector("nav#sidebar,aside#sidebar,#sidebar,.sidebar");if(!s)return null;' +
+      's.classList.add("tm-sr-sidebar-host");' +
+      'try{s.querySelectorAll("#theme-toggle,.theme-toggle").forEach(function(el){el.classList.add("tm-sr-hide");});}catch(eT){}' +
+      '/* Measure width so the push-right padding matches. */' +
+      'try{var r=s.getBoundingClientRect();if(r.width>120){document.documentElement.style.setProperty("--tm-sr-side-w",Math.round(r.width)+"px");}}catch(eM){}' +
+      '/* Inject theme button in MAAE brand/top area (first child). */' +
+      'if(!s.querySelector("[data-tm-theme-btn]")){' +
+      'var anchor=s.querySelector(".sidebar-brand,.sidebar-logo,.sidebar-header")||s.firstElementChild||s;' +
+      'var tbtn2=document.createElement("button");tbtn2.type="button";tbtn2.className="tm-sr-sidebar-theme-btn";tbtn2.setAttribute("data-tm-theme-btn","1");' +
+      'tbtn2.setAttribute("aria-label","Toggle light/dark mode");tbtn2.innerHTML="<span class=\\"tm-theme-icon\\">\u263E</span>";' +
+      'tbtn2.style.position="absolute";tbtn2.style.top="10px";tbtn2.style.right="10px";' +
+      'if(anchor&&anchor.style)anchor.style.position=anchor.style.position||"relative";' +
+      '(anchor||s).appendChild(tbtn2);' +
+      '}' +
+      'return s;' +
+      '}' +
+
+      'function addControls(side){' +
+      '/* Remove any stale hamburger from a previous session — the chevron is the sole control. */' +
+      'try{var oldH=document.getElementById("tm-sr-hamburger");if(oldH&&oldH.parentNode)oldH.parentNode.removeChild(oldH);}catch(eHam){}' +
+      '/* Chevron is body-level (not inside sidebar) so it remains visible when the sidebar slides off. */' +
+      'var existing=document.getElementById("tm-sr-sidebar-toggle");' +
+      'if(!existing){' +
+      'var chev=document.createElement("button");chev.type="button";chev.id="tm-sr-sidebar-toggle";chev.className="tm-sr-sidebar-toggle";' +
+      'chev.setAttribute("aria-label","Toggle sidebar");chev.innerHTML="\u2039";' +
+      'chev.addEventListener("click",function(ev){ev.stopPropagation();toggle();});' +
+      'document.body.appendChild(chev);' +
+      '}' +
+      'function syncChevIcon(){' +
+      'var btn=document.getElementById("tm-sr-sidebar-toggle");if(!btn)return;' +
+      'var isCol=document.body.classList.contains("tm-sr-sidebar-collapsed");' +
+      'btn.innerHTML=isCol?"\u203A":"\u2039";' +
+      'btn.setAttribute("aria-label",isCol?"Open sidebar":"Collapse sidebar");' +
+      '}' +
+      'syncChevIcon();' +
+      '/* Also expose syncChevIcon to toggle() via window closure. */' +
+      'window.__TM_SR_SYNC_CHEV=syncChevIcon;' +
+      'var tbtn=side.querySelector("[data-tm-theme-btn]");' +
+      'if(tbtn){' +
+      'tbtn.addEventListener("click",function(ev){' +
+      'ev.stopPropagation();ev.preventDefault();' +
+      'var isLight=document.documentElement.classList.contains("sr-light");' +
+      'var next=isLight?"dark":"light";' +
+      'try{document.documentElement.classList.toggle("sr-light",next==="light");document.documentElement.setAttribute("data-sr-theme",next);document.documentElement.setAttribute("data-theme",next);}catch(e){}' +
+      'try{window.parent.postMessage({type:"tm_sr_theme_request",theme:next},"*");}catch(e2){}' +
+      'updateThemeBtn();' +
+      '});' +
+      '}' +
+      'updateThemeBtn();' +
+      '}' +
+      'function updateThemeBtn(){' +
+      'var isLight=document.documentElement.classList.contains("sr-light");' +
+      'Array.prototype.forEach.call(document.querySelectorAll(".tm-sr-sidebar-theme-btn .tm-theme-icon"),function(i){i.textContent=isLight?"\u2600":"\u263E";});' +
+      '}' +
+
+      'function toggle(){' +
+      'var side=document.querySelector(".tm-sr-sidebar,.tm-sr-sidebar-host");if(!side)return;' +
+      'var nextCollapsed=side.getAttribute("data-collapsed")!=="true";' +
+      'side.setAttribute("data-collapsed",nextCollapsed?"true":"false");' +
+      'document.body.classList.toggle("tm-sr-sidebar-collapsed",nextCollapsed);' +
+      'writeCollapsed(nextCollapsed);' +
+      'if(typeof window.__TM_SR_SYNC_CHEV==="function")window.__TM_SR_SYNC_CHEV();' +
+      '}' +
+
+      'function init(){' +
+      'var side;' +
+      'if(IS_FORMULA)side=buildFormulaSidebar();' +
+      'else if(IS_ECOR)side=buildEcorSidebar();' +
+      'else{' +
+      /* MAAE and any other course: prefer hooking the upstream .sidebar if present,
+       * otherwise auto-build from h2/h3/h4 headings so there is always a usable TOC. */
+      'side=hookExistingMaaeSidebar();' +
+      'if(!side)side=buildAutoSidebar("MAAE 2202");' +
+      '}' +
+      'if(!side)return;' +
+      'document.body.classList.add("tm-sr-has-sidebar");' +
+      /* Any auto-built sidebar (ECOR, FORMULA, or MAAE fallback) uses our fixed-position layout,
+       * so the body needs the push-right padding. Skip it when we hooked an upstream sidebar. */
+      'var isAutoBuilt=!!document.getElementById("tm-sr-sidebar");' +
+      'if(isAutoBuilt)document.body.classList.add("tm-sr-has-ecor-sidebar");' +
+      'var collapsed=readCollapsed();' +
+      'side.setAttribute("data-collapsed",collapsed?"true":"false");' +
+      'document.body.classList.toggle("tm-sr-sidebar-collapsed",collapsed);' +
+      'addControls(side);' +
+      '}' +
+
+      'if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);' +
+      'else init();' +
+
+      '/* React to theme messages from the parent (e.g. when toggled from the other iframe). */' +
+      'window.addEventListener("message",function(ev){' +
+      'if(!ev.data||ev.data.type!=="tm_sr_theme")return;' +
+      'if(ev.data.theme!=="light"&&ev.data.theme!=="dark")return;' +
+      'try{document.documentElement.classList.toggle("sr-light",ev.data.theme==="light");document.documentElement.setAttribute("data-sr-theme",ev.data.theme);document.documentElement.setAttribute("data-theme",ev.data.theme);}catch(e){}' +
+      'updateThemeBtn();' +
+      '});' +
+
+      '})();' +
+      '</scr' + 'ipt>';
+
+    var out = html;
+    if (/<\/head>/i.test(out)) {
+      out = out.replace(/<\/head>/i, function (m) { return css + m; });
+    } else {
+      out = css + out;
+    }
+    out = out.replace(/<\/body>/i, function (m) { return scr + m; });
+    return out;
+  }
+
+  /**
    * Injects a small script into the downloaded notes/formula page so highlights can talk to
    * this parent page (where highlights are actually saved). Safe even when the GitHub page
    * does not define saveHL / clearAll / restoreHL (those wrappers are skipped if missing).
    */
   function injectHighlightPersistence(html) {
+    /* Receives hydrate payload from parent, stores in local backing key used by
+     * restoreHL, rewires each mark to support eraser-click and (via the exposed
+     * hook) push highlight entries onto the unified undo stack in the toolbar. */
     var bridge =
       '<script>' +
       '(function(){' +
-      'window.__TM_HIGHLIGHT_ARMED=false;' +
-      'window.__TM_HIGHLIGHT_ERASER=false;' +
+      'var LS_KEY=(window.__TM_SR_HL&&window.__TM_SR_HL.LS_KEY)||"tm_sr_hl_local_v1";' +
       'function tmRewireHighlightMarks(){' +
       'try{' +
       'document.querySelectorAll("mark.usr").forEach(function(mark){' +
-      'var clone=mark.cloneNode(true);' +
-      'clone.title="Highlight";' +
-      'var p=mark.parentNode;' +
-      'if(!p)return;' +
-      'p.replaceChild(clone,mark);' +
-      'clone.addEventListener("click",function(ev){' +
+      'if(mark.__tmWired)return;' +
+      'mark.__tmWired=true;' +
+      'if(!mark.hasAttribute("data-slot"))mark.setAttribute("data-slot","0");' +
+      'mark.title="Highlight";' +
+      'mark.addEventListener("click",function(ev){' +
       'if(!window.__TM_HIGHLIGHT_ERASER&&!window.__TM_HIGHLIGHT_ARMED){ev.preventDefault();ev.stopPropagation();return;}' +
       'ev.stopPropagation();' +
-      'var par=clone.parentNode;' +
-      'while(clone.firstChild)par.insertBefore(clone.firstChild,clone);' +
-      'par.removeChild(clone);' +
+      'try{if(typeof window.__TM_PUSH_HL_HISTORY==="function")window.__TM_PUSH_HL_HISTORY();}catch(eP){}' +
+      'var par=mark.parentNode;if(!par)return;' +
+      'while(mark.firstChild)par.insertBefore(mark.firstChild,mark);' +
+      'par.removeChild(mark);' +
       'if(typeof saveHL==="function")saveHL();' +
       '});' +
       '});' +
@@ -3725,17 +4320,19 @@
       'function strip(){document.querySelectorAll("mark.usr").forEach(function(m){var p=m.parentNode;while(m.firstChild)p.insertBefore(m.firstChild,m);p.removeChild(m);});}' +
       'window.addEventListener("message",function(ev){' +
       'if(!ev.data||ev.data.type!=="tm_student_resources_hl"||ev.data.action!=="hydrate")return;' +
-      'try{if(ev.data.payload)localStorage.setItem("ecor2050_hl",ev.data.payload);else localStorage.removeItem("ecor2050_hl");}catch(e){}' +
+      'try{if(ev.data.payload)localStorage.setItem(LS_KEY,ev.data.payload);else localStorage.removeItem(LS_KEY);}catch(e){}' +
       'strip();' +
       'if(typeof restoreHL==="function"){restoreHL();tmRewireHighlightMarks();}' +
       '});' +
       'var _rh0=typeof restoreHL==="function"?restoreHL:null;' +
       'if(_rh0){restoreHL=function(){_rh0.apply(this,arguments);tmRewireHighlightMarks();};}' +
       'var _s=typeof saveHL==="function"?saveHL:null;' +
-      'if(_s){saveHL=function(){_s.apply(this,arguments);tmRewireHighlightMarks();try{var marks=document.querySelectorAll("mark.usr"),d=[];marks.forEach(function(m){d.push({text:m.textContent,bg:m.style.background});});window.parent.postMessage({type:"tm_student_resources_hl",action:"save",payload:JSON.stringify(d)},"*");}catch(e){}};}' +
+      'if(_s){saveHL=function(){_s.apply(this,arguments);tmRewireHighlightMarks();};}' +
       'var _c=typeof clearAll==="function"?clearAll:null;' +
-      'if(_c){clearAll=function(){_c.apply(this,arguments);try{var marks=document.querySelectorAll("mark.usr"),d=[];marks.forEach(function(m){d.push({text:m.textContent,bg:m.style.background});});window.parent.postMessage({type:"tm_student_resources_hl",action:"save",payload:JSON.stringify(d)},"*");}catch(e){}};}' +
+      'if(_c){clearAll=function(){_c.apply(this,arguments);tmRewireHighlightMarks();};}' +
       'tmRewireHighlightMarks();' +
+      '/* Expose to workspace-iframe.js so it can rewire new marks after wrapping. */' +
+      'window.__TM_SR_HL_REWIRE=tmRewireHighlightMarks;' +
       '})();' +
       '</scr' +
       'ipt>';
@@ -3891,72 +4488,78 @@
     });
   }
 
-  function injectFormulaHighlightCore(html) {
+  /**
+   * Minimal highlight save/restore/clear bridge injected into EVERY iframe
+   * (notes + formula). Replaces the old ECOR/formula-only cores.
+   *
+   * The mouseup listener that actually creates marks lives in workspace-iframe.js
+   * so it works regardless of whether the upstream HTML had its own. This bridge
+   * exposes saveHL / restoreHL / clearAll (plus the __TM_HIGHLIGHT_ARMED flag)
+   * and stores slot-indexed mark data ({text, slot}) — backward-compatible read
+   * of the legacy {text, bg} shape is handled by mapping bg → nearest slot.
+   */
+  function injectUnifiedHighlightCore(html) {
     var scr =
       '<script>' +
       '(function(){' +
       'try{window.hlColor=window.hlColor||"#fff59d";}catch(e0){}' +
-      'function tmHlOpacity(){var op=document.getElementById("hl-op");var v=op&&parseInt(op.value,10);if(isNaN(v))v=82;return Math.max(0.35,Math.min(1,v/100));}' +
-      'function tmHexToRgba(h,a){' +
-      'if(!h||h[0]!=="#")return"rgba(255,245,157,"+a+")";' +
-      'h=h.slice(1);if(h.length===3)h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];' +
-      'var r=parseInt(h.slice(0,2),16),g=parseInt(h.slice(2,4),16),b=parseInt(h.slice(4,6),16);' +
-      'if(isNaN(r)||isNaN(g)||isNaN(b))return"rgba(255,245,157,"+a+")";' +
-      'return"rgba("+r+","+g+","+b+","+a+")";' +
+      'window.__TM_HIGHLIGHT_ARMED=window.__TM_HIGHLIGHT_ARMED||false;' +
+      'window.__TM_HIGHLIGHT_ERASER=window.__TM_HIGHLIGHT_ERASER||false;' +
+      'var LS_KEY="tm_sr_hl_local_v1";' +
+      'var DEFAULT_SLOTS=["#fff59d","#ffcc80","#a5d6a7","#90caf9","#ce93d8"];' +
+      'function tmHexToRgb(h){if(!h||h[0]!=="#")return null;h=h.slice(1);if(h.length===3)h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];var r=parseInt(h.slice(0,2),16),g=parseInt(h.slice(2,4),16),b=parseInt(h.slice(4,6),16);if(isNaN(r)||isNaN(g)||isNaN(b))return null;return[r,g,b];}' +
+      'function tmNearestSlot(bg){' +
+      'if(!bg)return 0;' +
+      'var m=String(bg).match(/#([0-9a-f]{3,6})/i);var hex=m?"#"+m[1]:(String(bg)[0]==="#"?String(bg):null);' +
+      'var rgbM=String(bg).match(/rgba?\\(\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)/i);' +
+      'var rgb=hex?tmHexToRgb(hex):(rgbM?[parseInt(rgbM[1],10),parseInt(rgbM[2],10),parseInt(rgbM[3],10)]:null);' +
+      'if(!rgb)return 0;' +
+      'var best=0,bd=1e9;for(var i=0;i<DEFAULT_SLOTS.length;i++){var s=tmHexToRgb(DEFAULT_SLOTS[i]);if(!s)continue;var d=(rgb[0]-s[0])*(rgb[0]-s[0])+(rgb[1]-s[1])*(rgb[1]-s[1])+(rgb[2]-s[2])*(rgb[2]-s[2]);if(d<bd){bd=d;best=i;}}' +
+      'return best;' +
       '}' +
       'function tmStripMarks(){document.querySelectorAll("mark.usr").forEach(function(m){var p=m.parentNode;if(!p)return;while(m.firstChild)p.insertBefore(m.firstChild,m);p.removeChild(m);});}' +
-      'window.saveHL=function(){try{var m=document.querySelectorAll("mark.usr"),d=[];m.forEach(function(x){d.push({text:x.textContent,bg:x.style.background});});localStorage.setItem("ecor2050_hl",JSON.stringify(d));}catch(e1){}};' +
-      'window.clearAll=function(){try{tmStripMarks();localStorage.removeItem("ecor2050_hl");}catch(e2){}};' +
-      'window.restoreHL=function(){' +
-      'try{' +
-      'tmStripMarks();' +
-      'var raw=localStorage.getItem("ecor2050_hl");' +
-      'if(!raw)return;' +
-      'var d=JSON.parse(raw);' +
-      'if(!Array.isArray(d))return;' +
-      'var op=tmHlOpacity();' +
-      'function wrapOnce(needle,bg){' +
+      'function tmSerializeMarks(){var d=[];document.querySelectorAll("mark.usr").forEach(function(m){var slot=parseInt(m.getAttribute("data-slot")||"0",10);if(isNaN(slot)||slot<0||slot>4)slot=0;d.push({text:m.textContent,slot:slot});});return d;}' +
+      'window.saveHL=function(){try{var d=tmSerializeMarks();localStorage.setItem(LS_KEY,JSON.stringify(d));window.parent.postMessage({type:"tm_student_resources_hl",action:"save",payload:JSON.stringify(d)},"*");}catch(e1){}};' +
+      'window.clearAll=function(){try{tmStripMarks();localStorage.removeItem(LS_KEY);window.parent.postMessage({type:"tm_student_resources_hl",action:"save",payload:"[]"},"*");}catch(e2){}};' +
+      'function tmWrapOnce(needle,slot){' +
       'if(!needle)return false;' +
-      'var tw=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,null);' +
-      'var n;' +
+      'var tw=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,null);var n;' +
       'while(n=tw.nextNode()){' +
       'if(!n.nodeValue)continue;' +
+      'if(n.parentNode&&n.parentNode.closest&&n.parentNode.closest("mark.usr,#hl-bar,.tm-ws-host,.tm-sr-sidebar"))continue;' +
       'var idx=n.nodeValue.indexOf(needle);' +
       'if(idx<0)continue;' +
-      'var r=document.createRange();' +
-      'r.setStart(n,idx);r.setEnd(n,idx+needle.length);' +
-      'var mk=document.createElement("mark");' +
-      'mk.className="usr";' +
-      'var fill=(bg&&String(bg).indexOf("rgba")===0)?bg:(bg&&String(bg)[0]==="#"?tmHexToRgba(String(bg),op):"rgba(255,245,157,"+op+")");' +
-      'mk.style.background=fill||"";' +
+      'var r=document.createRange();r.setStart(n,idx);r.setEnd(n,idx+needle.length);' +
+      'var mk=document.createElement("mark");mk.className="usr";mk.setAttribute("data-slot",String(slot|0));' +
       'try{r.surroundContents(mk);return true;}catch(e3){return false;}' +
       '}' +
       'return false;' +
       '}' +
-      'for(var i=0;i<d.length;i++){' +
-      'var it=d[i];if(!it||it.text==null)continue;wrapOnce(String(it.text),it.bg||"");' +
-      '}' +
-      '}catch(e4){}' +
-      '};' +
-      'document.addEventListener("mouseup",function(ev){' +
-      'if(!window.__TM_HIGHLIGHT_ARMED)return;' +
-      'if(ev.target&&ev.target.closest&&ev.target.closest("#hl-bar,.tm-ws-host,.tm-pop,.tm-popwrap,.tm-drawing-ctx"))return;' +
-      'var sel=window.getSelection();' +
-      'if(!sel||sel.isCollapsed)return;' +
-      'var rng=sel.getRangeAt(0);' +
-      'if(!rng||!document.body.contains(rng.commonAncestorContainer))return;' +
-      'var col=(typeof window.hlColor==="string"&&window.hlColor)?window.hlColor:"#fff59d";' +
-      'var fill=tmHexToRgba(col,tmHlOpacity());' +
+      'window.restoreHL=function(){' +
       'try{' +
-      'var mk=document.createElement("mark");mk.className="usr";mk.style.background=fill;' +
-      'rng.surroundContents(mk);' +
-      'sel.removeAllRanges();' +
-      'if(typeof saveHL==="function")saveHL();' +
+      'tmStripMarks();' +
+      'var raw=localStorage.getItem(LS_KEY);' +
+      'if(!raw)return;' +
+      'var d;try{d=JSON.parse(raw);}catch(e4){d=null;}' +
+      'if(!Array.isArray(d))return;' +
+      'for(var i=0;i<d.length;i++){' +
+      'var it=d[i];if(!it||it.text==null)continue;' +
+      'var slot=(typeof it.slot==="number")?it.slot:tmNearestSlot(it.bg||"");' +
+      'tmWrapOnce(String(it.text),slot);' +
+      '}' +
       '}catch(e5){}' +
-      '},true);' +
+      '};' +
+      '/* Expose helpers used by the toolbar (workspace-iframe.js) */' +
+      'window.__TM_SR_HL={' +
+      'strip:tmStripMarks,' +
+      'serialize:tmSerializeMarks,' +
+      'wrapOnce:tmWrapOnce,' +
+      'nearestSlot:tmNearestSlot,' +
+      'DEFAULT_SLOTS:DEFAULT_SLOTS,' +
+      'LS_KEY:LS_KEY' +
+      '};' +
       '})();' +
-      '</scr' +
-      'ipt>';
+      '</scr' + 'ipt>';
     return html.replace(/<\/body>/i, function (m) {
       return scr + m;
     });
@@ -4157,9 +4760,18 @@
       showNotesExpandToggle: forFormula ? false : true,
       /** Toolbar button to open/close the formula sheet (parent page). */
       showFormulaSheetToggle: true,
-      /** Optional in-iframe notes sidebar toggle (MAAE 2202 has #sidebar). */
+      /** Optional in-iframe notes sidebar toggle (MAAE 2202 has #sidebar) — from upstream's
+       *  "Add sidebar toggle for MAAE 2202 notes" change; kept for back-compat with the workspace
+       *  toolbar's sidebar-toggle button. The fuller sidebar-chrome (chevron/theme/topic pins)
+       *  is injected separately by injectSidebarChrome. */
       showSidebarToggle: forFormula ? false : true,
-      sidebarCollapsed: forFormula ? false : readSidebarCollapsed()
+      sidebarCollapsed: forFormula ? false : readSidebarCollapsed(),
+      /** Current Student Resources theme ('dark' | 'light') so the iframe paints correctly on first frame. */
+      theme: currentTheme,
+      /** Course context — lets the iframe pick the right sidebar-state localStorage key. */
+      courseId: forFormula ? 'formula' : activeCourseId,
+      /** Hydrated highlight payload as slot-indexed JSON (workspace-iframe.js paints marks from this). */
+      highlights: forFormula ? readStoredFormulaHighlights() : readStoredHighlights()
     };
   }
 
@@ -4192,6 +4804,16 @@
     var fromNotes = isNotesIframeMessageSource(ev);
     if (ev.data.type === 'tm_formula_sheet_toggle') {
       toggleFormulaDock();
+      return;
+    }
+    if (ev.data.type === 'tm_sr_theme_request' && (ev.data.theme === 'light' || ev.data.theme === 'dark')) {
+      setTheme(ev.data.theme);
+      return;
+    }
+    if (ev.data.type === 'tm_sr_sidebar_state' && typeof ev.data.course === 'string' && typeof ev.data.collapsed === 'boolean') {
+      try {
+        localStorage.setItem(SIDEBAR_STATE_KEY_PREFIX + ev.data.course, ev.data.collapsed ? 'closed' : 'open');
+      } catch (e) { /* ignore */ }
       return;
     }
     if (ev.data.type === 'tm_student_resources_hl' && ev.data.action === 'save') {
@@ -4501,18 +5123,24 @@
    */
   function prepareHtmlWithWorkspace(html, wsJs, opts) {
     opts = opts || {};
+    var courseId = opts.courseId || (opts.formulaSheet ? 'formula' : activeCourseId);
     html = patchEcorHighlightGate(html); /* lets the parent page turn highlighting on/off */
     html = patchEcorScrollPassive(html); /* smoother scrolling inside the iframe */
     html = patchEcorHighlightOpacity(html); /* match opacity behaviour with our tools */
-    html = injectHighlightContrastCss(html); /* extra CSS so marks stay readable */
+    html = injectHighlightContrastCss(html); /* theme-aware mark CSS (slot-indexed, dark/light) */
+    html = injectContentThemeOverrides(html); /* body/text/link/code light-mode recolor for notes content */
     if (opts.formulaSheet) {
       html = patchFormulaVarDefsGlobal(html);
       html = patchFormulaColorCodingGuide(html);
       html = injectFormulaReadabilityCss(html);
     }
     html = ensureHlBarForWorkspace(html, opts); /* guarantee #hl-bar exists for the toolbar */
-    if (opts.formulaSheet) html = injectFormulaHighlightCore(html); /* saveHL / selection wrap for formula HTML */
-    html = injectHighlightPersistence(html); /* sync highlights with parent storage */
+    html = injectUnifiedHighlightCore(html); /* saveHL/restoreHL/clearAll + slot-indexed storage (both iframes) */
+    html = injectHighlightPersistence(html); /* sync highlights with parent storage + eraser wiring */
+    /* Sidebar is injected into ALL notes iframes (MAAE, ECOR) AND the formula iframe —
+     * so the user keeps access to the course TOC + theme toggle while the formula sheet is open. */
+    html = injectSidebarChrome(html, { course: courseId });
+    html = injectThemeBootstrap(html, currentTheme); /* inline class on <html> so first paint matches theme */
     html = injectWorkspaceIframeScript(html, wsJs); /* paste toolbar + tools (wsJs file body) */
     if (opts.formulaSheet) html = injectFormulaVariableEnhancements(html); /* vars + nomenclature + popups */
     return html;
@@ -4588,7 +5216,7 @@
       })
     ])
       .then(function (pair) {
-        var html = prepareHtmlWithWorkspace(pair[0], pair[1], { formulaSheet: true });
+        var html = prepareHtmlWithWorkspace(pair[0], pair[1], { formulaSheet: true, courseId: 'formula' });
         assignFormulaFrameFromProcessedHtml(html);
       })
       .catch(function () {
@@ -4646,7 +5274,7 @@
       })
     ])
       .then(function (pair) {
-        var html = prepareHtmlWithWorkspace(pair[0], pair[1]);
+        var html = prepareHtmlWithWorkspace(pair[0], pair[1], { courseId: activeCourseId });
         assignFrameFromProcessedHtml(html, (c && c.code ? c.code + ' notes' : 'Course notes'));
         // Formula sheet is ECOR2050-only for now.
         if (activeCourseId === 'ecor2050') ensureFormulaSheetInDockLoaded();

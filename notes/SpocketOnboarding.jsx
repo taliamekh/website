@@ -1880,6 +1880,23 @@ function ParkedRobot({
   const [h, setH] = useState(false);
   const [joke, setJ] = useState(IDLE_JOKES[0]);
   const [idle, setI] = useState("none");
+  // Close delay lets the mouse travel from the robot → menu without the menu
+  // flickering closed when the activation padding shrinks to ~10px.
+  const closeTimerRef = useRef(null);
+  const cancelClose = () => {
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+  };
+  const scheduleClose = () => {
+    cancelClose();
+    closeTimerRef.current = setTimeout(() => {
+      setH(false);
+      closeTimerRef.current = null;
+    }, 200);
+  };
+  useEffect(() => () => cancelClose(), []);
   useEffect(() => {
     const a = ["sleep", "music", "build", "none"];
     let i = 0;
@@ -1895,6 +1912,19 @@ function ParkedRobot({
       setJ(IDLE_JOKES[Math.floor(Math.random() * IDLE_JOKES.length)]);
     }
   }, [h]);
+  // Subscribe to Student Resources theme so Spocket's menu can flip colors.
+  const [srTheme, setSrTheme] = useState(() => {
+    try {
+      if (typeof document !== "undefined" && document.documentElement.classList.contains("sr-light")) return "light";
+    } catch (e) {}
+    return "dark";
+  });
+  useEffect(() => {
+    const onTheme = (ev) => setSrTheme((ev && ev.detail && ev.detail.theme) === "light" ? "light" : "dark");
+    try { window.addEventListener("tm-sr-theme", onTheme); } catch (e) {}
+    return () => { try { window.removeEventListener("tm-sr-theme", onTheme); } catch (e) {} };
+  }, []);
+  const isLight = srTheme === "light";
   const btn = {
     padding: "8px 14px",
     borderRadius: 14,
@@ -1907,8 +1937,8 @@ function ParkedRobot({
   };
   return (
     <div
-      onMouseEnter={() => setH(true)}
-      onMouseLeave={() => setH(false)}
+      onMouseEnter={() => { cancelClose(); setH(true); }}
+      onMouseLeave={scheduleClose}
       style={{
         position: "fixed",
         bottom: 4,
@@ -1916,27 +1946,29 @@ function ParkedRobot({
         zIndex: 30,
         animation: "fadeInUp 0.6s ease",
         cursor: "pointer",
-        padding: 22,
+        padding: 10,
         pointerEvents: "auto",
       }}
     >
       {h && (
         <div
+          onMouseEnter={cancelClose}
+          onMouseLeave={scheduleClose}
           style={{
             position: "absolute",
             bottom: "calc(100% - 14px)",
             right: -8,
-            background: "linear-gradient(135deg,#1a2538,#0f172a)",
-            border: "1px solid #7fdbca30",
+            background: isLight ? "linear-gradient(135deg,#ffffff,#f4f7fd)" : "linear-gradient(135deg,#1a2538,#0f172a)",
+            border: isLight ? "1px solid #0a6fa838" : "1px solid #7fdbca30",
             borderRadius: 14,
             padding: "14px 18px",
             width: "min(260px, calc(100vw - 48px))",
             animation: "fadeInUp 0.2s ease",
-            boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
+            boxShadow: isLight ? "0 12px 28px rgba(10,30,80,0.18)" : "0 8px 24px rgba(0,0,0,0.5)",
             zIndex: 40,
           }}
         >
-          <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: "#c8d6e5", lineHeight: 1.6, marginBottom: 12 }}>{joke}</div>
+          <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: isLight ? "#1a2438" : "#c8d6e5", lineHeight: 1.6, marginBottom: 12 }}>{joke}</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             {!hideTestUserButtons && (
               <>
@@ -3253,31 +3285,44 @@ function App() {
   }, [typing, skipTyping]);
 
   const spaceTipPostTypeTimerRef = useRef(null);
+  // Track whether the tip was already shown this session, so it doesn't pop up
+  // every time Spocket starts typing a new message during login / roam.
+  const spaceTipShownThisSessionRef = useRef(false);
+  const [spaceTipHovered, setSpaceTipHovered] = useState(false);
 
   useEffect(() => {
     try {
       if (localStorage.getItem(LS_SPOCKET_SPACE_TIP) === "1") return;
     } catch (e) {}
-    if (typing) {
+    // Show exactly once per session: first time Spocket starts typing, reveal the tip.
+    if (typing && !spaceTipShownThisSessionRef.current) {
+      spaceTipShownThisSessionRef.current = true;
       setSpaceSkipTipOpen(true);
+    }
+  }, [typing]);
+
+  // Auto-dismiss after ~5s; if the user hovers it, pause the timer.
+  useEffect(() => {
+    if (!spaceSkipTipOpen) return;
+    if (spaceTipHovered) {
       if (spaceTipPostTypeTimerRef.current) {
         clearTimeout(spaceTipPostTypeTimerRef.current);
         spaceTipPostTypeTimerRef.current = null;
       }
       return;
     }
-    if (!spaceSkipTipOpen) return;
+    if (spaceTipPostTypeTimerRef.current) clearTimeout(spaceTipPostTypeTimerRef.current);
     spaceTipPostTypeTimerRef.current = setTimeout(() => {
       setSpaceSkipTipOpen(false);
       spaceTipPostTypeTimerRef.current = null;
-    }, 10000);
+    }, 5000);
     return () => {
       if (spaceTipPostTypeTimerRef.current) {
         clearTimeout(spaceTipPostTypeTimerRef.current);
         spaceTipPostTypeTimerRef.current = null;
       }
     };
-  }, [typing, spaceSkipTipOpen]);
+  }, [spaceSkipTipOpen, spaceTipHovered]);
 
   const dismissSpaceSkipTipSoft = useCallback(() => {
     if (spaceTipPostTypeTimerRef.current) {
@@ -3598,24 +3643,14 @@ function App() {
     return () => window.removeEventListener("resize", sync);
   }, [phase, measureLockCardForArena]);
 
-  /* Drive real #lock-card “pushed off” animation (notes/index.html CSS). Never while page unlocked. */
+  /* Lock-card push-away animation removed per user request — Spocket rolls out beside the
+   * sign-in form without displacing it. Defensively remove the class in case it was left on
+   * from a prior version's state. */
   useEffect(() => {
-    const el = document.getElementById("lock-card");
-    if (!el) return;
-    let unlocked = false;
     try {
-      unlocked = document.body.classList.contains("sr-auth-unlocked");
+      const el = document.getElementById("lock-card");
+      if (el) el.classList.remove("spocket-lock-pushed");
     } catch (e) {}
-    if (!cardGone || unlocked || notesUnlocked) {
-      el.classList.remove("spocket-lock-pushed");
-    } else {
-      el.classList.add("spocket-lock-pushed");
-    }
-    return () => {
-      try {
-        el.classList.remove("spocket-lock-pushed");
-      } catch (e) {}
-    };
   }, [cardGone, notesUnlocked]);
 
   /* Hide site nav while Roam / Study are open (full-width Spocket modes). */
@@ -3781,69 +3816,77 @@ function App() {
       {spaceSkipTipOpen && (
         <div
           role="status"
+          onMouseEnter={() => setSpaceTipHovered(true)}
+          onMouseLeave={() => setSpaceTipHovered(false)}
           style={{
             position: "fixed",
-            bottom: 16,
+            bottom: 14,
             left: "50%",
             transform: "translateX(-50%)",
             zIndex: 600,
-            maxWidth: "min(340px, calc(100vw - 24px))",
-            padding: "12px 16px",
-            borderRadius: 14,
-            background: "linear-gradient(135deg,#1e293b,#0f172a)",
+            maxWidth: "min(320px, calc(100vw - 24px))",
+            padding: "6px 8px 6px 12px",
+            borderRadius: 999,
+            background: "rgba(15,23,42,0.94)",
             border: "1px solid #7fdbca55",
-            boxShadow: "0 10px 36px rgba(0,0,0,0.55)",
+            boxShadow: "0 6px 20px rgba(0,0,0,0.45)",
             fontFamily: "'JetBrains Mono',monospace",
-            fontSize: 11,
+            fontSize: 10.5,
             color: "#e2e8f0",
-            lineHeight: 1.5,
+            lineHeight: 1.35,
             pointerEvents: "auto",
-            animation: "fadeInUp 0.25s ease",
+            animation: "fadeInUp 0.2s ease",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
           }}
         >
-          <div style={{ fontWeight: 700, marginBottom: 6, color: "#7fdbca" }}>Tip</div>
-          <div>
-            You can press <kbd style={{ padding: "2px 6px", borderRadius: 4, background: "#334155", border: "1px solid #475569" }}>Space</kbd> to skip waiting for my typing (when you are not typing in a text field).
-          </div>
-          <div style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
-            <button
-              type="button"
-              onClick={dismissSpaceSkipTipSoft}
-              style={{
-                padding: "6px 12px",
-                borderRadius: 8,
-                border: "none",
-                background: "#7fdbca",
-                color: "#0f172a",
-                fontWeight: 700,
-                fontSize: 10,
-                fontFamily: "'JetBrains Mono',monospace",
-                cursor: "pointer",
-              }}
-            >
-              Dismiss
-            </button>
-            <button
-              type="button"
-              onClick={dismissSpaceSkipTipForever}
-              style={{
-                padding: "6px 12px",
-                borderRadius: 8,
-                border: "1px solid #64748b",
-                background: "transparent",
-                color: "#94a3b8",
-                fontWeight: 600,
-                fontSize: 10,
-                fontFamily: "'JetBrains Mono',monospace",
-                cursor: "pointer",
-              }}
-            >
-              Do not show again
-            </button>
-          </div>
-          <div style={{ marginTop: 8, fontSize: 9, color: "#64748b" }}>
-            Stays until you dismiss, or for 10 seconds after I finish typing. Dismiss hides it for now; Do not show again stops the tip permanently.
-          </div>
+          <span aria-hidden="true" style={{ color: "#7fdbca", fontSize: 11 }}>💡</span>
+          <span>
+            Press <kbd style={{ padding: "1px 5px", borderRadius: 4, background: "#334155", border: "1px solid #475569", fontSize: 10 }}>Space</kbd> to skip my typing.
+          </span>
+          <button
+            type="button"
+            onClick={dismissSpaceSkipTipForever}
+            title="Don't show this again"
+            aria-label="Don't show again"
+            style={{
+              padding: "2px 7px",
+              borderRadius: 10,
+              border: "1px solid #475569",
+              background: "transparent",
+              color: "#94a3b8",
+              fontSize: 9,
+              fontFamily: "'JetBrains Mono',monospace",
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+            }}
+          >
+            don&apos;t show
+          </button>
+          <button
+            type="button"
+            onClick={dismissSpaceSkipTipSoft}
+            title="Close"
+            aria-label="Close tip"
+            style={{
+              width: 22,
+              height: 22,
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              border: "none",
+              borderRadius: "50%",
+              background: "rgba(127,219,202,0.12)",
+              color: "#7fdbca",
+              fontSize: 13,
+              lineHeight: 1,
+              cursor: "pointer",
+              marginLeft: 2,
+            }}
+          >
+            ×
+          </button>
         </div>
       )}
       <style>{`
