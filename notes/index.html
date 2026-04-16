@@ -1826,7 +1826,8 @@
         stickies: 'tm_student_workspace_sticky_notes_v1',
         drawings: 'tm_workspace_drawings_v1',
         style: 'tm_workspace_global_style_v1',
-        images: 'tm_workspace_images_v1'
+        images: 'tm_workspace_images_v1',
+        sidebarCollapsed: 'tm_student_resources_notes_ecor2050_sidebar_collapsed_v1'
       }
     },
     maae2202: {
@@ -1840,7 +1841,8 @@
         stickies: 'tm_student_resources_notes_maae2202_stickies_v1',
         drawings: 'tm_student_resources_notes_maae2202_drawings_v1',
         style: 'tm_student_resources_notes_maae2202_style_v1',
-        images: 'tm_student_resources_notes_maae2202_images_v1'
+        images: 'tm_student_resources_notes_maae2202_images_v1',
+        sidebarCollapsed: 'tm_student_resources_notes_maae2202_sidebar_collapsed_v1'
       }
     }
   };
@@ -1875,6 +1877,7 @@
   function keyDrawings() { return getActiveCourse().storage.drawings; }
   function keyStyle() { return getActiveCourse().storage.style; }
   function keyImages() { return getActiveCourse().storage.images; }
+  function keySidebarCollapsed() { return getActiveCourse().storage.sidebarCollapsed; }
 
   /** Formula sheet page file (no .html in the repo) — same “download → patch → show in iframe” path as NOTES_HTML_URL. */
   var FORMULA_SHEET_HTML_URL = 'https://raw.githubusercontent.com/taliamekh/Ecor2050-formula-sheet/main/Ecor2050-formula-sheet';
@@ -4128,6 +4131,16 @@
     return '';
   }
 
+  function readSidebarCollapsed() {
+    try {
+      var k = keySidebarCollapsed();
+      if (!k) return false;
+      return localStorage.getItem(k) === '1';
+    } catch (e) {
+      return false;
+    }
+  }
+
   function readIframeWorkspaceBootPayload(opts) {
     opts = opts || {};
     var forFormula = !!opts.forFormula;
@@ -4143,7 +4156,10 @@
       /** False = formula iframe: toolbar hides “expand notes layout” (study guide only). */
       showNotesExpandToggle: forFormula ? false : true,
       /** Toolbar button to open/close the formula sheet (parent page). */
-      showFormulaSheetToggle: true
+      showFormulaSheetToggle: true,
+      /** Optional in-iframe notes sidebar toggle (MAAE 2202 has #sidebar). */
+      showSidebarToggle: forFormula ? false : true,
+      sidebarCollapsed: forFormula ? false : readSidebarCollapsed()
     };
   }
 
@@ -4261,6 +4277,14 @@
       try {
         localStorage.setItem(GLOBAL_STYLE_KEY, ev.data.payload || '{}');
       } catch (e) { /* ignore */ }
+      return;
+    }
+    if (ev.data.type === 'tm_sidebar_collapsed_save') {
+      if (!fromNotes) return;
+      try {
+        var k = keySidebarCollapsed();
+        if (k) localStorage.setItem(k, ev.data.collapsed ? '1' : '0');
+      } catch (eS) { /* ignore */ }
       return;
     }
     if (ev.data.type === 'tm_clear_workspace_annotations') {

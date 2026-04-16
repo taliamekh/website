@@ -54,6 +54,9 @@
   var btnNotesExpandLayout = null;
   /** Opens or closes the formula sheet panel on the parent page (hidden if showFormulaSheetToggle is false). */
   var btnFormulaSheetToggle = null;
+  /** Toggles an in-page notes sidebar (only shown if #sidebar exists + showSidebarToggle !== false). */
+  var btnSidebarToggle = null;
+  var sidebarCollapsed = false;
   var nativeWrap = null;
   var chromeRoot = null;
   var wrapShapesRoot = null;
@@ -948,11 +951,38 @@
       }
     }
   }
+
+  function pageHasSidebar() {
+    try {
+      return !!document.getElementById('sidebar');
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function applySidebarCollapsed(next) {
+    sidebarCollapsed = !!next;
+    try {
+      document.documentElement.classList.toggle('tm-sidebar-collapsed', sidebarCollapsed);
+    } catch (e1) { /* ignore */ }
+    try {
+      if (btnSidebarToggle) btnSidebarToggle.setAttribute('aria-pressed', sidebarCollapsed ? 'true' : 'false');
+    } catch (e2) { /* ignore */ }
+    try {
+      window.parent.postMessage({ type: 'tm_sidebar_collapsed_save', collapsed: sidebarCollapsed }, '*');
+    } catch (e3) { /* ignore */ }
+  }
   // All toolbar / bar appearance rules live in this one string (search class names like tm-ws- to tweak layout).
   function injectBaseCss() {
     var st = document.createElement('style');
     st.textContent =
       '#hl-min{display:none!important}' +
+      /* Optional host-page sidebar toggle (MAAE2202 notes). */
+      'html.tm-sidebar-collapsed #sidebar{display:none!important;transform:translateX(-120%)!important;opacity:0!important;pointer-events:none!important}' +
+      'html.tm-sidebar-collapsed body{padding-left:0!important}' +
+      'html.tm-sidebar-collapsed main{margin-left:0!important}' +
+      'html.tm-sidebar-collapsed #main{margin-left:0!important}' +
+      'html.tm-sidebar-collapsed #main-content{margin-left:0!important}' +
       '#hl-bar.tm-ws-host{position:fixed;left:12px;top:52px;right:auto;bottom:auto;transform:none;' +
       /* Above #tm-annotations-fixed so the toolbar stays clickable (fixed overlay used to sit at 10020). */
       'z-index:10040;box-sizing:border-box;max-width:min(920px,calc(100vw - 16px));width:max-content;min-width:0;padding:0;margin:0;border:none;background:transparent;' +
@@ -1444,6 +1474,15 @@
           btnFormulaSheetToggle.hidden = hideFormulaToggle;
           btnFormulaSheetToggle.setAttribute('aria-hidden', hideFormulaToggle ? 'true' : 'false');
         }
+        if (btnSidebarToggle) {
+          var hideSidebarToggle = p.showSidebarToggle === false || !pageHasSidebar();
+          btnSidebarToggle.style.display = hideSidebarToggle ? 'none' : '';
+          btnSidebarToggle.hidden = hideSidebarToggle;
+          btnSidebarToggle.setAttribute('aria-hidden', hideSidebarToggle ? 'true' : 'false');
+          if (!hideSidebarToggle && typeof p.sidebarCollapsed === 'boolean') applySidebarCollapsed(p.sidebarCollapsed);
+        } else if (pageHasSidebar() && typeof p.sidebarCollapsed === 'boolean') {
+          applySidebarCollapsed(p.sidebarCollapsed);
+        }
         render();
         syncStyleInputs();
         syncHlColorFromStyle();
@@ -1630,6 +1669,28 @@
       } catch (eFs) {}
     });
     tools.appendChild(btnFormulaSheetToggle);
+
+    btnSidebarToggle = document.createElement('button');
+    btnSidebarToggle.type = 'button';
+    btnSidebarToggle.className = 'tm-ic-btn';
+    btnSidebarToggle.title = 'Sidebar — show or hide the notes sidebar (when the page provides one)';
+    btnSidebarToggle.setAttribute('aria-label', 'Toggle sidebar');
+    btnSidebarToggle.setAttribute('aria-pressed', 'false');
+    btnSidebarToggle.innerHTML =
+      '<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">' +
+      '<rect x="4" y="5" width="16" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>' +
+      '<path d="M9 5v14" fill="none" stroke="currentColor" stroke-width="2"/>' +
+      '</svg>';
+    btnSidebarToggle.addEventListener('click', function (e) {
+      e.stopPropagation();
+      closeAllPops();
+      applySidebarCollapsed(!sidebarCollapsed);
+    });
+    // Hidden until boot payload arrives (and only shown if #sidebar exists).
+    btnSidebarToggle.style.display = 'none';
+    btnSidebarToggle.hidden = true;
+    btnSidebarToggle.setAttribute('aria-hidden', 'true');
+    tools.appendChild(btnSidebarToggle);
     tools.appendChild(mkDiv());
 
     btnHl = document.createElement('button');
