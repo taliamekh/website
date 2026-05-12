@@ -25,7 +25,7 @@ cp legacy/index.html ./index.html
 cp -r legacy/notes/* ./notes/
 
 # Remove the new Aurora-only pages
-rm projects.html contact.html resume.html
+rm projects.html contact.html
 ```
 
 Or just `git revert` the "Migrate Aurora redesign to production" commit.

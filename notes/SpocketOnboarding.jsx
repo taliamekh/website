@@ -635,8 +635,8 @@ function Bubble({ rawMsg, textPlain, text, isTyping, tiny, onSkip, tail = "botto
   const box = (
     <div
       style={{
-        backgroundColor: "#0f172a",
-        backgroundImage: "linear-gradient(135deg,#1a2538,#121a2e)",
+        backgroundColor: "#21102a",
+        backgroundImage: "linear-gradient(135deg,#2e1640,#170a1c)",
         border: "1px solid #7fdbca30",
         borderRadius: 18,
         padding: tiny ? (tail === "right" ? "10px 18px 10px 14px" : "10px 16px") : tail === "right" ? "18px 26px 18px 22px" : tail === "left" ? "18px 24px 18px 26px" : "18px 24px",
@@ -644,7 +644,7 @@ function Bubble({ rawMsg, textPlain, text, isTyping, tiny, onSkip, tail = "botto
         maxWidth: mw || 420,
         fontFamily: "'JetBrains Mono',monospace",
         fontSize: tiny ? 11 : 14,
-        color: tiny ? "#7fdbca50" : "#c8d6e5",
+        color: tiny ? "#7fdbca50" : "#ecdef7",
         lineHeight: 1.65,
         boxShadow: "0 6px 24px rgba(0,0,0,0.45)",
         isolation: "isolate",
@@ -675,7 +675,7 @@ function Bubble({ rawMsg, textPlain, text, isTyping, tiny, onSkip, tail = "botto
           style={{ position: "absolute", right: -11, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}
           aria-hidden="true"
         >
-          <path d="M0 5 L14 11 L0 17 Z" fill="#121a2e" />
+          <path d="M0 5 L14 11 L0 17 Z" fill="#170a1c" />
         </svg>
       ) : tail === "left" ? (
         <svg
@@ -685,11 +685,11 @@ function Bubble({ rawMsg, textPlain, text, isTyping, tiny, onSkip, tail = "botto
           style={{ position: "absolute", left: -11, top: 28, pointerEvents: "none" }}
           aria-hidden="true"
         >
-          <path d="M14 5 L0 11 L14 17 Z" fill="#121a2e" />
+          <path d="M14 5 L0 11 L14 17 Z" fill="#170a1c" />
         </svg>
       ) : (
         <svg width="20" height="14" viewBox="0 0 20 14" style={{ position: "absolute", bottom: -13, left: 28 }} aria-hidden="true">
-          <path d="M0 0 L10 14 L20 0" fill="#121a2e" />
+          <path d="M0 0 L10 14 L20 0" fill="#170a1c" />
         </svg>
       )}
     </div>
@@ -710,13 +710,13 @@ function IpadForm(){
       {/* Notch */}
       <div style={{width:60,height:6,background:"#1a1a1e",borderRadius:3,margin:"0 auto 6px auto"}}/>
       {/* Screen */}
-      <div style={{background:"linear-gradient(135deg,#1a2538,#0f172a)",borderRadius:20,padding:18,minHeight:240}}>
+      <div style={{background:"linear-gradient(135deg,#2e1640,#21102a)",borderRadius:20,padding:18,minHeight:240}}>
         <div style={{fontSize:13,color:"#7fdbca",fontFamily:"monospace",fontWeight:700,marginBottom:14,letterSpacing:1,textAlign:"center"}}>📧 CONTACT ME</div>
         {s?<div style={{color:"#7fdbca",fontSize:13,textAlign:"center",padding:"30px 0"}}>✅ Sent!</div>:(<>
-          <input placeholder="Name" value={n} onChange={x=>sN(x.target.value)} style={{width:"100%",padding:"9px 12px",background:"#0a0f18",border:"1px solid #7fdbca30",borderRadius:8,color:"#c8d6e5",fontSize:12,fontFamily:"monospace",marginBottom:8,boxSizing:"border-box"}}/>
-          <input placeholder="Email" value={e} onChange={x=>{sE(x.target.value);sErr("")}} style={{width:"100%",padding:"9px 12px",background:"#0a0f18",border:`1px solid ${err?"#ff6b6b":"#7fdbca30"}`,borderRadius:8,color:"#c8d6e5",fontSize:12,fontFamily:"monospace",marginBottom:err?4:8,boxSizing:"border-box"}}/>
+          <input placeholder="Name" value={n} onChange={x=>sN(x.target.value)} style={{width:"100%",padding:"9px 12px",background:"#0a0f18",border:"1px solid #7fdbca30",borderRadius:8,color:"#ecdef7",fontSize:12,fontFamily:"monospace",marginBottom:8,boxSizing:"border-box"}}/>
+          <input placeholder="Email" value={e} onChange={x=>{sE(x.target.value);sErr("")}} style={{width:"100%",padding:"9px 12px",background:"#0a0f18",border:`1px solid ${err?"#ff6b6b":"#7fdbca30"}`,borderRadius:8,color:"#ecdef7",fontSize:12,fontFamily:"monospace",marginBottom:err?4:8,boxSizing:"border-box"}}/>
           {err&&<div style={{color:"#ff6b6b",fontSize:10,marginBottom:6}}>{err}</div>}
-          <textarea placeholder="Message..." value={m} onChange={x=>sM(x.target.value)} rows={3} style={{width:"100%",padding:"9px 12px",background:"#0a0f18",border:"1px solid #7fdbca30",borderRadius:8,color:"#c8d6e5",fontSize:12,fontFamily:"monospace",marginBottom:12,boxSizing:"border-box",resize:"none"}}/>
+          <textarea placeholder="Message..." value={m} onChange={x=>sM(x.target.value)} rows={3} style={{width:"100%",padding:"9px 12px",background:"#0a0f18",border:"1px solid #7fdbca30",borderRadius:8,color:"#ecdef7",fontSize:12,fontFamily:"monospace",marginBottom:12,boxSizing:"border-box",resize:"none"}}/>
           <button onClick={handleSend} style={{width:"100%",padding:"10px",background:"#7fdbca",color:"#0a0f1a",border:"none",borderRadius:8,fontWeight:700,fontSize:12,fontFamily:"monospace",cursor:"pointer"}}>Send</button>
         </>)}
       </div>
@@ -1001,7 +1001,7 @@ function SpocketImmersiveChrome({
         alignItems: "center",
         justifyContent: "space-between",
         padding: "0 10px 0 12px",
-        background: "linear-gradient(180deg, #0f172af2, #0a0f18ee)",
+        background: "linear-gradient(180deg, #21102af2, #0a0f18ee)",
         borderBottom: "1px solid rgba(127,219,202,0.12)",
         boxShadow: "0 1px 0 rgba(0,0,0,0.25)",
         pointerEvents: "auto",
@@ -1328,25 +1328,25 @@ function StudyPanel({ onClose, siteNavOpen = false, onToggleSiteNav = () => {}, 
 
       {/* Reminder bubble — large and visible */}
       {reminder&&(
-        <div style={{position:"absolute",bottom:"38%",left:"50%",transform:"translateX(-50%)",background:"linear-gradient(135deg,#1a2538ee,#0f172aee)",border:"1.5px solid #7fdbca40",borderRadius:18,padding:"16px 28px",zIndex:15,animation:"fadeInUp 0.3s ease",boxShadow:"0 8px 24px rgba(0,0,0,0.5)",maxWidth:400}}>
+        <div style={{position:"absolute",bottom:"38%",left:"50%",transform:"translateX(-50%)",background:"linear-gradient(135deg,#2e1640ee,#21102aee)",border:"1.5px solid #7fdbca40",borderRadius:18,padding:"16px 28px",zIndex:15,animation:"fadeInUp 0.3s ease",boxShadow:"0 8px 24px rgba(0,0,0,0.5)",maxWidth:400}}>
           <div style={{fontSize:18,color:"#e2e8f0",...S,textAlign:"center"}}>{reminder}</div>
-          <svg width="20" height="12" viewBox="0 0 20 12" style={{position:"absolute",bottom:-11,left:"50%",transform:"translateX(-50%)"}}><path d="M0 0 L10 12 L20 0" fill="#0f172a"/></svg>
+          <svg width="20" height="12" viewBox="0 0 20 12" style={{position:"absolute",bottom:-11,left:"50%",transform:"translateX(-50%)"}}><path d="M0 0 L10 12 L20 0" fill="#21102a"/></svg>
         </div>
       )}
 
       {/* Controls */}
       <div style={{position:"absolute",top:12,left:12,display:"flex",gap:8,zIndex:40,flexWrap:"wrap",alignItems:"center"}}>
-        <button onClick={handleClose} style={{padding:"6px 14px",background:"#1a253880",border:"1px solid #ff6b6b30",borderRadius:12,color:"#ff6b6b80",fontSize:10,...S,cursor:"pointer",backdropFilter:"blur(4px)"}}>← Leave</button>
-        <button onClick={()=>setLight(!light)} style={{padding:"6px 14px",background:light?"#1a253880":"#e8e0d480",border:"1px solid #ffffff20",borderRadius:12,color:light?"#e2e8f0":"#1a1a2e",fontSize:10,...S,cursor:"pointer",backdropFilter:"blur(4px)"}}>{light?"🌙 Dark":"☀️ Light"}</button>
-        <button onClick={toggleLock} style={{padding:"6px 14px",background:lockedIn?"#4ad4a025":"#1a253880",border:`1px solid ${lockedIn?"#4ad4a060":"#ffffff20"}`,borderRadius:12,color:lockedIn?"#4ad4a0":"#94a3b8",fontSize:10,...S,cursor:"pointer",backdropFilter:"blur(4px)",fontWeight:lockedIn?700:400}}>{lockedIn?"🔒 Locked In":"🔓 Not Locked In"}</button>
+        <button onClick={handleClose} style={{padding:"6px 14px",background:"#2e164080",border:"1px solid #ff6b6b30",borderRadius:12,color:"#ff6b6b80",fontSize:10,...S,cursor:"pointer",backdropFilter:"blur(4px)"}}>← Leave</button>
+        <button onClick={()=>setLight(!light)} style={{padding:"6px 14px",background:light?"#2e164080":"#e8e0d480",border:"1px solid #ffffff20",borderRadius:12,color:light?"#e2e8f0":"#1a1a2e",fontSize:10,...S,cursor:"pointer",backdropFilter:"blur(4px)"}}>{light?"🌙 Dark":"☀️ Light"}</button>
+        <button onClick={toggleLock} style={{padding:"6px 14px",background:lockedIn?"#4ad4a025":"#2e164080",border:`1px solid ${lockedIn?"#4ad4a060":"#ffffff20"}`,borderRadius:12,color:lockedIn?"#4ad4a0":"#94a3b8",fontSize:10,...S,cursor:"pointer",backdropFilter:"blur(4px)",fontWeight:lockedIn?700:400}}>{lockedIn?"🔒 Locked In":"🔓 Not Locked In"}</button>
         {totalLocked>0&&<span style={{fontSize:9,color:"#4ad4a080",...S,background:"#0a0f1880",padding:"4px 10px",borderRadius:8,backdropFilter:"blur(4px)"}}>🔒 {fmt(totalLocked+(lockedIn&&lockStart?Math.floor((new Date()-lockStart)/1000):0))} locked</span>}
-        <button onClick={()=>setShowHistory(!showHistory)} style={{padding:"6px 14px",background:"#1a253880",border:"1px solid #ffffff20",borderRadius:12,color:"#94a3b8",fontSize:10,...S,cursor:"pointer",backdropFilter:"blur(4px)"}}>📊 History</button>
-        <button onClick={()=>setShowSettings(!showSettings)} style={{padding:"6px 14px",background:showSettings?"#7fdbca20":"#1a253880",border:`1px solid ${showSettings?"#7fdbca40":"#ffffff20"}`,borderRadius:12,color:showSettings?"#7fdbca":"#94a3b8",fontSize:10,...S,cursor:"pointer",backdropFilter:"blur(4px)"}}>⚙️ Settings</button>
+        <button onClick={()=>setShowHistory(!showHistory)} style={{padding:"6px 14px",background:"#2e164080",border:"1px solid #ffffff20",borderRadius:12,color:"#94a3b8",fontSize:10,...S,cursor:"pointer",backdropFilter:"blur(4px)"}}>📊 History</button>
+        <button onClick={()=>setShowSettings(!showSettings)} style={{padding:"6px 14px",background:showSettings?"#7fdbca20":"#2e164080",border:`1px solid ${showSettings?"#7fdbca40":"#ffffff20"}`,borderRadius:12,color:showSettings?"#7fdbca":"#94a3b8",fontSize:10,...S,cursor:"pointer",backdropFilter:"blur(4px)"}}>⚙️ Settings</button>
       </div>
 
       {/* ── SPOCKET SETTINGS PANEL ── */}
       {showSettings&&(
-        <div style={{position:"absolute",top:50,left:12,width:280,background:"linear-gradient(145deg,#1a2538ee,#0f172aee)",border:"1px solid #ffffff15",borderRadius:16,padding:16,zIndex:50,backdropFilter:"blur(10px)",...S}}>
+        <div style={{position:"absolute",top:50,left:12,width:280,background:"linear-gradient(145deg,#2e1640ee,#21102aee)",border:"1px solid #ffffff15",borderRadius:16,padding:16,zIndex:50,backdropFilter:"blur(10px)",...S}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
             <div style={{fontSize:13,color:"#e2e8f0",fontWeight:700}}>⚙️ Spocket Settings</div>
             <button onClick={()=>setShowSettings(false)} style={{padding:"2px 8px",background:"transparent",border:"1px solid #ffffff15",borderRadius:6,color:"#94a3b8",fontSize:9,cursor:"pointer",...S}}>✕</button>
@@ -1553,7 +1553,7 @@ function StudyPanel({ onClose, siteNavOpen = false, onToggleSiteNav = () => {}, 
           </div>
         </div>
       ) : (
-        <div style={{position:"absolute",bottom:12,left:"50%",transform:"translateX(-50%)",background:"linear-gradient(145deg,#1a2538ee,#0f172aee)",border:"1px solid #ffffff15",borderRadius:16,padding:"12px 16px",zIndex:40,backdropFilter:"blur(10px)",maxWidth:"90vw",...S}}>
+        <div style={{position:"absolute",bottom:12,left:"50%",transform:"translateX(-50%)",background:"linear-gradient(145deg,#2e1640ee,#21102aee)",border:"1px solid #ffffff15",borderRadius:16,padding:"12px 16px",zIndex:40,backdropFilter:"blur(10px)",maxWidth:"90vw",...S}}>
           {/* Header */}
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
             <span style={{fontSize:11,color:"#e2e8f0",fontWeight:600}}>🎧 Ambient Sounds</span>
@@ -1586,7 +1586,7 @@ function StudyPanel({ onClose, siteNavOpen = false, onToggleSiteNav = () => {}, 
 
       {/* ── LOCK-IN LOG ── */}
       {lockLog.length>0&&tourStep<0&&(
-        <div style={{position:"absolute",bottom:50,left:12,background:"#1a253890",border:"1px solid #4ad4a020",borderRadius:12,padding:"8px 14px",zIndex:35,backdropFilter:"blur(6px)",maxHeight:120,overflow:"auto",...S}}>
+        <div style={{position:"absolute",bottom:50,left:12,background:"#2e164090",border:"1px solid #4ad4a020",borderRadius:12,padding:"8px 14px",zIndex:35,backdropFilter:"blur(6px)",maxHeight:120,overflow:"auto",...S}}>
           <div style={{fontSize:8,color:"#4ad4a060",textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Lock-in Log</div>
           {lockLog.slice(-6).map((l,i)=>(
             <div key={i} style={{fontSize:9,color:l.type==="in"?"#4ad4a0":"#94a3b8",display:"flex",gap:6}}>
@@ -1598,7 +1598,7 @@ function StudyPanel({ onClose, siteNavOpen = false, onToggleSiteNav = () => {}, 
       )}
 
       {/* ── HELP / TOUR BUTTON ── */}
-      <div onClick={()=>setTourStep(0)} style={{position:"absolute",bottom:14,right:14,width:36,height:36,borderRadius:"50%",background:"linear-gradient(135deg,#1a2538ee,#0f172aee)",border:"1.5px solid #7fdbca40",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",zIndex:40,boxShadow:"0 4px 14px rgba(0,0,0,0.4)",backdropFilter:"blur(6px)",transition:"all 0.2s"}} onMouseOver={e=>{e.currentTarget.style.border="1.5px solid #7fdbca80";e.currentTarget.style.boxShadow="0 4px 18px rgba(127,219,202,0.2)"}} onMouseOut={e=>{e.currentTarget.style.border="1.5px solid #7fdbca40";e.currentTarget.style.boxShadow="0 4px 14px rgba(0,0,0,0.4)"}}>
+      <div onClick={()=>setTourStep(0)} style={{position:"absolute",bottom:14,right:14,width:36,height:36,borderRadius:"50%",background:"linear-gradient(135deg,#2e1640ee,#21102aee)",border:"1.5px solid #7fdbca40",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",zIndex:40,boxShadow:"0 4px 14px rgba(0,0,0,0.4)",backdropFilter:"blur(6px)",transition:"all 0.2s"}} onMouseOver={e=>{e.currentTarget.style.border="1.5px solid #7fdbca80";e.currentTarget.style.boxShadow="0 4px 18px rgba(127,219,202,0.2)"}} onMouseOut={e=>{e.currentTarget.style.border="1.5px solid #7fdbca40";e.currentTarget.style.boxShadow="0 4px 14px rgba(0,0,0,0.4)"}}>
         <span style={{fontSize:18,color:"#7fdbca",fontWeight:700,...S}}>?</span>
       </div>
 
@@ -1630,7 +1630,7 @@ function StudyPanel({ onClose, siteNavOpen = false, onToggleSiteNav = () => {}, 
                 step.pos==="right"?{top:"25%",right:30}:
                 step.pos==="bottom"?{bottom:70,left:"50%",transform:"translateX(-50%)"}:
                 {top:60,left:"50%",transform:"translateX(-50%)"}),
-              width:340,background:"linear-gradient(145deg,#1a2538,#0f172a)",border:"1.5px solid #7fdbca40",borderRadius:18,padding:24,boxShadow:"0 12px 40px rgba(0,0,0,0.6)",animation:"fadeInUp 0.3s ease",...S}}>
+              width:340,background:"linear-gradient(145deg,#2e1640,#21102a)",border:"1.5px solid #7fdbca40",borderRadius:18,padding:24,boxShadow:"0 12px 40px rgba(0,0,0,0.6)",animation:"fadeInUp 0.3s ease",...S}}>
               {/* Spocket mini avatar */}
               <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
                 <div style={{width:32,height:32,borderRadius:"50%",background:"linear-gradient(135deg,#e8c0c8,#c8a0a8)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,border:"2px solid #7fdbca40"}}>🤖</div>
@@ -1654,7 +1654,7 @@ function StudyPanel({ onClose, siteNavOpen = false, onToggleSiteNav = () => {}, 
 
       {/* ── SESSION HISTORY PANEL ── */}
       {showHistory&&(
-        <div style={{position:"absolute",top:50,right:12,width:320,maxHeight:"80vh",background:"linear-gradient(145deg,#1a2538ee,#0f172aee)",border:"1px solid #ffffff15",borderRadius:16,padding:20,zIndex:50,backdropFilter:"blur(10px)",overflow:"auto",...S}}>
+        <div style={{position:"absolute",top:50,right:12,width:320,maxHeight:"80vh",background:"linear-gradient(145deg,#2e1640ee,#21102aee)",border:"1px solid #ffffff15",borderRadius:16,padding:20,zIndex:50,backdropFilter:"blur(10px)",overflow:"auto",...S}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
             <div style={{fontSize:14,color:"#e2e8f0",fontWeight:700}}>📊 Study History</div>
             <button onClick={()=>setShowHistory(false)} style={{padding:"3px 10px",background:"transparent",border:"1px solid #ffffff15",borderRadius:8,color:"#94a3b8",fontSize:9,cursor:"pointer",...S}}>✕</button>
@@ -1787,7 +1787,7 @@ function RoamMode({ onExit, siteNavOpen, onToggleSiteNav }) {
       )}
 
       {/* Status bar */}
-      <div style={{position:"absolute",top:8,left:"50%",transform:"translateX(-50%)",background:"linear-gradient(135deg,#1a2538,#0f172a)",border:"1px solid #7fdbca30",borderRadius:20,padding:"5px 14px",zIndex:20,fontFamily:"'JetBrains Mono',monospace",fontSize:10,color:"#7fdbca",boxShadow:"0 4px 12px rgba(0,0,0,0.3)",display:"flex",alignItems:"center",gap:8,whiteSpace:"nowrap"}}>
+      <div style={{position:"absolute",top:8,left:"50%",transform:"translateX(-50%)",background:"linear-gradient(135deg,#2e1640,#21102a)",border:"1px solid #7fdbca30",borderRadius:20,padding:"5px 14px",zIndex:20,fontFamily:"'JetBrains Mono',monospace",fontSize:10,color:"#7fdbca",boxShadow:"0 4px 12px rgba(0,0,0,0.3)",display:"flex",alignItems:"center",gap:8,whiteSpace:"nowrap"}}>
         <span>🏠</span><span>{statusText}</span>
         {isIdle&&<span style={{color:"#94a3b860"}}>💭</span>}
         <button onClick={callHome} title="Call Spocket home" style={{padding:"2px 8px",background:"#e8c84a15",border:"1px solid #e8c84a40",borderRadius:8,color:"#e8c84a",fontSize:8,fontFamily:"'JetBrains Mono',monospace",cursor:"pointer"}}>📞</button>
@@ -1958,7 +1958,7 @@ function ParkedRobot({
             position: "absolute",
             bottom: "calc(100% - 14px)",
             right: -8,
-            background: isLight ? "linear-gradient(135deg,#ffffff,#f4f7fd)" : "linear-gradient(135deg,#1a2538,#0f172a)",
+            background: isLight ? "linear-gradient(135deg,#ffffff,#f4f7fd)" : "linear-gradient(135deg,#2e1640,#21102a)",
             border: isLight ? "1px solid #0a6fa838" : "1px solid #7fdbca30",
             borderRadius: 14,
             padding: "14px 18px",
@@ -1968,7 +1968,7 @@ function ParkedRobot({
             zIndex: 40,
           }}
         >
-          <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: isLight ? "#1a2438" : "#c8d6e5", lineHeight: 1.6, marginBottom: 12 }}>{joke}</div>
+          <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: isLight ? "#1a2438" : "#ecdef7", lineHeight: 1.6, marginBottom: 12 }}>{joke}</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             {!hideTestUserButtons && (
               <>
@@ -2088,7 +2088,7 @@ function ParkedRobot({
             )}
           </div>
           <svg width="16" height="10" viewBox="0 0 16 10" style={{ position: "absolute", bottom: -9, right: 32 }} aria-hidden="true">
-            <path d="M0 0 L8 10 L16 0" fill="#0f172a" />
+            <path d="M0 0 L8 10 L16 0" fill="#21102a" />
           </svg>
         </div>
       )}
@@ -2230,7 +2230,7 @@ function AiChatPanel({ messages, loading, input, onInputChange, onSubmit, onClos
         zIndex: 82,
         display: 'flex',
         flexDirection: 'column',
-        background: 'linear-gradient(180deg, #0f172a, #0b1220)',
+        background: 'linear-gradient(180deg, #21102a, #0b1220)',
         border: '1px solid rgba(127,219,202,0.2)',
         borderRadius: '12px 12px 0 0',
         overflow: 'hidden',
@@ -2246,7 +2246,7 @@ function AiChatPanel({ messages, loading, input, onInputChange, onSubmit, onClos
         zIndex: 82,
         display: 'flex',
         flexDirection: 'column',
-        background: 'linear-gradient(180deg, #0f172a, #0b1220)',
+        background: 'linear-gradient(180deg, #21102a, #0b1220)',
         border: '1px solid rgba(127,219,202,0.2)',
         borderRadius: '12px 0 0 12px',
         overflow: 'hidden',
@@ -2388,8 +2388,8 @@ function AiChatPanel({ messages, loading, input, onInputChange, onSubmit, onClos
                   wordWrap: 'break-word',
                 }
               : {
-                  background: '#1a2538',
-                  color: '#c8d6e5',
+                  background: '#2e1640',
+                  color: '#ecdef7',
                   alignSelf: 'flex-start',
                   borderRadius: '12px 12px 12px 2px',
                   border: '1px solid #1e293b',
@@ -2408,7 +2408,7 @@ function AiChatPanel({ messages, loading, input, onInputChange, onSubmit, onClos
         ))}
         {loading && (
           <div style={{
-            background: '#1a2538',
+            background: '#2e1640',
             color: '#475569',
             alignSelf: 'flex-start',
             borderRadius: '12px 12px 12px 2px',
@@ -2481,7 +2481,7 @@ function AiChatPanel({ messages, loading, input, onInputChange, onSubmit, onClos
       {/* Beta disclaimer */}
       <div style={{
         padding: '4px 10px 6px',
-        borderTop: '1px solid #0f172a',
+        borderTop: '1px solid #21102a',
         flexShrink: 0,
         textAlign: 'center',
         color: '#334155',
@@ -3914,10 +3914,10 @@ function App() {
            transformOrigin:"top center" on each SVG makes it hinge from the wrist.
            To make it open wider: increase 1.25. To slow down: increase 3s. */
         @keyframes clawHinge{0%,100%{transform:translateX(-50%) scaleX(1)}50%{transform:translateX(-50%) scaleX(1.25)}}
-        .opt-btn{padding:10px 20px;background:#0f172a;border:1px solid #7fdbca50;border-radius:22px;color:#7fdbca;font-size:12px;font-family:'JetBrains Mono',monospace;cursor:pointer;transition:all 0.2s;white-space:nowrap;box-shadow:0 2px 10px rgba(0,0,0,0.4)}
-        .opt-btn:hover{background:#152238;border-color:#7fdbca;transform:translateY(-2px);box-shadow:0 4px 16px rgba(127,219,202,0.2)}
+        .opt-btn{padding:10px 20px;background:#21102a;border:1px solid #7fdbca50;border-radius:22px;color:#7fdbca;font-size:12px;font-family:'JetBrains Mono',monospace;cursor:pointer;transition:all 0.2s;white-space:nowrap;box-shadow:0 2px 10px rgba(0,0,0,0.4)}
+        .opt-btn:hover{background:#3d2055;border-color:#7fdbca;transform:translateY(-2px);box-shadow:0 4px 16px rgba(127,219,202,0.2)}
         @media(max-width:768px){.opt-btn{padding:7px 14px;font-size:10px;white-space:normal;text-align:center}}
-        .end-btn{padding:6px 14px;background:#0f172a;border:1px solid #ff6b6b30;border-radius:16px;color:#ff6b6b60;font-size:10px;font-family:'JetBrains Mono',monospace;cursor:pointer;transition:all 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.35)}
+        .end-btn{padding:6px 14px;background:#21102a;border:1px solid #ff6b6b30;border-radius:16px;color:#ff6b6b60;font-size:10px;font-family:'JetBrains Mono',monospace;cursor:pointer;transition:all 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.35)}
         .end-btn:hover{background:#1a1218;border-color:#ff6b6b;color:#ff6b6b}
       `}</style>
 
@@ -4206,7 +4206,7 @@ function App() {
                           padding: "6px 12px",
                           borderRadius: 10,
                           border: "1px solid #475569",
-                          background: "#0f172a",
+                          background: "#21102a",
                           color: "#94a3b8",
                           fontSize: 10,
                           fontFamily: "'JetBrains Mono',monospace",
@@ -4224,7 +4224,7 @@ function App() {
                           borderRadius: 10,
                           border: "none",
                           background: findNotesBusy || !findNotesQuery.trim() ? "#334155" : "#38bdf8",
-                          color: findNotesBusy || !findNotesQuery.trim() ? "#64748b" : "#0f172a",
+                          color: findNotesBusy || !findNotesQuery.trim() ? "#64748b" : "#21102a",
                           fontSize: 10,
                           fontWeight: 700,
                           fontFamily: "'JetBrains Mono',monospace",
@@ -4344,7 +4344,7 @@ function App() {
                   gap: 8,
                   padding: "10px 14px",
                   borderRadius: 14,
-                  background: "#0f172a",
+                  background: "#21102a",
                   border: "1px solid #7fdbca40",
                   maxWidth: "min(480px, calc(100vw - 24px))",
                 }}
@@ -4442,7 +4442,7 @@ function App() {
 
         {/* Cookie popup */}
         {cookiePopup&&(
-          <div style={{position:"fixed",bottom:16,right:16,maxWidth:"min(400px, calc(100vw - 32px))",background:"#1a2538",border:"1px solid #7fdbca30",borderRadius:14,padding:"16px 24px",display:"flex",alignItems:"center",gap:16,zIndex:50,animation:"fadeInUp 0.5s ease",boxShadow:"0 8px 32px rgba(0,0,0,0.5)",pointerEvents:"auto"}}>
+          <div style={{position:"fixed",bottom:16,right:16,maxWidth:"min(400px, calc(100vw - 32px))",background:"#2e1640",border:"1px solid #7fdbca30",borderRadius:14,padding:"16px 24px",display:"flex",alignItems:"center",gap:16,zIndex:50,animation:"fadeInUp 0.5s ease",boxShadow:"0 8px 32px rgba(0,0,0,0.5)",pointerEvents:"auto"}}>
             <span style={{fontSize:28,animation:"cookieFloat 0.6s ease"}}>🍪</span>
             <div><div style={{color:"#e2e8f0",fontSize:13,fontWeight:600,marginBottom:4}}>Spocket wants to share her cookies with you!</div><div style={{color:"#94a3b8",fontSize:11}}>This site uses cookies for authentication.</div></div>
             <button onClick={()=>setCookiePopup(false)} style={{padding:"8px 18px",background:"#7fdbca",color:"#0a0f1a",border:"none",borderRadius:8,fontWeight:700,fontSize:11,fontFamily:"monospace",cursor:"pointer"}}>Accept 🍪</button>

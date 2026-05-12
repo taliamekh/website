@@ -296,6 +296,34 @@
     transform: scale(1.4);
   }
 
+  /* ─── SPOCKET tile: inline SVG cover so the arm can wave on hover ─── */
+  .bento .tile[data-id="spocket"] .tile-img svg {
+    width: 100%; height: 100%;
+    display: block;
+  }
+  .bento .tile[data-id="spocket"] .spocket-arm-left {
+    transform-origin: 14px 7px;
+    transform: rotate(8deg);
+    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .bento .tile[data-id="spocket"] .spocket-arm-right {
+    transform-origin: 14px 7px;
+    transform: rotate(-8deg);
+    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .bento .tile[data-id="spocket"]:hover .spocket-arm-left {
+    animation: spocket-wave 1.4s ease-in-out;
+  }
+  @keyframes spocket-wave {
+    0%   { transform: rotate(8deg); }
+    15%  { transform: rotate(-55deg); }
+    30%  { transform: rotate(-25deg); }
+    45%  { transform: rotate(-55deg); }
+    60%  { transform: rotate(-25deg); }
+    75%  { transform: rotate(-50deg); }
+    100% { transform: rotate(8deg); }
+  }
+
   .tile.no-image .tile-img,
   .tile.no-image .tile-overlay { display: none; }
   .tile.no-image {
@@ -572,21 +600,10 @@
   <ul class="nav-links">
     <li><a href="index.html">Home</a></li>
     <li><a href="projects.html" class="active">Projects</a></li>
-    <li><a href="resume.html">Resume</a></li>
     <li><a href="notes/">Student Resources</a></li>
     <li><a href="contact.html">Contact</a></li>
   </ul>
 </nav>
-
-<!-- STICKY PALETTE PICKER (20 project palettes) -->
-<div class="controls">
-  <div class="controls-inner">
-    <div class="control-row">
-      <span class="control-label">Project pops →</span>
-      <div class="control-options" id="palette-options"></div>
-    </div>
-  </div>
-</div>
 
 <section id="projects">
   <div class="projects-header">
@@ -833,6 +850,112 @@ const noImage = { 'wind-turbine': true, 'haptic-gloves': true };
 const tileOrder = ['deskclaw','sleep-apnea','spocket','wind-turbine','haptic-gloves','water-filter'];
 const tagLimit = { 'size-2x2': 6, 'size-2x1': 5, 'size-wide': 6, 'size-tall': 4, 'size-mid': 3 };
 
+/* Inline Spocket SVG — matches spocket.svg but with .spocket-arm-left class hooks
+   so the CSS wave-on-hover animation can target the arm group. */
+const SPOCKET_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 480" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <linearGradient id="sp-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3d2055"/><stop offset="100%" stop-color="#1d0e35"/>
+    </linearGradient>
+    <radialGradient id="sp-glowBg" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#a87895" stop-opacity="0.20"/><stop offset="100%" stop-color="#a87895" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="sp-chassis" x1="20%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e8c0c8"/><stop offset="35%" stop-color="#dba8b2"/>
+      <stop offset="70%" stop-color="#c9909c"/><stop offset="100%" stop-color="#a87080"/>
+    </linearGradient>
+    <radialGradient id="sp-eyeOrb" cx="38%" cy="32%" r="68%">
+      <stop offset="0%" stop-color="#c8f5e7"/><stop offset="38%" stop-color="#7fdbca"/>
+      <stop offset="78%" stop-color="#3a8e7a"/><stop offset="100%" stop-color="#1f5747"/>
+    </radialGradient>
+    <radialGradient id="sp-eyeGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#7fdbca" stop-opacity="0.40"/><stop offset="100%" stop-color="#7fdbca" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="sp-silverBall" cx="38%" cy="30%" r="62%">
+      <stop offset="0%" stop-color="#f6eef2"/><stop offset="42%" stop-color="#e8dce2"/>
+      <stop offset="72%" stop-color="#a8949c"/><stop offset="100%" stop-color="#6e5e66"/>
+    </radialGradient>
+    <linearGradient id="sp-silverV" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#a8949c"/><stop offset="52%" stop-color="#6e5e66"/><stop offset="100%" stop-color="#453a40"/>
+    </linearGradient>
+    <linearGradient id="sp-tread" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#a8949c"/><stop offset="45%" stop-color="#6e5e66"/><stop offset="100%" stop-color="#453a40"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="480" fill="url(#sp-bg)"/>
+  <rect width="400" height="480" fill="url(#sp-glowBg)"/>
+  <path d="M200 116 L200 78 Q200 62 218 56" fill="none" stroke="#a87080" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="222" cy="54" r="18" fill="#7fdbca" opacity="0.22"/>
+  <circle cx="222" cy="54" r="11" fill="#7fdbca" opacity="0.38"/>
+  <circle cx="222" cy="54" r="8" fill="#7fdbca"/>
+  <circle cx="219" cy="51" r="2.5" fill="#fffaff" opacity="0.65"/>
+  <rect x="105" y="115" width="190" height="135" rx="50" fill="url(#sp-chassis)" stroke="#a87080" stroke-width="3"/>
+  <path d="M128 138 Q200 128 272 138" fill="none" stroke="#fffaff" stroke-width="2" stroke-linecap="round" opacity="0.28"/>
+  <rect x="120" y="130" width="160" height="110" rx="40" fill="#0c1220"/>
+  <path d="M124 142 Q200 134 276 142" fill="none" stroke="#fffaff" stroke-width="1" stroke-linecap="round" opacity="0.08"/>
+  <circle cx="170" cy="185" r="32" fill="url(#sp-eyeGlow)"/>
+  <circle cx="170" cy="185" r="22" fill="url(#sp-eyeOrb)"/>
+  <circle cx="161" cy="177" r="6.5" fill="#fffaff" opacity="0.55"/>
+  <circle cx="178" cy="194" r="2.5" fill="#fffaff" opacity="0.35"/>
+  <circle cx="230" cy="185" r="32" fill="url(#sp-eyeGlow)"/>
+  <circle cx="230" cy="185" r="22" fill="url(#sp-eyeOrb)"/>
+  <circle cx="221" cy="177" r="6.5" fill="#fffaff" opacity="0.55"/>
+  <circle cx="238" cy="194" r="2.5" fill="#fffaff" opacity="0.35"/>
+  <rect x="184" y="250" width="32" height="16" rx="3" fill="url(#sp-silverV)" stroke="#453a40" stroke-width="1"/>
+  <rect x="118" y="264" width="164" height="130" rx="22" fill="url(#sp-chassis)" stroke="#6e5e66" stroke-width="2.5"/>
+  <path d="M135 282 Q200 274 265 282" fill="none" stroke="#fffaff" stroke-width="2" stroke-linecap="round" opacity="0.22"/>
+  <text x="200" y="298" text-anchor="middle" fill="#453a40" font-family="'Courier New', monospace" font-size="13" font-weight="700" letter-spacing="3.5">SPOCKET</text>
+  <rect x="170" y="338" width="60" height="42" rx="6" fill="#0a0f18" stroke="#453a40" stroke-width="2"/>
+  <circle cx="200" cy="359" r="4" fill="#6e5e66"/>
+  <circle cx="128" cy="274" r="3.5" fill="url(#sp-silverBall)" stroke="#453a40" stroke-width="0.5"/>
+  <circle cx="272" cy="274" r="3.5" fill="url(#sp-silverBall)" stroke="#453a40" stroke-width="0.5"/>
+  <circle cx="128" cy="384" r="3.5" fill="url(#sp-silverBall)" stroke="#453a40" stroke-width="0.5"/>
+  <circle cx="272" cy="384" r="3.5" fill="url(#sp-silverBall)" stroke="#453a40" stroke-width="0.5"/>
+  <g transform="translate(76, 286)">
+    <g class="spocket-arm-left">
+      <circle cx="14" cy="7" r="11" fill="url(#sp-silverBall)" stroke="#453a40" stroke-width="1.5"/>
+      <rect x="9" y="17" width="10" height="32" rx="5" fill="url(#sp-chassis)" stroke="#a87080" stroke-width="1"/>
+      <circle cx="14" cy="50" r="4.5" fill="url(#sp-silverBall)" stroke="#453a40" stroke-width="1"/>
+      <rect x="9" y="53" width="10" height="20" rx="5" fill="url(#sp-chassis)" stroke="#a87080" stroke-width="1"/>
+      <rect x="6" y="73" width="16" height="6" rx="1.5" fill="#a8949c" stroke="#453a40" stroke-width="1"/>
+      <circle cx="9" cy="79" r="2.2" fill="#a8949c" stroke="#453a40" stroke-width="0.8"/>
+      <circle cx="19" cy="79" r="2.2" fill="#a8949c" stroke="#453a40" stroke-width="0.8"/>
+      <line x1="9" y1="80" x2="3" y2="91" stroke="#6e5e66" stroke-width="3.5" stroke-linecap="round"/>
+      <line x1="3" y1="91" x2="6" y2="101" stroke="#6e5e66" stroke-width="3.5" stroke-linecap="round"/>
+      <circle cx="3" cy="91" r="2" fill="#a8949c" stroke="#453a40" stroke-width="0.7"/>
+      <line x1="19" y1="80" x2="25" y2="91" stroke="#6e5e66" stroke-width="3.5" stroke-linecap="round"/>
+      <line x1="25" y1="91" x2="22" y2="101" stroke="#6e5e66" stroke-width="3.5" stroke-linecap="round"/>
+      <circle cx="25" cy="91" r="2" fill="#a8949c" stroke="#453a40" stroke-width="0.7"/>
+    </g>
+  </g>
+  <g transform="translate(292, 286)">
+    <g class="spocket-arm-right">
+      <circle cx="14" cy="7" r="11" fill="url(#sp-silverBall)" stroke="#453a40" stroke-width="1.5"/>
+      <rect x="9" y="17" width="10" height="32" rx="5" fill="url(#sp-chassis)" stroke="#a87080" stroke-width="1"/>
+      <circle cx="14" cy="50" r="4.5" fill="url(#sp-silverBall)" stroke="#453a40" stroke-width="1"/>
+      <rect x="9" y="53" width="10" height="20" rx="5" fill="url(#sp-chassis)" stroke="#a87080" stroke-width="1"/>
+      <rect x="6" y="73" width="16" height="6" rx="1.5" fill="#a8949c" stroke="#453a40" stroke-width="1"/>
+      <circle cx="9" cy="79" r="2.2" fill="#a8949c" stroke="#453a40" stroke-width="0.8"/>
+      <circle cx="19" cy="79" r="2.2" fill="#a8949c" stroke="#453a40" stroke-width="0.8"/>
+      <line x1="9" y1="80" x2="3" y2="91" stroke="#6e5e66" stroke-width="3.5" stroke-linecap="round"/>
+      <line x1="3" y1="91" x2="6" y2="101" stroke="#6e5e66" stroke-width="3.5" stroke-linecap="round"/>
+      <circle cx="3" cy="91" r="2" fill="#a8949c" stroke="#453a40" stroke-width="0.7"/>
+      <line x1="19" y1="80" x2="25" y2="91" stroke="#6e5e66" stroke-width="3.5" stroke-linecap="round"/>
+      <line x1="25" y1="91" x2="22" y2="101" stroke="#6e5e66" stroke-width="3.5" stroke-linecap="round"/>
+      <circle cx="25" cy="91" r="2" fill="#a8949c" stroke="#453a40" stroke-width="0.7"/>
+    </g>
+  </g>
+  <rect x="115" y="402" width="170" height="32" rx="14" fill="url(#sp-tread)" stroke="#453a40" stroke-width="2"/>
+  <line x1="130" y1="412" x2="270" y2="412" stroke="#a8949c" stroke-width="1.2" opacity="0.45"/>
+  <line x1="128" y1="418" x2="272" y2="418" stroke="#a8949c" stroke-width="1.2" opacity="0.45"/>
+  <line x1="128" y1="424" x2="272" y2="424" stroke="#a8949c" stroke-width="1.2" opacity="0.45"/>
+  <line x1="130" y1="430" x2="270" y2="430" stroke="#a8949c" stroke-width="1.2" opacity="0.45"/>
+  <circle cx="140" cy="438" r="9" fill="#2c2629" stroke="#453a40" stroke-width="1.5"/>
+  <circle cx="140" cy="438" r="3" fill="#a8949c"/>
+  <circle cx="260" cy="438" r="9" fill="#2c2629" stroke="#453a40" stroke-width="1.5"/>
+  <circle cx="260" cy="438" r="3" fill="#a8949c"/>
+</svg>`;
+
 const bento = document.getElementById('bento');
 bento.innerHTML = tileOrder.map(id => {
   const p = PROJECTS.find(x => x.id === id);
@@ -843,9 +966,12 @@ bento.innerHTML = tileOrder.map(id => {
   const awardsBlock = (p.awards && p.awards.length)
     ? `<div class="tile-awards">${p.awards.map(a => `<span class="tile-award ${a.kind}">${a.text}</span>`).join('')}</div>`
     : '';
+  const coverHTML = id === 'spocket'
+    ? SPOCKET_SVG
+    : `<img src="${p.cover}" alt="${p.title}">`;
   return `
     <article class="tile ${size} ${noImage[id] ? 'no-image' : ''} ${p.awards.length > 1 ? 'large' : ''}" data-id="${p.id}" data-num="${p.num}" onclick="openModal('${p.id}')">
-      <div class="tile-img"><img src="${p.cover}" alt="${p.title}"></div>
+      <div class="tile-img">${coverHTML}</div>
       <div class="tile-overlay"></div>
       <div class="tile-content">
         <div class="tile-bottom">
@@ -940,14 +1066,6 @@ const palettes = [
     colors: { 'deskclaw':'#f9a8d4','sleep-apnea':'#f472b6','water-filter':'#ec88c4',
               'spocket':'#e879f9','wind-turbine':'#ccb4e4','haptic-gloves':'#b9a8d8' }}
 ];
-
-const opts = document.getElementById('palette-options');
-opts.innerHTML = palettes.map((p, i) => `
-  <button class="opt ${i === 0 ? 'active' : ''}" data-id="${p.id}" onclick="setPalette('${p.id}')" title="${p.name}">
-    <span class="swatch">${tileOrder.map(id => `<span style="background:${p.colors[id]}"></span>`).join('')}</span>
-    <span>${String(i+1).padStart(2,'0')} · ${p.name}</span>
-  </button>
-`).join('');
 
 function setPalette(id) {
   const palette = palettes.find(p => p.id === id);
