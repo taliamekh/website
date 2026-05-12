@@ -2608,7 +2608,12 @@ function App() {
   }, [notesUnlocked]);
   // Auto-dismiss pre-unlock dialogue if the page unlocks while Spocket is talking
   useEffect(() => {
-    if (notesUnlocked && phase === "talking" && !parked) {
+    // ?from=spocket-project = visitor explicitly clicked through from the Spocket
+    // project tile to see her live, so we suppress the unlocked-page auto-dismiss
+    // (otherwise her entrance animation ends in immediate exit).
+    const isFromSpocketProject = typeof window !== "undefined"
+      && /[?&]from=spocket-project(?:&|$)/.test(window.location.search);
+    if (notesUnlocked && phase === "talking" && !parked && !isFromSpocketProject) {
       exit();
     }
   // exit is defined later in App(); omitting it avoids TDZ ReferenceError
@@ -3360,6 +3365,12 @@ function App() {
   /* After unlock (or if already unlocked), ask for a display name once unless saved or skipped. */
   useEffect(() => {
     if (!notesUnlocked) return;
+    // ?from=spocket-project visitors came specifically to see Spocket's
+    // entrance animation — don't hijack that with the name prompt, which
+    // would force her into corner-park mode and override startReturning().
+    const isFromSpocketProject = typeof window !== "undefined"
+      && /[?&]from=spocket-project(?:&|$)/.test(window.location.search);
+    if (isFromSpocketProject) return;
     let skip = false;
     try {
       skip = localStorage.getItem(LS_SPOCKET_NAME_SKIP) === "1";
@@ -3577,11 +3588,17 @@ function App() {
   // Once storage is checked, start the appropriate flow (skip full intro when notes already unlocked)
   useEffect(() => {
     if (!storageChecked) return;
-    if (typeof document !== "undefined" && document.body.classList.contains("sr-auth-unlocked")) {
+    // ?from=spocket-project comes from the Spocket project tile's "Open Student Resources"
+    // CTA. The visitor explicitly clicked through to see Spocket live, so override the
+    // already-unlocked snap-to-parked and run the entrance animation regardless.
+    const fromSpocketProject = typeof window !== "undefined"
+      && /[?&]from=spocket-project(?:&|$)/.test(window.location.search);
+
+    if (typeof document !== "undefined" && document.body.classList.contains("sr-auth-unlocked") && !fromSpocketProject) {
       snapToParkedIdle();
       return;
     }
-    if (isReturning) {
+    if (fromSpocketProject || isReturning) {
       startReturning();
     } else {
       start();

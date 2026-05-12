@@ -229,6 +229,26 @@
     background: rgba(192,132,252,0.08);
   }
 
+  /* Contact = primary CTA. Pastel pink pill that matches the page CTAs. */
+  .nav-links a.contact-cta {
+    margin-left: 6px;
+    padding: 7px 16px;
+    color: #3d1f47;
+    background: linear-gradient(100deg, #fce7f3 0%, #fbcfe8 50%, #f9a8d4 100%);
+    font-weight: 700;
+    border-radius: 999px;
+    border-color: transparent;
+    box-shadow: 0 2px 10px rgba(249, 168, 212, 0.30);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .nav-links a.contact-cta:hover {
+    color: #3d1f47;
+    background: linear-gradient(100deg, #fce7f3 0%, #fbcfe8 50%, #f9a8d4 100%);
+    border-color: transparent;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(249, 168, 212, 0.50);
+  }
+
   /* Spocket Study mode: site menu toggle portaled into the real nav */
   #sr-spocket-nav-toggle-host {
     list-style: none;
@@ -1629,7 +1649,7 @@
     <li><a href="../index.html" onclick="closeMenu()">Home</a></li>
     <li><a href="../projects.html" onclick="closeMenu()">Projects</a></li>
     <li><a href="./" aria-current="page" onclick="closeMenu()">Student Resources</a></li>
-    <li><a href="../contact.html" onclick="closeMenu()">Contact</a></li>
+    <li><a href="../contact.html" class="contact-cta" onclick="closeMenu()">Contact</a></li>
     <li id="sr-spocket-nav-toggle-host" class="sr-spocket-nav-toggle-host" aria-hidden="true"></li>
   </ul>
 </nav>

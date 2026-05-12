@@ -68,6 +68,28 @@
   .nav-links a:hover { color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
   .nav-links a.active { color: var(--accent); }
 
+  /* Contact = primary CTA. Pastel pink pill that matches the page CTAs. */
+  .nav-links a.contact-cta {
+    margin-left: 6px;
+    padding: 7px 16px;
+    color: #3d1f47;
+    background: linear-gradient(100deg, #fce7f3 0%, #fbcfe8 50%, #f9a8d4 100%);
+    font-weight: 700;
+    border-radius: 999px;
+    box-shadow: 0 2px 10px rgba(249, 168, 212, 0.30);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .nav-links a.contact-cta:hover {
+    color: #3d1f47;
+    background: linear-gradient(100deg, #fce7f3 0%, #fbcfe8 50%, #f9a8d4 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(249, 168, 212, 0.50);
+  }
+  .nav-links a.contact-cta.active {
+    color: #3d1f47;
+    box-shadow: 0 0 0 1px #3d1f47, 0 4px 14px rgba(249, 168, 212, 0.45);
+  }
+
   /* ─── STICKY PALETTE PICKER (20 project color palettes) ─── */
   .controls {
     position: sticky; top: 64px; z-index: 50;
@@ -301,26 +323,46 @@
     width: 100%; height: 100%;
     display: block;
   }
-  .bento .tile[data-id="spocket"] .spocket-arm-left {
-    transform-origin: 14px 7px;
-    transform: rotate(8deg);
-    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-  }
+  /* `transform-box: fill-box` makes transform-origin resolve against the
+     element's own bounding box, so 50% 10% lands at the shoulder ball
+     (top-center of the arm group). Without this the rotation pivots
+     around the SVG userspace origin and the arm flies across the body. */
+  .bento .tile[data-id="spocket"] .spocket-arm-left,
   .bento .tile[data-id="spocket"] .spocket-arm-right {
-    transform-origin: 14px 7px;
-    transform: rotate(-8deg);
+    transform-box: fill-box;
+    transform-origin: 50% 10%;
     transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
   }
+  .bento .tile[data-id="spocket"] .spocket-arm-left  { transform: rotate(8deg); }
+  .bento .tile[data-id="spocket"] .spocket-arm-right { transform: rotate(-8deg); }
   .bento .tile[data-id="spocket"]:hover .spocket-arm-left {
-    animation: spocket-wave 1.4s ease-in-out;
+    animation: spocket-wave 1.6s ease-in-out;
   }
+  /* Smile only appears while Spocket is waving — fade in at the start
+     of the animation, fade out as the arm settles back to rest. */
+  .bento .tile[data-id="spocket"] .spocket-smile {
+    opacity: 0;
+  }
+  .bento .tile[data-id="spocket"]:hover .spocket-smile {
+    animation: spocket-smile 1.6s ease-in-out;
+  }
+  @keyframes spocket-smile {
+    0%   { opacity: 0; }
+    18%  { opacity: 1; }
+    82%  { opacity: 1; }
+    100% { opacity: 0; }
+  }
+  /* Wave: positive rotation swings the LEFT arm OUTWARD-AND-UP (gripper
+     well above the shoulder), then wobbles 3x at the raised position
+     before settling back to rest. */
   @keyframes spocket-wave {
     0%   { transform: rotate(8deg); }
-    15%  { transform: rotate(-55deg); }
-    30%  { transform: rotate(-25deg); }
-    45%  { transform: rotate(-55deg); }
-    60%  { transform: rotate(-25deg); }
-    75%  { transform: rotate(-50deg); }
+    18%  { transform: rotate(130deg); }
+    32%  { transform: rotate(105deg); }
+    48%  { transform: rotate(140deg); }
+    62%  { transform: rotate(105deg); }
+    78%  { transform: rotate(135deg); }
+    90%  { transform: rotate(120deg); }
     100% { transform: rotate(8deg); }
   }
 
@@ -601,7 +643,7 @@
     <li><a href="index.html">Home</a></li>
     <li><a href="projects.html" class="active">Projects</a></li>
     <li><a href="notes/">Student Resources</a></li>
-    <li><a href="contact.html">Contact</a></li>
+    <li><a href="contact.html" class="contact-cta">Contact</a></li>
   </ul>
 </nav>
 
@@ -633,7 +675,7 @@
   </div>
 </div>
 
-<footer>© 2026 Talia Mekhayche · Engineering Portfolio</footer>
+<footer>© 2026 Talia Mekhayche</footer>
 
 <script>
 /* ─── INLINED PROJECT DATA ─── */
@@ -829,7 +871,7 @@ window.renderProjectDetail = function(p) {
       <div class="spocket-msg">
         <span class="spocket-whisper">Try Spocket live · Student Resources</span>
         <p><span class="spocket-hi">This is the real thing, not a mockup.</span> Open <strong>Student Resources</strong> to walk through onboarding, ask AI questions about the notes, use Find &amp; Explain, and try Roam/Study modes. Everything runs live.</p>
-        <a href="notes/index.html" class="spocket-cta" onclick="event.stopPropagation()">Open Student Resources →</a>
+        <a href="notes/?from=spocket-project" class="spocket-cta" onclick="event.stopPropagation()">Open Student Resources →</a>
       </div>
     </div>` : '';
   return `<div class="p-awards">${awardsHTML}</div>
@@ -857,20 +899,25 @@ const SPOCKET_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 48
     <linearGradient id="sp-bg" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#3d2055"/><stop offset="100%" stop-color="#1d0e35"/>
     </linearGradient>
-    <radialGradient id="sp-glowBg" cx="50%" cy="40%" r="60%">
-      <stop offset="0%" stop-color="#a87895" stop-opacity="0.20"/><stop offset="100%" stop-color="#a87895" stop-opacity="0"/>
+    <radialGradient id="sp-glowBg" cx="50%" cy="42%" r="55%">
+      <stop offset="0%" stop-color="#a87895" stop-opacity="0.30"/><stop offset="100%" stop-color="#a87895" stop-opacity="0"/>
     </radialGradient>
     <linearGradient id="sp-chassis" x1="20%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#e8c0c8"/><stop offset="35%" stop-color="#dba8b2"/>
       <stop offset="70%" stop-color="#c9909c"/><stop offset="100%" stop-color="#a87080"/>
     </linearGradient>
-    <radialGradient id="sp-eyeOrb" cx="38%" cy="32%" r="68%">
-      <stop offset="0%" stop-color="#c8f5e7"/><stop offset="38%" stop-color="#7fdbca"/>
-      <stop offset="78%" stop-color="#3a8e7a"/><stop offset="100%" stop-color="#1f5747"/>
-    </radialGradient>
-    <radialGradient id="sp-eyeGlow" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#7fdbca" stop-opacity="0.40"/><stop offset="100%" stop-color="#7fdbca" stop-opacity="0"/>
-    </radialGradient>
+    <!-- Silver cylindrical pipe — bright centerline shine (matches React armPipeBg) -->
+    <linearGradient id="sp-silverPipe" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#453a40"/>
+      <stop offset="18%"  stop-color="#6e5e66"/>
+      <stop offset="38%"  stop-color="#a8949c"/>
+      <stop offset="49%"  stop-color="#e8dce2"/>
+      <stop offset="50%"  stop-color="#f6eef2"/>
+      <stop offset="51%"  stop-color="#e8dce2"/>
+      <stop offset="62%"  stop-color="#a8949c"/>
+      <stop offset="82%"  stop-color="#6e5e66"/>
+      <stop offset="100%" stop-color="#453a40"/>
+    </linearGradient>
     <radialGradient id="sp-silverBall" cx="38%" cy="30%" r="62%">
       <stop offset="0%" stop-color="#f6eef2"/><stop offset="42%" stop-color="#e8dce2"/>
       <stop offset="72%" stop-color="#a8949c"/><stop offset="100%" stop-color="#6e5e66"/>
@@ -881,6 +928,15 @@ const SPOCKET_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 48
     <linearGradient id="sp-tread" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%" stop-color="#a8949c"/><stop offset="45%" stop-color="#6e5e66"/><stop offset="100%" stop-color="#453a40"/>
     </linearGradient>
+    <!-- The teal eye glow that defines Spocket's "alive" look — matches the
+         React Robot's CSS filter: drop-shadow(0 0 10px g) drop-shadow(0 0 22px g40). -->
+    <filter id="sp-eye-glow" x="-100%" y="-100%" width="300%" height="300%">
+      <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#7fdbca" flood-opacity="0.95"/>
+      <feDropShadow dx="0" dy="0" stdDeviation="14" flood-color="#7fdbca" flood-opacity="0.30"/>
+    </filter>
+    <filter id="sp-mouth-glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="0" stdDeviation="1.8" flood-color="#7fdbca" flood-opacity="0.7"/>
+    </filter>
   </defs>
   <rect width="400" height="480" fill="url(#sp-bg)"/>
   <rect width="400" height="480" fill="url(#sp-glowBg)"/>
@@ -889,21 +945,17 @@ const SPOCKET_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 48
   <circle cx="222" cy="54" r="11" fill="#7fdbca" opacity="0.38"/>
   <circle cx="222" cy="54" r="8" fill="#7fdbca"/>
   <circle cx="219" cy="51" r="2.5" fill="#fffaff" opacity="0.65"/>
-  <rect x="105" y="115" width="190" height="135" rx="50" fill="url(#sp-chassis)" stroke="#a87080" stroke-width="3"/>
-  <path d="M128 138 Q200 128 272 138" fill="none" stroke="#fffaff" stroke-width="2" stroke-linecap="round" opacity="0.28"/>
-  <rect x="120" y="130" width="160" height="110" rx="40" fill="#0c1220"/>
-  <path d="M124 142 Q200 134 276 142" fill="none" stroke="#fffaff" stroke-width="1" stroke-linecap="round" opacity="0.08"/>
-  <circle cx="170" cy="185" r="32" fill="url(#sp-eyeGlow)"/>
-  <circle cx="170" cy="185" r="22" fill="url(#sp-eyeOrb)"/>
-  <circle cx="161" cy="177" r="6.5" fill="#fffaff" opacity="0.55"/>
-  <circle cx="178" cy="194" r="2.5" fill="#fffaff" opacity="0.35"/>
-  <circle cx="230" cy="185" r="32" fill="url(#sp-eyeGlow)"/>
-  <circle cx="230" cy="185" r="22" fill="url(#sp-eyeOrb)"/>
-  <circle cx="221" cy="177" r="6.5" fill="#fffaff" opacity="0.55"/>
-  <circle cx="238" cy="194" r="2.5" fill="#fffaff" opacity="0.35"/>
+  <rect x="105" y="115" width="190" height="135" rx="62" fill="url(#sp-chassis)" stroke="#a87080" stroke-width="3"/>
+  <rect x="120" y="130" width="160" height="110" rx="50" fill="#0c1220"/>
+  <!-- Eyes: solid mint discs with glow filter + small white reflection (matches React renderEyes default case) -->
+  <circle cx="170" cy="188" r="22" fill="#7fdbca" filter="url(#sp-eye-glow)"/>
+  <circle cx="163" cy="180" r="5" fill="#ffffff" opacity="0.4"/>
+  <circle cx="230" cy="188" r="22" fill="#7fdbca" filter="url(#sp-eye-glow)"/>
+  <circle cx="223" cy="180" r="5" fill="#ffffff" opacity="0.4"/>
+  <!-- Smile — subtle warm curve, sized to match the React mouth ("M34 37 Q44 43 54 37") scaled into my viewBox. -->
+  <path class="spocket-smile" d="M186 218 Q200 226 214 218" fill="none" stroke="#7fdbca" stroke-width="2.8" stroke-linecap="round" filter="url(#sp-mouth-glow)"/>
   <rect x="184" y="250" width="32" height="16" rx="3" fill="url(#sp-silverV)" stroke="#453a40" stroke-width="1"/>
   <rect x="118" y="264" width="164" height="130" rx="22" fill="url(#sp-chassis)" stroke="#6e5e66" stroke-width="2.5"/>
-  <path d="M135 282 Q200 274 265 282" fill="none" stroke="#fffaff" stroke-width="2" stroke-linecap="round" opacity="0.22"/>
   <text x="200" y="298" text-anchor="middle" fill="#453a40" font-family="'Courier New', monospace" font-size="13" font-weight="700" letter-spacing="3.5">SPOCKET</text>
   <rect x="170" y="338" width="60" height="42" rx="6" fill="#0a0f18" stroke="#453a40" stroke-width="2"/>
   <circle cx="200" cy="359" r="4" fill="#6e5e66"/>
@@ -911,58 +963,66 @@ const SPOCKET_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 48
   <circle cx="272" cy="274" r="3.5" fill="url(#sp-silverBall)" stroke="#453a40" stroke-width="0.5"/>
   <circle cx="128" cy="384" r="3.5" fill="url(#sp-silverBall)" stroke="#453a40" stroke-width="0.5"/>
   <circle cx="272" cy="384" r="3.5" fill="url(#sp-silverBall)" stroke="#453a40" stroke-width="0.5"/>
-  <g transform="translate(76, 286)">
+  <!-- ARMS — match React Robot exactly: silver shoulder ball, single silver
+       cylindrical pipe with the bright horizontal shine, and a wrist-mounted
+       silver claw (no elbow joint, no pink). -->
+  <g transform="translate(108, 282)">
     <g class="spocket-arm-left">
-      <circle cx="14" cy="7" r="11" fill="url(#sp-silverBall)" stroke="#453a40" stroke-width="1.5"/>
-      <rect x="9" y="17" width="10" height="32" rx="5" fill="url(#sp-chassis)" stroke="#a87080" stroke-width="1"/>
-      <circle cx="14" cy="50" r="4.5" fill="url(#sp-silverBall)" stroke="#453a40" stroke-width="1"/>
-      <rect x="9" y="53" width="10" height="20" rx="5" fill="url(#sp-chassis)" stroke="#a87080" stroke-width="1"/>
-      <rect x="6" y="73" width="16" height="6" rx="1.5" fill="#a8949c" stroke="#453a40" stroke-width="1"/>
-      <circle cx="9" cy="79" r="2.2" fill="#a8949c" stroke="#453a40" stroke-width="0.8"/>
-      <circle cx="19" cy="79" r="2.2" fill="#a8949c" stroke="#453a40" stroke-width="0.8"/>
-      <line x1="9" y1="80" x2="3" y2="91" stroke="#6e5e66" stroke-width="3.5" stroke-linecap="round"/>
-      <line x1="3" y1="91" x2="6" y2="101" stroke="#6e5e66" stroke-width="3.5" stroke-linecap="round"/>
-      <circle cx="3" cy="91" r="2" fill="#a8949c" stroke="#453a40" stroke-width="0.7"/>
-      <line x1="19" y1="80" x2="25" y2="91" stroke="#6e5e66" stroke-width="3.5" stroke-linecap="round"/>
-      <line x1="25" y1="91" x2="22" y2="101" stroke="#6e5e66" stroke-width="3.5" stroke-linecap="round"/>
-      <circle cx="25" cy="91" r="2" fill="#a8949c" stroke="#453a40" stroke-width="0.7"/>
+      <!-- Shoulder ball -->
+      <circle cx="14" cy="7" r="12" fill="url(#sp-silverBall)" stroke="#453a40" stroke-width="1.5"/>
+      <!-- Single silver arm pipe with cylindrical shine -->
+      <rect x="8" y="19" width="12" height="52" rx="6" fill="url(#sp-silverPipe)" stroke="#453a40" stroke-width="1"/>
+      <!-- Wrist base + pivot bolts -->
+      <rect x="6" y="71" width="16" height="5" rx="1.5" fill="#a8949c" stroke="#453a40" stroke-width="1"/>
+      <circle cx="9"  cy="76" r="2.2" fill="#a8949c" stroke="#453a40" stroke-width="0.7"/>
+      <circle cx="19" cy="76" r="2.2" fill="#a8949c" stroke="#453a40" stroke-width="0.7"/>
+      <!-- Left pincer -->
+      <line x1="9"  y1="78" x2="3"  y2="89" stroke="#6e5e66" stroke-width="3.2" stroke-linecap="round"/>
+      <line x1="3"  y1="89" x2="6"  y2="100" stroke="#6e5e66" stroke-width="3.2" stroke-linecap="round"/>
+      <circle cx="3"  cy="89" r="2" fill="#a8949c" stroke="#453a40" stroke-width="0.7"/>
+      <!-- Right pincer -->
+      <line x1="19" y1="78" x2="25" y2="89" stroke="#6e5e66" stroke-width="3.2" stroke-linecap="round"/>
+      <line x1="25" y1="89" x2="22" y2="100" stroke="#6e5e66" stroke-width="3.2" stroke-linecap="round"/>
+      <circle cx="25" cy="89" r="2" fill="#a8949c" stroke="#453a40" stroke-width="0.7"/>
     </g>
   </g>
-  <g transform="translate(292, 286)">
+  <g transform="translate(264, 282)">
     <g class="spocket-arm-right">
-      <circle cx="14" cy="7" r="11" fill="url(#sp-silverBall)" stroke="#453a40" stroke-width="1.5"/>
-      <rect x="9" y="17" width="10" height="32" rx="5" fill="url(#sp-chassis)" stroke="#a87080" stroke-width="1"/>
-      <circle cx="14" cy="50" r="4.5" fill="url(#sp-silverBall)" stroke="#453a40" stroke-width="1"/>
-      <rect x="9" y="53" width="10" height="20" rx="5" fill="url(#sp-chassis)" stroke="#a87080" stroke-width="1"/>
-      <rect x="6" y="73" width="16" height="6" rx="1.5" fill="#a8949c" stroke="#453a40" stroke-width="1"/>
-      <circle cx="9" cy="79" r="2.2" fill="#a8949c" stroke="#453a40" stroke-width="0.8"/>
-      <circle cx="19" cy="79" r="2.2" fill="#a8949c" stroke="#453a40" stroke-width="0.8"/>
-      <line x1="9" y1="80" x2="3" y2="91" stroke="#6e5e66" stroke-width="3.5" stroke-linecap="round"/>
-      <line x1="3" y1="91" x2="6" y2="101" stroke="#6e5e66" stroke-width="3.5" stroke-linecap="round"/>
-      <circle cx="3" cy="91" r="2" fill="#a8949c" stroke="#453a40" stroke-width="0.7"/>
-      <line x1="19" y1="80" x2="25" y2="91" stroke="#6e5e66" stroke-width="3.5" stroke-linecap="round"/>
-      <line x1="25" y1="91" x2="22" y2="101" stroke="#6e5e66" stroke-width="3.5" stroke-linecap="round"/>
-      <circle cx="25" cy="91" r="2" fill="#a8949c" stroke="#453a40" stroke-width="0.7"/>
+      <circle cx="14" cy="7" r="12" fill="url(#sp-silverBall)" stroke="#453a40" stroke-width="1.5"/>
+      <rect x="8" y="19" width="12" height="52" rx="6" fill="url(#sp-silverPipe)" stroke="#453a40" stroke-width="1"/>
+      <rect x="6" y="71" width="16" height="5" rx="1.5" fill="#a8949c" stroke="#453a40" stroke-width="1"/>
+      <circle cx="9"  cy="76" r="2.2" fill="#a8949c" stroke="#453a40" stroke-width="0.7"/>
+      <circle cx="19" cy="76" r="2.2" fill="#a8949c" stroke="#453a40" stroke-width="0.7"/>
+      <line x1="9"  y1="78" x2="3"  y2="89" stroke="#6e5e66" stroke-width="3.2" stroke-linecap="round"/>
+      <line x1="3"  y1="89" x2="6"  y2="100" stroke="#6e5e66" stroke-width="3.2" stroke-linecap="round"/>
+      <circle cx="3"  cy="89" r="2" fill="#a8949c" stroke="#453a40" stroke-width="0.7"/>
+      <line x1="19" y1="78" x2="25" y2="89" stroke="#6e5e66" stroke-width="3.2" stroke-linecap="round"/>
+      <line x1="25" y1="89" x2="22" y2="100" stroke="#6e5e66" stroke-width="3.2" stroke-linecap="round"/>
+      <circle cx="25" cy="89" r="2" fill="#a8949c" stroke="#453a40" stroke-width="0.7"/>
     </g>
   </g>
-  <rect x="115" y="402" width="170" height="32" rx="14" fill="url(#sp-tread)" stroke="#453a40" stroke-width="2"/>
-  <line x1="130" y1="412" x2="270" y2="412" stroke="#a8949c" stroke-width="1.2" opacity="0.45"/>
-  <line x1="128" y1="418" x2="272" y2="418" stroke="#a8949c" stroke-width="1.2" opacity="0.45"/>
-  <line x1="128" y1="424" x2="272" y2="424" stroke="#a8949c" stroke-width="1.2" opacity="0.45"/>
-  <line x1="130" y1="430" x2="270" y2="430" stroke="#a8949c" stroke-width="1.2" opacity="0.45"/>
-  <circle cx="140" cy="438" r="9" fill="#2c2629" stroke="#453a40" stroke-width="1.5"/>
-  <circle cx="140" cy="438" r="3" fill="#a8949c"/>
-  <circle cx="260" cy="438" r="9" fill="#2c2629" stroke="#453a40" stroke-width="1.5"/>
-  <circle cx="260" cy="438" r="3" fill="#a8949c"/>
+  <!-- TREADS — matches React Robot lines 620-622:
+       1) silver platform bar (vertical gradient, rounded), with subtle top highlight,
+       2) two dark rounded-rect wheels at the bottom corners (3px outside, 5px below),
+       3) three horizontal tread ridges inside each wheel. -->
+  <rect x="127" y="392" width="146" height="28" rx="8" fill="url(#sp-tread)" stroke="#453a40" stroke-width="1.5"/>
+  <line x1="135" y1="394" x2="265" y2="394" stroke="#fffaf3" stroke-width="0.6" opacity="0.35"/>
+  <!-- Left wheel + tread ridges -->
+  <rect x="121" y="401" width="60" height="32" rx="15" fill="#2c2629" stroke="#453a40" stroke-width="2"/>
+  <line x1="125" y1="409" x2="177" y2="409" stroke="#6e5e66" stroke-width="3" opacity="0.45"/>
+  <line x1="125" y1="417" x2="177" y2="417" stroke="#6e5e66" stroke-width="3" opacity="0.45"/>
+  <line x1="125" y1="425" x2="177" y2="425" stroke="#6e5e66" stroke-width="3" opacity="0.45"/>
+  <!-- Right wheel + tread ridges -->
+  <rect x="219" y="401" width="60" height="32" rx="15" fill="#2c2629" stroke="#453a40" stroke-width="2"/>
+  <line x1="223" y1="409" x2="275" y2="409" stroke="#6e5e66" stroke-width="3" opacity="0.45"/>
+  <line x1="223" y1="417" x2="275" y2="417" stroke="#6e5e66" stroke-width="3" opacity="0.45"/>
+  <line x1="223" y1="425" x2="275" y2="425" stroke="#6e5e66" stroke-width="3" opacity="0.45"/>
 </svg>`;
 
 const bento = document.getElementById('bento');
 bento.innerHTML = tileOrder.map(id => {
   const p = PROJECTS.find(x => x.id === id);
   const size = sizes[id];
-  const limit = tagLimit[size] || 3;
-  const visibleTags = p.tags.slice(0, limit);
-  const tagsHTML = visibleTags.map(t => `<span class="tile-tag">${t}</span>`).join('');
   const awardsBlock = (p.awards && p.awards.length)
     ? `<div class="tile-awards">${p.awards.map(a => `<span class="tile-award ${a.kind}">${a.text}</span>`).join('')}</div>`
     : '';
@@ -978,7 +1038,6 @@ bento.innerHTML = tileOrder.map(id => {
           ${awardsBlock}
           <h3 class="tile-name">${p.title}</h3>
           <p class="tile-summary">${p.summary}</p>
-          <div class="tile-tags">${tagsHTML}</div>
         </div>
       </div>
       <div class="arrow"></div>
