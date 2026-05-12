@@ -1,0 +1,170 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 480" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <!-- Theme background -->
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3d2055"/>
+      <stop offset="100%" stop-color="#1d0e35"/>
+    </linearGradient>
+    <radialGradient id="glowBg" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#a87895" stop-opacity="0.20"/>
+      <stop offset="100%" stop-color="#a87895" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Pink chassis gradient (matches Spocket m1-m4) -->
+    <linearGradient id="chassis" x1="20%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#e8c0c8"/>
+      <stop offset="35%"  stop-color="#dba8b2"/>
+      <stop offset="70%"  stop-color="#c9909c"/>
+      <stop offset="100%" stop-color="#a87080"/>
+    </linearGradient>
+
+    <!-- Silver pipe gradient (horizontal cylinder shine) -->
+    <linearGradient id="silverPipe" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#453a40"/>
+      <stop offset="18%"  stop-color="#6e5e66"/>
+      <stop offset="38%"  stop-color="#a8949c"/>
+      <stop offset="49%"  stop-color="#e8dce2"/>
+      <stop offset="50%"  stop-color="#f6eef2"/>
+      <stop offset="51%"  stop-color="#e8dce2"/>
+      <stop offset="62%"  stop-color="#a8949c"/>
+      <stop offset="82%"  stop-color="#6e5e66"/>
+      <stop offset="100%" stop-color="#453a40"/>
+    </linearGradient>
+
+    <!-- Silver ball gradient (shoulders, bolts) -->
+    <radialGradient id="silverBall" cx="38%" cy="30%" r="62%">
+      <stop offset="0%"   stop-color="#f6eef2"/>
+      <stop offset="42%"  stop-color="#e8dce2"/>
+      <stop offset="72%"  stop-color="#a8949c"/>
+      <stop offset="100%" stop-color="#6e5e66"/>
+    </radialGradient>
+
+    <!-- Silver vertical gradient (neck) -->
+    <linearGradient id="silverV" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"   stop-color="#a8949c"/>
+      <stop offset="52%"  stop-color="#6e5e66"/>
+      <stop offset="100%" stop-color="#453a40"/>
+    </linearGradient>
+
+    <!-- Tread base gradient -->
+    <linearGradient id="tread" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"   stop-color="#a8949c"/>
+      <stop offset="45%"  stop-color="#6e5e66"/>
+      <stop offset="100%" stop-color="#453a40"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="400" height="480" fill="url(#bg)"/>
+  <rect width="400" height="480" fill="url(#glowBg)"/>
+
+  <!-- ANTENNA: bent stem with teal glow ball at tip (matches Robot component) -->
+  <path d="M200 116 L200 78 Q200 62 218 56" fill="none" stroke="#6e5e66" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="222" cy="54" r="18" fill="#7fdbca" opacity="0.20"/>
+  <circle cx="222" cy="54" r="11" fill="#7fdbca" opacity="0.35"/>
+  <circle cx="222" cy="54" r="8"  fill="#7fdbca"/>
+  <circle cx="219" cy="51" r="2.5" fill="#fffaff" opacity="0.6"/>
+
+  <!-- HEAD chassis (pink rounded rectangle) -->
+  <rect x="105" y="115" width="190" height="135" rx="50" fill="url(#chassis)" stroke="#a87080" stroke-width="3"/>
+  <!-- Subtle highlight band on top -->
+  <path d="M128 138 Q200 128 272 138" fill="none" stroke="#fffaff" stroke-width="2" stroke-linecap="round" opacity="0.28"/>
+
+  <!-- HEAD inner screen (black) -->
+  <rect x="120" y="130" width="160" height="110" rx="40" fill="#0c1220"/>
+  <!-- Faint screen reflection -->
+  <path d="M124 142 Q200 134 276 142" fill="none" stroke="#fffaff" stroke-width="1" stroke-linecap="round" opacity="0.08"/>
+
+  <!-- HAPPY EYES (^_^) — filled teal crescents matching the live SVG -->
+  <path d="M148 200 Q170 166 192 200 Z" fill="#7fdbca"/>
+  <path d="M208 200 Q230 166 252 200 Z" fill="#7fdbca"/>
+
+  <!-- SMILE -->
+  <path d="M170 218 Q200 233 230 218" fill="none" stroke="#7fdbca" stroke-width="3.2" stroke-linecap="round"/>
+
+  <!-- NECK (silver pipe segment) -->
+  <rect x="184" y="250" width="32" height="16" rx="3" fill="url(#silverV)" stroke="#453a40" stroke-width="1"/>
+
+  <!-- BODY chassis (pink rounded rectangle) -->
+  <rect x="118" y="264" width="164" height="130" rx="22" fill="url(#chassis)" stroke="#6e5e66" stroke-width="2.5"/>
+  <!-- Body top highlight -->
+  <path d="M135 282 Q200 274 265 282" fill="none" stroke="#fffaff" stroke-width="2" stroke-linecap="round" opacity="0.22"/>
+
+  <!-- "SPOCKET" branding on body -->
+  <text x="200" y="298" text-anchor="middle" fill="#453a40"
+        font-family="'Courier New', monospace" font-size="13" font-weight="700" letter-spacing="3.5">SPOCKET</text>
+
+  <!-- Body utility panel (small black screen where she can hold things) -->
+  <rect x="170" y="338" width="60" height="42" rx="6" fill="#0a0f18" stroke="#453a40" stroke-width="2"/>
+  <circle cx="200" cy="359" r="4" fill="#6e5e66"/>
+
+  <!-- 4 silver bolts at body corners -->
+  <circle cx="128" cy="274" r="3.5" fill="url(#silverBall)" stroke="#453a40" stroke-width="0.5"/>
+  <circle cx="272" cy="274" r="3.5" fill="url(#silverBall)" stroke="#453a40" stroke-width="0.5"/>
+  <circle cx="128" cy="384" r="3.5" fill="url(#silverBall)" stroke="#453a40" stroke-width="0.5"/>
+  <circle cx="272" cy="384" r="3.5" fill="url(#silverBall)" stroke="#453a40" stroke-width="0.5"/>
+
+  <!-- ─── LEFT ARM ─── silver pipe with shoulder ball and claw pincer -->
+  <g transform="translate(76, 286) rotate(8 14 7)">
+    <!-- Shoulder ball -->
+    <circle cx="14" cy="7" r="11" fill="url(#silverBall)" stroke="#453a40" stroke-width="1.5"/>
+    <!-- Arm pipe -->
+    <rect x="9" y="17" width="10" height="34" rx="5" fill="url(#silverPipe)" stroke="#453a40" stroke-width="1"/>
+    <!-- Wrist base -->
+    <rect x="6" y="51" width="16" height="6" rx="1.5" fill="#a8949c" stroke="#453a40" stroke-width="1"/>
+    <!-- Pivot bolts -->
+    <circle cx="9"  cy="57" r="2.2" fill="#a8949c" stroke="#453a40" stroke-width="0.8"/>
+    <circle cx="19" cy="57" r="2.2" fill="#a8949c" stroke="#453a40" stroke-width="0.8"/>
+    <!-- Left pincer (two segments + middle bolt) -->
+    <line x1="9"  y1="58" x2="3"  y2="69" stroke="#6e5e66" stroke-width="3.5" stroke-linecap="round"/>
+    <line x1="3"  y1="69" x2="6"  y2="79" stroke="#6e5e66" stroke-width="3.5" stroke-linecap="round"/>
+    <circle cx="3"  cy="69" r="2" fill="#a8949c" stroke="#453a40" stroke-width="0.7"/>
+    <!-- Right pincer -->
+    <line x1="19" y1="58" x2="25" y2="69" stroke="#6e5e66" stroke-width="3.5" stroke-linecap="round"/>
+    <line x1="25" y1="69" x2="22" y2="79" stroke="#6e5e66" stroke-width="3.5" stroke-linecap="round"/>
+    <circle cx="25" cy="69" r="2" fill="#a8949c" stroke="#453a40" stroke-width="0.7"/>
+  </g>
+
+  <!-- ─── RIGHT ARM ─── mirrored -->
+  <g transform="translate(292, 286) rotate(-8 14 7)">
+    <circle cx="14" cy="7" r="11" fill="url(#silverBall)" stroke="#453a40" stroke-width="1.5"/>
+    <rect x="9" y="17" width="10" height="34" rx="5" fill="url(#silverPipe)" stroke="#453a40" stroke-width="1"/>
+    <rect x="6" y="51" width="16" height="6" rx="1.5" fill="#a8949c" stroke="#453a40" stroke-width="1"/>
+    <circle cx="9"  cy="57" r="2.2" fill="#a8949c" stroke="#453a40" stroke-width="0.8"/>
+    <circle cx="19" cy="57" r="2.2" fill="#a8949c" stroke="#453a40" stroke-width="0.8"/>
+    <line x1="9"  y1="58" x2="3"  y2="69" stroke="#6e5e66" stroke-width="3.5" stroke-linecap="round"/>
+    <line x1="3"  y1="69" x2="6"  y2="79" stroke="#6e5e66" stroke-width="3.5" stroke-linecap="round"/>
+    <circle cx="3"  cy="69" r="2" fill="#a8949c" stroke="#453a40" stroke-width="0.7"/>
+    <line x1="19" y1="58" x2="25" y2="69" stroke="#6e5e66" stroke-width="3.5" stroke-linecap="round"/>
+    <line x1="25" y1="69" x2="22" y2="79" stroke="#6e5e66" stroke-width="3.5" stroke-linecap="round"/>
+    <circle cx="25" cy="69" r="2" fill="#a8949c" stroke="#453a40" stroke-width="0.7"/>
+  </g>
+
+  <!-- ─── WHEELS / TREADS ─── tracked rover base -->
+  <!-- Central tread chassis between wheels -->
+  <rect x="135" y="396" width="130" height="22" rx="6" fill="url(#tread)" stroke="#453a40" stroke-width="1.5"/>
+
+  <!-- LEFT WHEEL -->
+  <ellipse cx="130" cy="418" rx="36" ry="24" fill="#2c2629" stroke="#453a40" stroke-width="2.5"/>
+  <!-- Tread ridges -->
+  <line x1="110" y1="402" x2="150" y2="402" stroke="#a8949c" stroke-width="1.2" opacity="0.4"/>
+  <line x1="106" y1="409" x2="154" y2="409" stroke="#a8949c" stroke-width="1.2" opacity="0.4"/>
+  <line x1="105" y1="416" x2="155" y2="416" stroke="#a8949c" stroke-width="1.2" opacity="0.4"/>
+  <line x1="105" y1="424" x2="155" y2="424" stroke="#a8949c" stroke-width="1.2" opacity="0.4"/>
+  <line x1="106" y1="431" x2="154" y2="431" stroke="#a8949c" stroke-width="1.2" opacity="0.4"/>
+  <line x1="110" y1="438" x2="150" y2="438" stroke="#a8949c" stroke-width="1.2" opacity="0.4"/>
+  <!-- Hub -->
+  <circle cx="130" cy="418" r="10" fill="#453a40" stroke="#6e5e66" stroke-width="1"/>
+  <circle cx="130" cy="418" r="4"  fill="#a8949c"/>
+
+  <!-- RIGHT WHEEL -->
+  <ellipse cx="270" cy="418" rx="36" ry="24" fill="#2c2629" stroke="#453a40" stroke-width="2.5"/>
+  <line x1="250" y1="402" x2="290" y2="402" stroke="#a8949c" stroke-width="1.2" opacity="0.4"/>
+  <line x1="246" y1="409" x2="294" y2="409" stroke="#a8949c" stroke-width="1.2" opacity="0.4"/>
+  <line x1="245" y1="416" x2="295" y2="416" stroke="#a8949c" stroke-width="1.2" opacity="0.4"/>
+  <line x1="245" y1="424" x2="295" y2="424" stroke="#a8949c" stroke-width="1.2" opacity="0.4"/>
+  <line x1="246" y1="431" x2="294" y2="431" stroke="#a8949c" stroke-width="1.2" opacity="0.4"/>
+  <line x1="250" y1="438" x2="290" y2="438" stroke="#a8949c" stroke-width="1.2" opacity="0.4"/>
+  <circle cx="270" cy="418" r="10" fill="#453a40" stroke="#6e5e66" stroke-width="1"/>
+  <circle cx="270" cy="418" r="4"  fill="#a8949c"/>
+</svg>
