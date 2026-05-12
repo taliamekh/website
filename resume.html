@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resume — Talia Mekhayche</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&family=Sora:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ─── AURORA ROYAL THEME (matches home + projects + contact) ─── */
+  :root {
+    --bg: #170a1c;
+    --deep: #21102a;
+    --panel: #2e1640;
+    --panel-hi: #3d2055;
+    --border: #4a2a68;
+    --border2: #6f44a0;
+    --accent: #c084fc;
+    --accent-2: #fbbf24;
+    --pink: #e879f9;
+    --text: #ecdef7;
+    --text-muted: #b09bc8;
+    --text-dim: #7a6588;
+    --white: #fffaf3;
+    --grid-1: rgba(192, 132, 252, 0.045);
+    --grid-2: rgba(251, 191, 36, 0.025);
+    --grid-3: rgba(192, 132, 252, 0.055);
+    --tag-font: 'Roboto Mono', monospace;
+    --palette-gradient: linear-gradient(90deg, #fce7f3, #fbcfe8, #f9a8d4, #f0a3c9, #e88dbb, #db77a8);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Outfit', sans-serif; font-weight: 300;
+    line-height: 1.7; min-height: 100vh;
+    display: flex; flex-direction: column;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background-image:
+      linear-gradient(var(--grid-1) 1px, transparent 2px),
+      linear-gradient(90deg, var(--grid-2) 1px, transparent 2px),
+      linear-gradient(var(--grid-3) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-2) 1px, transparent 2px);
+    background-size: 80px 80px, 80px 80px, 16px 16px, 16px 16px;
+    pointer-events: none; z-index: 0;
+  }
+
+  /* ─── NAV ─── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: color-mix(in srgb, var(--bg) 92%, transparent);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 48px; height: 64px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .nav-logo {
+    font-family: 'Sora', sans-serif; font-weight: 700;
+    font-size: 22px; letter-spacing: -0.01em;
+    color: var(--white); text-decoration: none;
+  }
+  .nav-logo span { color: var(--accent); }
+  .nav-links { display: flex; gap: 4px; list-style: none; }
+  .nav-links a {
+    padding: 7px 15px;
+    font-family: var(--tag-font); font-size: 12px;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    text-decoration: none; color: var(--text-muted); border-radius: 4px;
+    transition: color 0.2s, background 0.2s;
+  }
+  .nav-links a:hover { color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
+  .nav-links a.active { color: var(--accent); }
+
+  /* ─── PAGE LAYOUT ─── */
+  main {
+    flex: 1;
+    max-width: 1000px; margin: 0 auto; width: 100%;
+    padding: 110px 48px 80px;
+    position: relative; z-index: 1;
+  }
+
+  .resume-header {
+    margin-bottom: 56px;
+  }
+  .resume-eyebrow {
+    display: inline-flex; align-items: center; gap: 12px;
+    font-family: var(--tag-font);
+    font-size: 12px; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--accent);
+    margin-bottom: 22px;
+  }
+  .resume-eyebrow::before {
+    content: ''; width: 32px; height: 1px; background: var(--accent);
+  }
+  .resume-title {
+    font-family: 'Sora', sans-serif;
+    font-weight: 700;
+    font-size: clamp(56px, 8vw, 88px);
+    line-height: 0.95;
+    letter-spacing: -0.025em;
+    color: var(--white);
+    margin-bottom: 18px;
+  }
+  .resume-title .accent { color: var(--accent); }
+  .resume-divider {
+    width: 60px; height: 2px;
+    background: var(--palette-gradient);
+    border-radius: 2px;
+    margin-bottom: 22px;
+  }
+  .resume-sub {
+    font-family: var(--tag-font);
+    font-size: 13px;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+    max-width: 620px;
+  }
+
+  /* ─── SECTIONS ─── */
+  .resume-section { margin-bottom: 52px; }
+  .resume-section:last-child { margin-bottom: 0; }
+  .section-label {
+    font-family: var(--tag-font);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    padding-left: 14px;
+    border-left: 2px solid var(--accent);
+    margin-bottom: 22px;
+  }
+
+  /* ─── CARD ─── */
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px 30px;
+    margin-bottom: 16px;
+    transition: border-color 0.25s;
+  }
+  .card:hover { border-color: var(--border2); }
+  .card:last-child { margin-bottom: 0; }
+
+  .item-head {
+    display: flex; flex-wrap: wrap;
+    justify-content: space-between; align-items: baseline;
+    gap: 6px 18px;
+    margin-bottom: 4px;
+  }
+  .item-title {
+    font-family: 'Sora', sans-serif;
+    font-weight: 600;
+    font-size: 18px;
+    color: var(--white);
+    letter-spacing: -0.005em;
+  }
+  .item-date {
+    font-family: var(--tag-font);
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+  }
+  .item-sub {
+    font-size: 14px;
+    color: var(--text-muted);
+    font-style: italic;
+    margin-bottom: 12px;
+  }
+  .item-bullets {
+    list-style: none;
+    display: flex; flex-direction: column;
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .item-bullets li {
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.65;
+    padding-left: 20px;
+    position: relative;
+  }
+  .item-bullets li::before {
+    content: '▸';
+    position: absolute;
+    left: 0; top: 2px;
+    color: var(--accent);
+    font-size: 11px;
+  }
+  .item-bullets li strong { color: var(--white); font-weight: 500; }
+
+  /* ─── SKILLS ─── */
+  .skills-rows { display: flex; flex-direction: column; gap: 18px; }
+  .skill-row {
+    display: flex; gap: 18px; align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .skill-row-label {
+    font-family: var(--tag-font);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    min-width: 100px;
+    padding-top: 6px;
+  }
+  .skill-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+  .skill-pill {
+    font-family: var(--tag-font);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--accent) 10%, var(--panel));
+    color: var(--accent);
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+    letter-spacing: 0.04em;
+  }
+
+  /* ─── EDUCATION GPA highlight ─── */
+  .gpa-chip {
+    display: inline-block;
+    margin-top: 8px;
+    font-family: var(--tag-font);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px 14px;
+    border-radius: 999px;
+    color: var(--accent-2);
+    border: 1px solid color-mix(in srgb, var(--accent-2) 50%, transparent);
+    background: color-mix(in srgb, var(--accent-2) 12%, transparent);
+    letter-spacing: 0.04em;
+  }
+
+  /* ─── BACK CTA ─── */
+  .back-link {
+    display: inline-flex; align-items: center; gap: 10px;
+    margin-top: 56px;
+    padding: 12px 26px;
+    font-family: var(--tag-font);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #3d1f47;
+    text-decoration: none;
+    border-radius: 999px;
+    background: linear-gradient(100deg, #fce7f3 0%, #fbcfe8 50%, #f9a8d4 100%);
+    box-shadow: 0 6px 22px rgba(249, 168, 212, 0.30);
+    font-weight: 700;
+    transition: transform 0.25s, box-shadow 0.25s;
+  }
+  .back-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(249, 168, 212, 0.45);
+  }
+
+  /* ─── FOOTER ─── */
+  footer {
+    text-align: center;
+    padding: 28px 32px;
+    border-top: 1px solid var(--border);
+    font-family: var(--tag-font);
+    font-size: 11px;
+    color: var(--text-muted);
+    position: relative; z-index: 1;
+  }
+
+  @media (max-width: 720px) {
+    nav { padding: 0 20px; }
+    .nav-links a { padding: 6px 10px; font-size: 11px; }
+    main { padding: 100px 20px 50px; }
+    .resume-title { font-size: clamp(44px, 11vw, 64px); }
+    .card { padding: 22px 20px; }
+    .item-head { flex-direction: column; align-items: flex-start; gap: 4px; }
+    .skill-row { flex-direction: column; gap: 10px; }
+    .skill-row-label { min-width: unset; padding-top: 0; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">T.<span>M</span></a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="projects.html">Projects</a></li>
+    <li><a href="resume.html" class="active">Resume</a></li>
+    <li><a href="notes/">Student Resources</a></li>
+    <li><a href="contact.html">Contact</a></li>
+  </ul>
+</nav>
+
+<main>
+  <header class="resume-header">
+    <div class="resume-eyebrow">Curriculum Vitae</div>
+    <h1 class="resume-title">Resume<span class="accent">.</span></h1>
+    <div class="resume-divider"></div>
+    <p class="resume-sub">// Mechanical engineering · robotics · embedded · CAD · firmware · the digital/physical seam</p>
+  </header>
+
+  <!-- ─── EDUCATION ─── -->
+  <section class="resume-section">
+    <div class="section-label">Education</div>
+    <div class="card">
+      <div class="item-head">
+        <div class="item-title">Carleton University</div>
+        <div class="item-date">Exp. April 2029</div>
+      </div>
+      <div class="item-sub">B.Eng. Sustainable and Renewable Energy (Stream B — Mechanical) · CO-OP</div>
+      <span class="gpa-chip">GPA · 3.7 / 4.0</span>
+    </div>
+  </section>
+
+  <!-- ─── SKILLS ─── -->
+  <section class="resume-section">
+    <div class="section-label">Technical Skills</div>
+    <div class="card">
+      <div class="skills-rows">
+        <div class="skill-row">
+          <div class="skill-row-label">Languages</div>
+          <div class="skill-pills">
+            <span class="skill-pill">Python</span>
+            <span class="skill-pill">C / C++</span>
+            <span class="skill-pill">JavaScript</span>
+            <span class="skill-pill">HTML</span>
+            <span class="skill-pill">CSS</span>
+            <span class="skill-pill">LaTeX</span>
+          </div>
+        </div>
+        <div class="skill-row">
+          <div class="skill-row-label">Tools</div>
+          <div class="skill-pills">
+            <span class="skill-pill">Fusion 360</span>
+            <span class="skill-pill">Arduino</span>
+            <span class="skill-pill">Raspberry Pi</span>
+            <span class="skill-pill">VS Code</span>
+            <span class="skill-pill">Bambu Studio</span>
+            <span class="skill-pill">Microsoft 365</span>
+            <span class="skill-pill">GitHub</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── EXPERIENCE ─── -->
+  <section class="resume-section">
+    <div class="section-label">Experience</div>
+
+    <div class="card">
+      <div class="item-head">
+        <div class="item-title">CAD / 3D Printing Technician</div>
+        <div class="item-date">Nov. 2024 – Present</div>
+      </div>
+      <ul class="item-bullets">
+        <li>Manufacture <strong>custom components</strong> using <strong>CAD</strong>, focusing on high-precision tolerances and functional performance.</li>
+        <li>Refine <strong>3D models</strong> to improve printability and structural integrity, significantly reducing material waste and print failure rates.</li>
+        <li>Manage the full additive manufacturing life cycle, from initial CAD drafting to post-processing and the final 3D print and assembly.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="item-head">
+        <div class="item-title">Computer Science &amp; Math Tutor</div>
+        <div class="item-date">Sep. 2024 – Aug. 2025</div>
+      </div>
+      <ul class="item-bullets">
+        <li>Tutored <strong>10+ students</strong>, improving average grades by <strong>15–25%</strong> by breaking down complex concepts.</li>
+        <li>Taught foundational <strong>Python and C/C++</strong> concepts, guiding students through practical coding logic and error handling.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="item-head">
+        <div class="item-title">Robotics Team Lead</div>
+        <div class="item-date">Sep. 2023 – Jun. 2024</div>
+      </div>
+      <ul class="item-bullets">
+        <li>Managed <strong>60+ members</strong> and led an 8-person team to finals in <strong>VEX Robotics Nationals</strong>.</li>
+        <li>Developed high-performance systems for the <strong>IEEE Robotics Competition</strong>, implementing PID control algorithms and calibrating infrared sensors for optimal navigation.</li>
+        <li><strong>Mentored</strong> junior teams in robotics fundamentals and competition strategy for a Lego Mindstorm Competition.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="item-head">
+        <div class="item-title">Sales Associate — Your Independent Grocer</div>
+        <div class="item-date">Nov. 2021 – Aug. 2024</div>
+      </div>
+      <ul class="item-bullets">
+        <li>Boosted store revenue by <strong>33%</strong> through targeted customer preference analysis and proactive issue resolution.</li>
+      </ul>
+    </div>
+  </section>
+
+  <a href="projects.html" class="back-link">← Back to projects</a>
+</main>
+
+<footer>© 2026 Talia Mekhayche · Engineering Portfolio</footer>
+
+</body>
+</html>

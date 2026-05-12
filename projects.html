@@ -7,7 +7,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600;700;800&family=Sora:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Roboto+Mono:wght@400;500;600;700&family=Fira+Code:wght@400;500;600;700&family=Source+Code+Pro:wght@400;500;600;700&family=Red+Hat+Mono:wght@400;500;600;700&family=DM+Mono:wght@400;500&family=Inconsolata:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   /* ─── BASE THEME — AURORA ROYAL (locked) ─── */
-  /* Wine purple background, lavender text that "pops" against it, gold secondary */
   :root {
     --bg: #170a1c;
     --deep: #21102a;
@@ -25,7 +24,6 @@
     --grid-1: rgba(192, 132, 252, 0.045);
     --grid-2: rgba(251, 191, 36, 0.025);
     --grid-3: rgba(192, 132, 252, 0.055);
-    /* Locked-in tag/label font */
     --tag-font: 'Roboto Mono', monospace;
   }
 
@@ -122,70 +120,7 @@
   }
   .opt .swatch span { flex: 1; }
 
-  /* ─── HERO ─── */
-  #home {
-    min-height: 88vh;
-    display: flex;
-    align-items: center;
-    padding: 80px 48px;
-    max-width: 1100px; margin: 0 auto;
-    position: relative; z-index: 1;
-  }
-  .home-inner { max-width: 760px; }
-  .home-tag {
-    display: inline-flex; align-items: center; gap: 8px;
-    font-family: 'JetBrains Mono', monospace; font-size: 11px;
-    letter-spacing: 0.14em; text-transform: uppercase;
-    color: var(--accent); margin-bottom: 24px;
-  }
-  .home-tag::before { content: ''; width: 24px; height: 1px; background: var(--accent); }
-
-  h1.hero-name {
-    font-family: 'Sora', sans-serif;
-    font-weight: 700;
-    font-size: clamp(56px, 9vw, 110px);
-    line-height: 0.95;
-    letter-spacing: -0.02em;
-    color: var(--white); margin-bottom: 8px;
-  }
-  h1.hero-name .accent { color: var(--accent); }
-
-  .hero-role {
-    font-family: 'JetBrains Mono', monospace; font-size: 13px;
-    color: var(--text-muted); letter-spacing: 0.06em; margin-bottom: 36px;
-  }
-  .hero-divider {
-    width: 60px; height: 2px;
-    background: var(--palette-gradient, linear-gradient(90deg, var(--accent), var(--accent-2)));
-    margin-bottom: 28px;
-  }
-  .hero-bio {
-    font-size: 16px; line-height: 1.8;
-    color: var(--text); max-width: 620px; margin-bottom: 14px;
-  }
-  .hero-bio strong { color: var(--accent); font-weight: 500; }
-
-  .hero-stats {
-    display: flex; gap: 40px;
-    margin-top: 56px;
-    padding-top: 36px;
-    border-top: 1px solid var(--border);
-  }
-  .stat-num {
-    font-family: 'Sora', sans-serif;
-    font-weight: 700;
-    font-size: 36px;
-    color: var(--accent);
-    letter-spacing: -0.01em;
-    line-height: 1;
-  }
-  .stat-label {
-    font-family: 'JetBrains Mono', monospace; font-size: 10px;
-    color: var(--text-muted); letter-spacing: 0.1em;
-    text-transform: uppercase; margin-top: 4px;
-  }
-
-  /* ─── PROJECTS (own page, more breathing room since there's no hero above) ─── */
+  /* ─── PROJECTS ─── */
   #projects {
     max-width: 1700px; margin: 0 auto;
     padding: 80px 48px 100px;
@@ -212,15 +147,13 @@
   .projects-line { flex: 1; height: 1px; background: var(--border); align-self: center; }
 
   /* ─── BENTO ─── */
-  /* Each tile has its own --tile-accent (the project's color pop)
-     applied via inline style. Falls back to --accent if not set. */
   .bento {
     display: grid;
     grid-template-columns: repeat(8, 1fr);
     grid-auto-rows: 240px;
     gap: 16px;
     perspective: 1800px;
-    grid-auto-flow: dense;   /* fill gaps so tiles pack into a clean 3-row block */
+    grid-auto-flow: dense;
   }
   .tile {
     --pop: var(--tile-accent, var(--accent));
@@ -239,7 +172,6 @@
   .tile.tilting {
     transition: transform 0.06s linear, border-color 0.4s, box-shadow 0.5s;
   }
-  /* HOVER SPOTLIGHT — colored to match this tile's pop */
   .tile:hover {
     border-color: var(--pop);
     box-shadow:
@@ -266,7 +198,6 @@
       rgba(8, 4, 14, 0.88) 78%,
       rgba(8, 4, 14, 0.96) 100%);
   }
-  /* Keep title + summary legible even over very bright/pale photos */
   .tile-name, .tile-summary {
     text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
   }
@@ -275,9 +206,8 @@
     position: absolute; inset: 0;
     padding: 22px;
     display: flex; flex-direction: column;
-    justify-content: flex-end;   /* push award + title + summary + tags to the bottom */
+    justify-content: flex-end;
     z-index: 4;
-    /* Force a dedicated GPU layer so text rasterizes once and stays crisp during tilt */
     transform: translateZ(0);
     will-change: transform;
     backface-visibility: hidden;
@@ -291,7 +221,6 @@
   }
   .tile-bottom { display: flex; flex-direction: column; gap: 10px; }
 
-  /* Award stack — when a project has multiple winning tags */
   .tile-awards {
     display: flex;
     flex-direction: column;
@@ -299,7 +228,6 @@
     gap: 5px;
   }
 
-  /* Award badge — uses pop color */
   .tile-award {
     align-self: flex-start;
     font-family: var(--tag-font);
@@ -329,7 +257,6 @@
     line-height: 1.5;
   }
 
-  /* Tech stack tags — use pop color */
   .tile-tags {
     display: flex; gap: 5px; flex-wrap: wrap;
     margin-top: 4px;
@@ -346,22 +273,12 @@
     letter-spacing: 0.04em;
   }
 
-  /* Legacy size classes (kept for the responsive fallback below). */
   .tile.size-2x2  { grid-column: span 2; grid-row: span 3; }
   .tile.size-tall { grid-column: span 2; grid-row: span 2; }
   .tile.size-wide { grid-column: span 6; grid-row: span 1; }
   .tile.size-mid  { grid-column: span 2; grid-row: span 1; }
 
-  /* ─── DESKTOP LAYOUT — EXPLICIT GRID PLACEMENT (declared AFTER size classes so it wins)
-     8-column grid, 3 rows. Every tile pinned to exact coordinates with !important so
-     auto-flow cannot rearrange anything.
-       cols 1-2 = DeskClaw       (rows 1-3, portrait pillar)
-       cols 3-4 = Sleep Apnea    (rows 1-2, square)
-                + Wind Turbine   (row 3,    wide)
-       cols 5-6 = Spocket        (rows 1-2, square)
-                + Haptic Gloves  (row 3,    wide)
-       cols 7-8 = Water Filter   (rows 1-3, portrait pillar — same as DeskClaw)
-  ─── */
+  /* DESKTOP EXPLICIT GRID PLACEMENT */
   .bento .tile[data-id="deskclaw"]      { grid-column: 1 / 3 !important; grid-row: 1 / 4 !important; }
   .bento .tile[data-id="sleep-apnea"]   { grid-column: 3 / 5 !important; grid-row: 1 / 3 !important; }
   .bento .tile[data-id="spocket"]       { grid-column: 5 / 7 !important; grid-row: 1 / 3 !important; }
@@ -369,8 +286,6 @@
   .bento .tile[data-id="wind-turbine"]  { grid-column: 3 / 5 !important; grid-row: 3 / 4 !important; }
   .bento .tile[data-id="haptic-gloves"] { grid-column: 5 / 7 !important; grid-row: 3 / 4 !important; }
 
-  /* Sleep Apnea — bottom-anchored crop + zoom-in so the face is gone and the
-     hardware + wires + body fill the tile. */
   .bento .tile[data-id="sleep-apnea"] .tile-img img {
     object-fit: cover !important;
     object-position: 50% 100% !important;
@@ -378,10 +293,9 @@
     transform-origin: center bottom;
   }
   .bento .tile[data-id="sleep-apnea"]:hover .tile-img img {
-    transform: scale(1.4);   /* tiny additional zoom on hover (overrides the global 1.04) */
+    transform: scale(1.4);
   }
 
-  /* No-image background — uses pop color for gradient + watermark number */
   .tile.no-image .tile-img,
   .tile.no-image .tile-overlay { display: none; }
   .tile.no-image {
@@ -391,7 +305,6 @@
       var(--panel);
   }
   .tile.no-image::before {
-    /* Decorative dot pattern (replaces the old project-number watermark) */
     content: '';
     position: absolute; inset: 0;
     background-image: radial-gradient(circle, color-mix(in srgb, var(--text) 18%, transparent) 1px, transparent 1.5px);
@@ -402,7 +315,6 @@
   }
   .tile.no-image .tile-content { z-index: 2; }
 
-  /* Sliding label arrow — top-right, uses pop color */
   .arrow {
     position: absolute;
     top: 16px; right: 16px;
@@ -429,7 +341,7 @@
     transform: translateX(0);
   }
 
-  /* ─── BOTTOM SHEET MODAL — picks up the opened tile's pop color ─── */
+  /* ─── BOTTOM SHEET MODAL ─── */
   .modal-backdrop {
     position: fixed; inset: 0; z-index: 200;
     background: color-mix(in srgb, var(--bg) 85%, transparent);
@@ -474,7 +386,6 @@
   .modal-body { overflow-y: auto; padding: 36px 48px 60px; }
   .modal-body-inner { max-width: 1000px; margin: 0 auto; }
 
-  /* Detail content — uses opened-tile's pop color */
   .modal-sheet .p-awards { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
   .modal-sheet .p-award {
     font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600;
@@ -518,15 +429,15 @@
   .modal-sheet .p-photo img {
     width: 100%;
     aspect-ratio: 4 / 3;
-    object-fit: contain;     /* show the FULL image, never crop */
+    object-fit: contain;
     display: block;
-    background: var(--deep); /* fill letterboxed gaps */
+    background: var(--deep);
     cursor: zoom-in;
     transition: transform 0.25s ease;
   }
   .modal-sheet .p-photo img:hover { transform: scale(1.015); }
 
-  /* ─── IMAGE LIGHTBOX ─── click any modal photo to expand */
+  /* ─── IMAGE LIGHTBOX ─── */
   .lightbox {
     position: fixed; inset: 0; z-index: 300;
     background: rgba(0, 0, 0, 0.94);
@@ -611,7 +522,7 @@
     font-family: var(--tag-font); font-size: 11px;
     letter-spacing: 0.1em; text-transform: uppercase;
     font-weight: 700;
-    color: #3d1f47;   /* dark plum text for AA contrast on pastel bg */
+    color: #3d1f47;
     text-decoration: none; border-radius: 999px;
     background: linear-gradient(100deg, #fce7f3 0%, #fbcfe8 50%, #f9a8d4 100%);
     box-shadow: 0 4px 18px rgba(249, 168, 212, 0.35);
@@ -626,25 +537,21 @@
 
   @media (max-width: 1100px) {
     .bento { grid-template-columns: repeat(4, 1fr); }
-    /* Reset the desktop explicit placements so the tablet layout can flow naturally */
     .bento .tile[data-id="deskclaw"]      { grid-column: span 2 !important; grid-row: span 3 !important; }
     .bento .tile[data-id="sleep-apnea"]   { grid-column: span 2 !important; grid-row: span 2 !important; }
     .bento .tile[data-id="spocket"]       { grid-column: span 2 !important; grid-row: span 2 !important; }
     .bento .tile[data-id="wind-turbine"]  { grid-column: span 2 !important; grid-row: span 1 !important; }
     .bento .tile[data-id="haptic-gloves"] { grid-column: span 2 !important; grid-row: span 1 !important; }
-    /* Water Filter drops to a full-width bottom bar at narrower viewports */
     .bento .tile[data-id="water-filter"]  { grid-column: 1 / -1 !important; grid-row: span 1 !important; }
   }
   @media (max-width: 720px) {
     nav { padding: 0 20px; }
     .nav-links { display: none; }
     .controls { padding: 10px 20px; }
-    #home { padding: 80px 20px; }
     #projects { padding: 50px 20px 60px; }
     .projects-title { font-size: 48px; }
     .bento { grid-template-columns: 1fr; }
     .tile, .tile.size-2x2, .tile.size-2x1, .tile.size-wide, .tile.size-tall, .tile.size-mid { grid-column: span 1; grid-row: span 1; }
-    /* Override the desktop !important pins at mobile too */
     .bento .tile[data-id="deskclaw"],
     .bento .tile[data-id="sleep-apnea"],
     .bento .tile[data-id="spocket"],
@@ -661,11 +568,12 @@
 <body>
 
 <nav>
-  <a href="home.html" class="nav-logo">T.<span>M</span></a>
+  <a href="index.html" class="nav-logo">T.<span>M</span></a>
   <ul class="nav-links">
-    <li><a href="home.html">Home</a></li>
+    <li><a href="index.html">Home</a></li>
     <li><a href="projects.html" class="active">Projects</a></li>
-    <li><a href="../notes/">Student Resources</a></li>
+    <li><a href="resume.html">Resume</a></li>
+    <li><a href="notes/">Student Resources</a></li>
     <li><a href="contact.html">Contact</a></li>
   </ul>
 </nav>
@@ -680,7 +588,6 @@
   </div>
 </div>
 
-<!-- PROJECTS — title back, no hint -->
 <section id="projects">
   <div class="projects-header">
     <h2 class="projects-title">Projects</h2>
@@ -689,7 +596,7 @@
   <div class="bento" id="bento"></div>
 </section>
 
-<!-- IMAGE LIGHTBOX (click any modal photo to expand) -->
+<!-- IMAGE LIGHTBOX -->
 <div class="lightbox" id="lightbox" onclick="closeLightbox()">
   <button class="lightbox-close" onclick="closeLightbox()" aria-label="Close">✕</button>
   <img class="lightbox-img" id="lightbox-img" alt="" onclick="event.stopPropagation()">
@@ -718,7 +625,7 @@ window.PROJECTS = [
     summary:'Wearable respiratory tracker → QNX on Pi 5 → REST API → SwiftUI iOS app with anomaly alerts.',
     awards:[{kind:'pop',text:'🥈 2nd — QNX Challenge · uOttaHack 8'}],
     tags:['Fusion 360','3D Printing','Raspberry Pi 5','C++','SwiftUI','QNX'],
-    cover:'../sleepapneahardware.jpeg',
+    cover:'sleepapneahardware.jpeg',
     description:'A wearable sleep apnea risk detection system tracking respiratory depth and rate in real time, streaming data to a mobile app and triggering automated alerts on anomaly detection.',
     sections:[
       {label:'How It Works',bullets:[
@@ -739,16 +646,16 @@ window.PROJECTS = [
       ]}
     ],
     photos:[
-      {src:'../sleepapneahardware.jpeg',alt:'Hardware prototype on person with wiring visible'},
-      {src:'../sleepapneapp.jpg',alt:'Mobile app screen showing breathing data and alert'},
-      {src:'../IMG_7685.jpeg',alt:'Team photo at uOttaHack 8'}
+      {src:'sleepapneahardware.jpeg',alt:'Hardware prototype on person with wiring visible'},
+      {src:'sleepapneapp.jpg',alt:'Mobile app screen showing breathing data and alert'},
+      {src:'IMG_7685.jpeg',alt:'Team photo at uOttaHack 8'}
     ]
   },
   { id:'deskclaw', num:'01', title:'DeskClaw — Giving AI a Body',
     summary:'Tracked rover + 6-axis 3D-printed arm + Gemini 2.5 + Whisper + ElevenLabs + YOLO11 dual-cam vision.',
     awards:[{kind:'pop',text:'🏆 Best Hardware Hack · GenAI Genisis'},{kind:'pop',text:'🏆 Overall Finalist · GenAI Genisis'}],
     tags:['Raspberry Pi 5','Arduino','YOLO11','3D Printing','C++','AI Agents','Open CV','Websockets','Whisper','ElevenLabs API','Python'],
-    cover:'../deskclaw.jpeg',
+    cover:'deskclaw.jpeg',
     description:'DeskClaw is an autonomous robot assistant designed to bridge the gap between digital intelligence and physical labor. While traditional AI agents are confined to screens, DeskClaw provides a functional "body" to assist engineers and makers in the workshop when their hands are tied.\n\nThe system acts as a real-time collaborator; you can vocalize design challenges to bounce ideas off the AI or ask for a second opinion on mechanical problems as it observes your workspace. By combining advanced computer vision with voice-activated intelligence, DeskClaw transforms from a simple tool into an active participant in the creative process.',
     sections:[
       {label:'How it Works',bullets:[
@@ -770,17 +677,17 @@ window.PROJECTS = [
       ]}
     ],
     photos:[
-      {src:'../deskclaw.jpeg',alt:'Full view of DeskClaw robot with arm extended'},
-      {src:'../circuitry.jpg',alt:'Circuitry set up for DeskClaw with Raspberry Pi, Arduino, and motor driver'},
-      {src:'../openclawvision.jpeg',alt:'DeskClaw vision system in action'},
-      {src:'../IMG_9327.png',alt:'Team receiving award at hackathon'}
+      {src:'deskclaw.jpeg',alt:'Full view of DeskClaw robot with arm extended'},
+      {src:'circuitry.jpg',alt:'Circuitry set up for DeskClaw with Raspberry Pi, Arduino, and motor driver'},
+      {src:'openclawvision.jpeg',alt:'DeskClaw vision system in action'},
+      {src:'IMG_9327.png',alt:'Team receiving award at hackathon'}
     ]
   },
   { id:'water-filter', num:'03', title:'Water Filter System & No Flow System',
     summary:'Two subsurface columns built in 5 hours to remediate a 20,000 L industrial fertilizer spill.',
     awards:[{kind:'pop',text:'🏆 1st · Engineering Without Borders'}],
     tags:['Environmental Engineering','Filtration Design','Materials Science'],
-    cover:'../columnAB.jpeg',
+    cover:'columnAB.jpeg',
     description:'The 2026 Sustainable Design Competition (SDC) was a 5-hour engineering challenge where teams were presented with a surprise environmental scenario. The prompt involved a 20,000-liter industrial fertilizer spill near a northern Canadian community, threatening a Significant Groundwater Recharge Zone (SGRA) and a local freshwater spring. We were tasked with designing and assembling two distinct subsurface columns to remediate the site:',
     descriptionBullets:[
       '<strong>Subsurface Column A:</strong> A filtration system designed to decontaminate water while allowing it to flow into the aquifer.',
@@ -821,10 +728,10 @@ window.PROJECTS = [
       ]}
     ],
     photos:[
-      {src:'../columnAB.jpeg',alt:'Both columns side by side with filtration layers visible'},
-      {src:'../abs.jpeg',alt:'Absorbance measurement results'},
-      {src:'../turbidity.jpeg',alt:'Turbidity measurement results'},
-      {src:'../electric.jpeg',alt:'Electrical conductivity measurement results'}
+      {src:'columnAB.jpeg',alt:'Both columns side by side with filtration layers visible'},
+      {src:'abs.jpeg',alt:'Absorbance measurement results'},
+      {src:'turbidity.jpeg',alt:'Turbidity measurement results'},
+      {src:'electric.jpeg',alt:'Electrical conductivity measurement results'}
     ]
   },
   { id:'spocket', num:'04', title:'Spocket — AI-powered study assistant',
@@ -852,7 +759,7 @@ window.PROJECTS = [
     summary:'Offshore-style turbine designed and 3D-printed from scratch. Spins, generates, lights an LED.',
     awards:[],
     tags:['Fusion 360','3D Printing'],
-    cover:'../electric.jpeg',
+    cover:'electric.jpeg',
     description:'A functional miniature wind turbine designed and fabricated from scratch, converting rotational kinetic energy into real electrical output via a DC generator.',
     sections:[
       {label:'Details',bullets:[
@@ -867,7 +774,7 @@ window.PROJECTS = [
     summary:'VR glove that physically stops your fingers when you grab a virtual object.',
     awards:[{kind:'pop',text:'On-going'}],
     tags:['ESP32','3D Printing','Unity','C#','Fusion 360'],
-    cover:'../circuitry.jpg',
+    cover:'circuitry.jpg',
     description:'Standard VR controllers use "vibrations" (haptic feedback) to tell you that you’ve touched something. This prototype uses Force Feedback, which physically stops your fingers from moving when you "grab" a virtual object. It transforms a visual illusion into a physical sensation.',
     sections:[
       {label:'Details',bullets:[
@@ -905,7 +812,7 @@ window.renderProjectDetail = function(p) {
       <div class="spocket-msg">
         <span class="spocket-whisper">Try Spocket live · Student Resources</span>
         <p><span class="spocket-hi">This is the real thing, not a mockup.</span> Open <strong>Student Resources</strong> to walk through onboarding, ask AI questions about the notes, use Find &amp; Explain, and try Roam/Study modes. Everything runs live.</p>
-        <a href="../notes/index.html" class="spocket-cta" onclick="event.stopPropagation()">Open Student Resources →</a>
+        <a href="notes/index.html" class="spocket-cta" onclick="event.stopPropagation()">Open Student Resources →</a>
       </div>
     </div>` : '';
   return `<div class="p-awards">${awardsHTML}</div>
@@ -915,15 +822,14 @@ window.renderProjectDetail = function(p) {
 
 /* ─── BENTO ─── */
 const sizes = {
-  'deskclaw':'size-2x2',     // 2 cols × 3 rows (portrait pillar — left)
-  'sleep-apnea':'size-tall', // 2 cols × 2 rows (square — top middle)
-  'water-filter':'size-2x2', // 2 cols × 3 rows (portrait pillar — right)
-  'spocket':'size-tall',     // 2 cols × 2 rows (square — top middle-right)
-  'wind-turbine':'size-mid', // 2 cols × 1 row  (wide — bottom middle)
-  'haptic-gloves':'size-mid' // 2 cols × 1 row  (wide — bottom middle-right)
+  'deskclaw':'size-2x2',
+  'sleep-apnea':'size-tall',
+  'water-filter':'size-2x2',
+  'spocket':'size-tall',
+  'wind-turbine':'size-mid',
+  'haptic-gloves':'size-mid'
 };
 const noImage = { 'wind-turbine': true, 'haptic-gloves': true };
-// Water Filter rendered LAST so grid-auto-flow: dense slots it into the only remaining 2x3 spot — the right side.
 const tileOrder = ['deskclaw','sleep-apnea','spocket','wind-turbine','haptic-gloves','water-filter'];
 const tagLimit = { 'size-2x2': 6, 'size-2x1': 5, 'size-wide': 6, 'size-tall': 4, 'size-mid': 3 };
 
@@ -971,10 +877,7 @@ document.querySelectorAll('.tile').forEach(tile => {
   });
 });
 
-/* ─── 10 PINK GRADIENT PALETTES (soft, no reds) ─── */
-/* Each palette is a smooth gradient across the 6 projects.
-   Tile order: deskclaw (01), sleep-apnea (02), water-filter (03), spocket (04), wind-turbine (05), haptic-gloves (06).
-   Aurora Royal base theme stays the same — only the project tiles change. */
+/* ─── 20 PALETTES ─── */
 const palettes = [
   { id:'pale-bloom',   name:'Pale → Pink Bloom',
     colors: { 'deskclaw':'#fce7f3','sleep-apnea':'#fbcfe8','water-filter':'#f9a8d4',
@@ -1006,9 +909,6 @@ const palettes = [
   { id:'twilight',     name:'Twilight Lavender',
     colors: { 'deskclaw':'#e9d5ff','sleep-apnea':'#ddc4f4','water-filter':'#d2b4e9',
               'spocket':'#c6a3de','wind-turbine':'#ba93d3','haptic-gloves':'#ae82c8' }},
-
-  // ─── 10 PINK → SOFT-PLUM VARIANTS ───
-  // Shared first 4 colors (the ones you liked). Last 2 are gentler than the original Pink → Plum.
   { id:'pp-lavender',     name:'Pink → Lavender',
     colors: { 'deskclaw':'#f9a8d4','sleep-apnea':'#f472b6','water-filter':'#ec88c4',
               'spocket':'#e879f9','wind-turbine':'#c4b5fd','haptic-gloves':'#ddd6fe' }},
@@ -1056,7 +956,6 @@ function setPalette(id) {
     const tile = document.querySelector(`.tile[data-id="${projectId}"]`);
     if (tile) tile.style.setProperty('--tile-accent', color);
   });
-  // Expose the palette gradient + lead color so dividers/stripes match the active theme
   const colorArr = tileOrder.map(pid => palette.colors[pid]);
   document.documentElement.style.setProperty(
     '--palette-gradient',
@@ -1066,14 +965,10 @@ function setPalette(id) {
   document.querySelectorAll('#palette-options .opt').forEach(b =>
     b.classList.toggle('active', b.dataset.id === id)
   );
-  // remember active palette so the modal can reuse colors
   document.documentElement.dataset.palette = id;
 }
 
-/* Apply default palette on load */
 setPalette('pale-bloom');
-
-/* Tag font locked to Roboto Mono — picker removed. */
 
 /* ─── MODAL ─── */
 function openModal(id) {
@@ -1102,7 +997,7 @@ document.addEventListener('keydown', e => {
   }
 });
 
-/* ─── IMAGE LIGHTBOX ─── delegated click handler so any modal photo opens fullscreen */
+/* ─── IMAGE LIGHTBOX ─── */
 document.addEventListener('click', e => {
   const img = e.target.closest('.modal-sheet .p-photo img');
   if (!img) return;

@@ -624,7 +624,7 @@
     row.style.padding = '4px 10px';
     var ic = document.createElement('input');
     ic.type = 'color';
-    ic.value = it.color || activeStyle.color || '#ecdef7';
+    ic.value = it.color || activeStyle.color || '#add7ff';
     ic.addEventListener('input', function () {
       it.color = ic.value;
       saveDrawings();
@@ -2036,7 +2036,7 @@
       colorManageInp = document.createElement('input');
       colorManageInp.type = 'color';
       colorManageInp.className = 'tm-ws-color';
-      colorManageInp.value = activeStyle.color || '#ecdef7';
+      colorManageInp.value = activeStyle.color || '#add7ff';
       colorManageInp.addEventListener('input', function () {
         activeStyle.color = colorManageInp.value;
         postColorRecentToParent(activeStyle.color);
@@ -2076,7 +2076,7 @@
     function openColorManagePop(anchorBtn) {
       hideHlManagePop();
       buildColorManagePop();
-      if (colorManageInp) colorManageInp.value = activeStyle.color || '#ecdef7';
+      if (colorManageInp) colorManageInp.value = activeStyle.color || '#add7ff';
       popColorManage.classList.add('tm-open');
       popColorManage.style.display = 'flex';
       refreshColorManageRecentUI();

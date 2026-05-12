@@ -4,30 +4,26 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Student Resources — Talia Mekhayche</title>
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-  /* ─── AURORA ROYAL theme — semantic names preserved for downstream selectors,
-         values swapped for wine-purple / lavender / gold to match the rest of the site. */
   :root {
-    --navy: #170a1c;            /* page bg (was navy) */
-    --deep: #21102a;            /* section bg */
-    --mid: #2e1640;
-    --panel: #2e1640;           /* card bg */
-    --border: #4a2a68;
-    --border2: #6f44a0;
-    --blue: #fbbf24;            /* gold — secondary accent (was bright blue) */
-    --cyan: #c084fc;            /* lavender — primary accent (was cyan) */
-    --text: #ecdef7;            /* body text — pops on wine bg */
-    --text-muted: #b09bc8;
-    --white: #fffaf3;
+    --navy: #060d1a;
+    --deep: #0a1628;
+    --mid: #0f2040;
+    --panel: #111e33;
+    --border: #1e3555;
+    --border2: #254470;
+    --blue: #2b7fff;
+    --cyan: hwb(204 27% 8% / 0.921);
+    --text: #add7ff;
+    --text-muted: #7a95bb;
+    --white: #f0f5ff;
     --err: #f87171;
   }
 
   /* Light-mode variable overrides — activated by toggling html.sr-light.
      Warm beige palette instead of cool white so the notes look like paper, not a UI panel.
      Text colors tuned to stay comfortably readable on beige (WCAG AA body + 4.5:1 muted). */
-  /* Light-mode paper aesthetic kept (warm beige reads great for notes),
-     but accents shifted to deep plum so the page still feels like part of the Aurora site. */
   html.sr-light {
     --navy: #f4ecd8;
     --deep: #ede4c9;
@@ -35,8 +31,8 @@
     --panel: #faf3e0;
     --border: #bcaa7f;
     --border2: #967f4b;
-    --blue: #6e3c92;            /* deep plum (was bright blue) */
-    --cyan: #5b2876;            /* darker plum — primary accent on beige (AA contrast) */
+    --blue: #0a4bb8;
+    --cyan: #0a5680;
     --text: #14100a;
     --text-muted: #4a3f2a;
     --white: #0b1220;
@@ -62,10 +58,10 @@
     position: fixed;
     inset: 0;
     background-image:
-      linear-gradient(rgba(192, 132, 252, 0.045) 1px, transparent 2px),
-      linear-gradient(90deg, rgba(251, 191, 36, 0.025) 1px, transparent 2px),
-      linear-gradient(rgba(192, 132, 252, 0.055) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(251, 191, 36, 0.025) 1px, transparent 2px);
+      linear-gradient(rgba(82, 117, 174, 0.039) 1px, transparent 2px),
+      linear-gradient(90deg, rgba(84, 141, 227, 0.053) 1px, transparent 2px),
+      linear-gradient(rgba(43, 128, 255, 0.064) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(67, 135, 237, 0.025) 1px, transparent 2px);
     background-size: 80px 80px, 80px 80px, 16px 16px, 16px 16px;
     pointer-events: none;
     z-index: 0;
@@ -90,7 +86,7 @@
     position: fixed;
     top: 0; left: 0; right: 0;
     z-index: 520;
-    background: rgba(23,10,28,0.92);
+    background: rgba(6,13,26,0.93);
     backdrop-filter: blur(16px);
     border-bottom: 1px solid var(--border);
     padding: 0 48px;
@@ -190,9 +186,9 @@
   }
 
   .nav-logo {
-    font-family: 'Sora', sans-serif; font-weight: 700;
+    font-family: 'Bebas Neue', sans-serif;
     font-size: 22px;
-    letter-spacing: -0.01em;
+    letter-spacing: 0.1em;
     color: var(--white);
     text-decoration: none;
   }
@@ -226,7 +222,7 @@
   .nav-links a[aria-current="page"] {
     color: var(--cyan);
     border-color: var(--cyan);
-    background: rgba(192,132,252,0.08);
+    background: rgba(0,212,255,0.06);
   }
 
   /* Spocket Study mode: site menu toggle portaled into the real nav */
@@ -245,15 +241,15 @@
     text-transform: uppercase;
     padding: 7px 12px;
     border-radius: 4px;
-    border: 1px solid rgba(192, 132, 252, 0.35);
-    background: rgba(192, 132, 252, 0.08);
+    border: 1px solid rgba(0, 212, 255, 0.35);
+    background: rgba(0, 212, 255, 0.08);
     color: var(--cyan);
     cursor: pointer;
     white-space: nowrap;
   }
   .sr-spocket-nav-site-toggle:hover {
     border-color: var(--cyan);
-    background: rgba(192, 132, 252, 0.14);
+    background: rgba(0, 212, 255, 0.14);
   }
 
   .hamburger {
@@ -410,7 +406,7 @@
     margin-bottom: 8px;
   }
   .page-title {
-    font-family: 'Sora', sans-serif; font-weight: 700;
+    font-family: 'Bebas Neue', sans-serif;
     font-size: clamp(40px, 6vw, 56px);
     letter-spacing: 0.05em;
     color: var(--white);
@@ -441,12 +437,12 @@
     transition: border-color 0.2s, transform 0.15s ease, background 0.15s ease;
   }
   .course-card:hover {
-    border-color: rgba(192, 132, 252, 0.55);
+    border-color: rgba(0, 212, 255, 0.55);
     transform: translateY(-1px);
     background: rgba(17, 30, 51, 0.85);
   }
   .course-card:focus-visible {
-    outline: 2px solid rgba(192, 132, 252, 0.75);
+    outline: 2px solid rgba(0, 212, 255, 0.75);
     outline-offset: 3px;
   }
   .course-card.active {
@@ -491,8 +487,8 @@
     cursor: pointer;
     padding: 14px 20px;
     border-radius: 6px;
-    border: 1px solid rgba(192, 132, 252, 0.35);
-    background: linear-gradient(180deg, rgba(192, 132, 252, 0.12) 0%, rgba(192, 132, 252, 0.04) 100%);
+    border: 1px solid rgba(0, 212, 255, 0.35);
+    background: linear-gradient(180deg, rgba(0, 212, 255, 0.12) 0%, rgba(0, 212, 255, 0.04) 100%);
     color: var(--white);
     font-size: 15px;
     font-weight: 600;
@@ -503,9 +499,9 @@
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
   }
   .formula-sheet-launch-btn:hover {
-    border-color: rgba(192, 132, 252, 0.65);
-    background: linear-gradient(180deg, rgba(192, 132, 252, 0.2) 0%, rgba(192, 132, 252, 0.08) 100%);
-    box-shadow: 0 4px 20px rgba(192, 132, 252, 0.12);
+    border-color: rgba(0, 212, 255, 0.65);
+    background: linear-gradient(180deg, rgba(0, 212, 255, 0.2) 0%, rgba(0, 212, 255, 0.08) 100%);
+    box-shadow: 0 4px 20px rgba(0, 212, 255, 0.12);
   }
   .formula-sheet-launch-btn:focus-visible {
     outline: 2px solid var(--cyan);
@@ -562,7 +558,7 @@
     flex-wrap: wrap;
     padding: 10px 12px;
     border-bottom: 1px solid var(--border);
-    background: rgba(192, 132, 252, 0.06);
+    background: rgba(0, 212, 255, 0.06);
     font-size: 14px;
     font-weight: 600;
     color: var(--white);
@@ -631,7 +627,7 @@
     align-items: center;
   }
   .ecor-panel-head h2 {
-    font-family: 'Sora', sans-serif; font-weight: 700;
+    font-family: 'Bebas Neue', sans-serif;
     font-size: 28px;
     letter-spacing: 0.06em;
     color: var(--white);
@@ -781,13 +777,13 @@
     padding: 0;
     margin: 0;
     cursor: ew-resize;
-    background: rgba(192, 132, 252, 0.12);
+    background: rgba(43, 127, 255, 0.12);
     z-index: 5;
     transition: background 0.2s;
   }
   .notes-resize-handle:hover,
   .notes-resize-handle:focus-visible {
-    background: rgba(192, 132, 252, 0.22);
+    background: rgba(0, 212, 255, 0.22);
     outline: none;
   }
   body.sr-notes-expand .notes-column-shell {
@@ -887,7 +883,7 @@
   }
   .sticky-resize-edge-e:hover,
   .sticky-resize-edge-s:hover {
-    background: rgba(192, 132, 252, 0.12);
+    background: rgba(43, 127, 255, 0.12);
   }
   .sticky-resize-handle {
     position: absolute;
@@ -912,8 +908,8 @@
       135deg,
       transparent 0%,
       transparent 35%,
-      rgba(192, 132, 252, 0.35) 35%,
-      rgba(192, 132, 252, 0.45) 100%
+      rgba(43, 127, 255, 0.35) 35%,
+      rgba(43, 127, 255, 0.45) 100%
     );
   }
   .sticky-resize-handle:active {
@@ -921,12 +917,12 @@
       135deg,
       transparent 0%,
       transparent 35%,
-      rgba(192, 132, 252, 0.5) 35%,
-      rgba(192, 132, 252, 0.65) 100%
+      rgba(43, 127, 255, 0.5) 35%,
+      rgba(43, 127, 255, 0.65) 100%
     );
   }
   .sticky-note.tm-sticky-active {
-    box-shadow: 0 0 0 1px rgba(192, 132, 252, 0.45), 0 8px 24px rgba(0, 0, 0, 0.55);
+    box-shadow: 0 0 0 1px rgba(0, 212, 255, 0.45), 0 8px 24px rgba(0, 0, 0, 0.55);
   }
   .sticky-drag-shim {
     height: 26px;
@@ -982,7 +978,7 @@
     font: inherit;
   }
   .tm-ctx-menu button:hover {
-    background: rgba(192, 132, 252, 0.15);
+    background: rgba(43, 127, 255, 0.15);
     color: var(--cyan);
   }
   .tm-ctx-sep {
@@ -1179,7 +1175,7 @@
     border-bottom: 1px solid var(--border);
   }
   .tm-workspace-guide-head h2 {
-    font-family: 'Sora', sans-serif; font-weight: 700;
+    font-family: 'Bebas Neue', sans-serif;
     font-size: 24px;
     letter-spacing: 0.06em;
     color: var(--white);
@@ -1324,7 +1320,7 @@
     top: 64px;
   }
   .lock-card h1 {
-    font-family: 'Sora', sans-serif; font-weight: 700;
+    font-family: 'Bebas Neue', sans-serif;
     font-size: 32px;
     color: var(--white);
     letter-spacing: 0.06em;
@@ -1387,7 +1383,7 @@
   }
   .lock-pass-toggle:hover {
     color: var(--cyan);
-    background: rgba(192, 132, 252, 0.08);
+    background: rgba(0, 212, 255, 0.08);
   }
   .lock-pass-toggle svg {
     width: 22px;
@@ -1431,12 +1427,12 @@
     color: var(--cyan);
   }
   .btn-primary {
-    background: rgba(192,132,252,0.10);
+    background: rgba(0,212,255,0.08);
     border-color: var(--cyan);
     color: var(--cyan);
   }
   .btn-primary:hover {
-    background: rgba(192,132,252,0.18);
+    background: rgba(0,212,255,0.14);
   }
   .lock-error {
     font-size: 13px;
@@ -1530,7 +1526,7 @@
     overflow-y: auto;
   }
   .modal h2 {
-    font-family: 'Sora', sans-serif; font-weight: 700;
+    font-family: 'Bebas Neue', sans-serif;
     font-size: 28px;
     color: var(--white);
     letter-spacing: 0.05em;
@@ -1621,16 +1617,16 @@
 <body>
 
 <nav>
-  <a href="../index.html" class="nav-logo">T.<span>M</span></a>
+  <a href="../index.html#home" class="nav-logo">T.<span>M</span></a>
   <button type="button" class="hamburger" onclick="toggleMenu()" aria-label="Toggle navigation">
     <span></span><span></span><span></span>
   </button>
   <ul class="nav-links">
-    <li><a href="../index.html" onclick="closeMenu()">Home</a></li>
-    <li><a href="../projects.html" onclick="closeMenu()">Projects</a></li>
-    <li><a href="../resume.html" onclick="closeMenu()">Resume</a></li>
+    <li><a href="../index.html#home" onclick="closeMenu()">Home</a></li>
+    <li><a href="../index.html#projects" onclick="closeMenu()">Projects</a></li>
+    <li><a href="../index.html#resume" onclick="closeMenu()">Resume</a></li>
+    <li><a href="../index.html#contact" onclick="closeMenu()">Contact</a></li>
     <li><a href="./" aria-current="page" onclick="closeMenu()">Student Resources</a></li>
-    <li><a href="../contact.html" onclick="closeMenu()">Contact</a></li>
     <li id="sr-spocket-nav-toggle-host" class="sr-spocket-nav-toggle-host" aria-hidden="true"></li>
   </ul>
 </nav>
@@ -1660,7 +1656,7 @@
 <div id="spocket-root"></div>
 
 <div id="tm-access-toast" class="tm-access-toast" hidden role="status" aria-live="polite">
-  <p class="tm-access-toast-msg">Use <strong>Spocket</strong> on this page for scripted guidance on access and the notes area. If you&rsquo;re one of my students and you&rsquo;re having trouble signing in, <a href="../contact.html">contact me directly</a> and I&rsquo;ll help you out.</p>
+  <p class="tm-access-toast-msg">Use <strong>Spocket</strong> on this page for scripted guidance on access and the notes area. If you&rsquo;re one of my students and you&rsquo;re having trouble signing in, <a href="../index.html#contact">contact me directly</a> and I&rsquo;ll help you out.</p>
   <button type="button" class="tm-access-toast-dismiss" id="tm-access-toast-dismiss" aria-label="Dismiss">×</button>
 </div>
 
@@ -2692,18 +2688,18 @@
     try {
       var raw = localStorage.getItem(GLOBAL_STYLE_KEY);
       if (!raw) {
-        return { color: '#ecdef7', fontSizePt: 14, lineWidthPt: 2.8, dashStyle: 'solid' };
+        return { color: '#add7ff', fontSizePt: 14, lineWidthPt: 2.8, dashStyle: 'solid' };
       }
       var o = JSON.parse(raw);
       var ds = o.dashStyle === 'dotted' || o.dashStyle === 'dashed' ? o.dashStyle : 'solid';
       return {
-        color: typeof o.color === 'string' ? o.color : '#ecdef7',
+        color: typeof o.color === 'string' ? o.color : '#add7ff',
         fontSizePt: clampNum(o.fontSizePt, 14, 3, 60),
         lineWidthPt: clampNum(o.lineWidthPt, 2.8, 0.5, 12),
         dashStyle: ds
       };
     } catch (e) {
-      return { color: '#ecdef7', fontSizePt: 14, lineWidthPt: 2.8, dashStyle: 'solid' };
+      return { color: '#add7ff', fontSizePt: 14, lineWidthPt: 2.8, dashStyle: 'solid' };
     }
   }
 
@@ -3681,12 +3677,12 @@
       'html.sr-light .chapter-toggle,html.sr-light .nav-item,html.sr-light .sub-item,html.sr-light .nav-section-label{color:#14100a!important;}' +
       'html.sr-light .nav-num,html.sr-light .sub-num,html.sr-light .ch-arrow{color:#6b5f47!important;}' +
       'html.sr-light .chapter-toggle:hover,html.sr-light .nav-item:hover,html.sr-light .sub-item:hover{color:#080604!important;background:rgba(82,60,20,0.08)!important;}' +
-      'html.sr-light .nav-item.active,html.sr-light .sub-item.active,html.sr-light .chapter-toggle.active{color:#6e3c92!important;background:rgba(110,60,146,0.10)!important;}' +
+      'html.sr-light .nav-item.active,html.sr-light .sub-item.active,html.sr-light .chapter-toggle.active{color:#0a4bb8!important;background:rgba(10,75,184,0.10)!important;}' +
       /* Sidebar background panel itself — upstream is dark (#171512), swap to warm beige. */
       'html.sr-light nav#sidebar,html.sr-light aside#sidebar,html.sr-light #sidebar,html.sr-light .sidebar{background:#ede4c9!important;}' +
       'html.sr-light .sidebar-brand,html.sr-light .sidebar-scroll{background:transparent!important;}' +
       'html.sr-light .sidebar-brand{color:#080604!important;}' +
-      'html.sr-light .nav-item.active::before,html.sr-light .sub-item.active::before{background:#6e3c92!important;}' +
+      'html.sr-light .nav-item.active::before,html.sr-light .sub-item.active::before{background:#0a4bb8!important;}' +
       /* Tighten page tail — MAAE\'s upstream .page has padding-bottom:88px and the last
        * descendant (section-block → worked-example etc.) has margin-bottom up to 40px,
        * giving every page a ~128px empty tail. Reduce the padding and zero out the
@@ -3999,7 +3995,7 @@
       'left:var(--tm-sr-side-w);' +
       '}' +
       '.tm-sr-sidebar-toggle:hover{color:#7ec7ff;}' +
-      '.tm-sr-sidebar-toggle:focus-visible{outline:2px solid #c084fc;outline-offset:2px;}' +
+      '.tm-sr-sidebar-toggle:focus-visible{outline:2px solid #2b7fff;outline-offset:2px;}' +
       'html.sr-light .tm-sr-sidebar-toggle{background:rgba(252,253,255,0.96);color:#1a2438;border-color:rgba(10,20,40,0.14);}' +
       /* When sidebar is collapsed, anchor the chevron to the left edge of the viewport. */
       'body.tm-sr-sidebar-collapsed .tm-sr-sidebar-toggle{left:0;}' +
@@ -4044,8 +4040,8 @@
       /* "Final exam topics" pinned links at the top of the ECOR sidebar. */
       '.tm-sr-nav-item.tm-sr-topic-pin{font-weight:600;color:#a7d0ff;background:rgba(40,110,220,0.12);border:1px solid rgba(40,110,220,0.22);margin:2px 4px;}' +
       '.tm-sr-nav-item.tm-sr-topic-pin:hover{background:rgba(40,110,220,0.22);}' +
-      'html.sr-light .tm-sr-nav-item.tm-sr-topic-pin{color:#6e3c92;background:rgba(110,60,146,0.08);border-color:rgba(110,60,146,0.35);}' +
-      'html.sr-light .tm-sr-nav-item.tm-sr-topic-pin:hover{background:rgba(110,60,146,0.16);}' +
+      'html.sr-light .tm-sr-nav-item.tm-sr-topic-pin{color:#0a4bb8;background:rgba(10,75,184,0.08);border-color:rgba(10,75,184,0.35);}' +
+      'html.sr-light .tm-sr-nav-item.tm-sr-topic-pin:hover{background:rgba(10,75,184,0.16);}' +
       /* Detail density: slightly tighter per-line so longer TOCs fit without more scrolling. */
       '.tm-sr-sidebar-scroll .tm-sr-nav-item{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}' +
       '.tm-sr-sidebar-extras{padding:8px 10px 14px;border-top:1px solid rgba(255,255,255,0.08);display:flex;flex-direction:column;gap:6px;}' +
