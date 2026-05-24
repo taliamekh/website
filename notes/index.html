@@ -4015,28 +4015,27 @@
   function injectNotesZoom(html) {
     var css =
       '<style id="tm-sr-zoom">' +
-      /* Zoom is applied to .app (everything inside the iframe except the
-         floating toolbar at body level), and body is forced to overflow:auto
-         so the iframe itself gets a horizontal scrollbar once the zoomed app
-         is wider than the viewport. Zoom is a non-standard but well-supported
-         CSS property (Chromium / WebKit / Firefox 126+); on older Firefox
-         browser's Ctrl+wheel still works as a fallback. The body min-width
-         keeps the layout intact when the user scrolls horizontally. */
-      'html.tm-sr-zoomed{overflow:auto !important;}' +
-      'html.tm-sr-zoomed body{' +
-        'overflow:visible !important;' +
-        /* Reserve scroll area sized to the zoomed visual extent so horizontal */
-        /* (and vertical) scrolling actually goes the distance the user sees. */
-        'min-width:calc(100vw * var(--tm-sr-zoom, 1)) !important;' +
-        'min-height:calc(100vh * var(--tm-sr-zoom, 1)) !important;' +
-      '}' +
-      '.app{' +
+      /* Zoom is scoped ONLY to the notes content (children of the scroll
+         container) — the sidebar (CONTENTS panel), floating workspace
+         toolbar, and sticky layer all stay at 100% regardless of zoom level.
+         The scroll container is forced to overflow:auto so a horizontal
+         scrollbar naturally appears once the zoomed page is wider than the
+         visible area, while vertical scrolling continues working as before.
+         Zoom is a non-standard but well-supported CSS property (Chromium /
+         WebKit / Firefox 126+); on older Firefox the browser's Ctrl+wheel
+         still works as a fallback. */
+      '.main-scroll{overflow:auto !important;}' +
+      /* Set width:800px explicitly (rather than relying on max-width and the */
+      /* container) so Chrome's zoom can properly extend the layout box: */
+      /* width values inside a `zoom` context are interpreted as zoom-units, */
+      /* so 800px width × 1.5 zoom = 1200 actual layout pixels. min-width:0 */
+      /* lets the page shrink inside narrow iframes when at default zoom. */
+      '.main-scroll > .page{' +
         'zoom:var(--tm-sr-zoom, 1);' +
-        /* Lock .app to viewport size so zoom multiplies width by exactly the */
-        /* requested level (otherwise .app inherits body min-width and over-zooms). */
-        'width:100vw !important;height:100vh !important;' +
+        'width:800px !important;' +
+        'max-width:none !important;' +
+        'min-width:0 !important;' +
       '}' +
-      /* Workspace toolbar / sticky layer are body-level and stay 1x naturally. */
       '</style>';
     var scr =
       '<script>' +
