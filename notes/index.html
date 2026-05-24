@@ -149,6 +149,42 @@
   html.sr-light .readme-block h3 {
     color: var(--cyan);
   }
+  /* ── Paper-grid palette ─────────────────────────────────────────────────
+     When the active course's natural light look uses engineering grid paper
+     (currently MATH 2004/2008), extend that color across the whole Student
+     Resources page in light mode. Warmed to cream paper #F2EBD3 so the
+     overall light mode reads less stark/white. The iframe's --bg is also
+     overridden to match (in injectContentThemeOverrides) so the iframe blends
+     seamlessly into the surrounding chrome. */
+  html.sr-light body.tm-sr-paper-active {
+    --navy: #f2ebd3;
+    --deep: #ebe3c3;
+    --mid: #e2d8b3;
+    --panel: #f2ebd3;
+    --border: #c8baa0;
+    --border2: #948663;
+    --text: #2a2618;
+    --text-muted: #5a4f30;
+  }
+  html.sr-light body.tm-sr-paper-active nav {
+    background: rgba(242, 235, 211, 0.92);
+    border-bottom-color: #c8baa0;
+  }
+  html.sr-light body.tm-sr-paper-active .ecor-panel-head .btn,
+  html.sr-light body.tm-sr-paper-active .ecor-panel-head button {
+    background: #f2ebd3;
+    border-color: #c8baa0;
+    color: #2a2618;
+  }
+  html.sr-light body.tm-sr-paper-active .notes-frame-wrap,
+  html.sr-light body.tm-sr-paper-active .notes-frame {
+    background: #f2ebd3 !important;
+  }
+  /* Suppress the parent's blueprint grid in paper-mode so it doesn't double
+     up on the iframe's own engineering-grid background. */
+  html.sr-light body.tm-sr-paper-active::before {
+    opacity: 0;
+  }
   body.sr-spocket-immersive nav {
     transform: translateY(-100%);
     opacity: 0;
@@ -421,6 +457,47 @@
   .page-head {
     margin-bottom: 40px;
   }
+  .page-head-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+  }
+  .page-head-titles { min-width: 0; }
+  .page-theme-toggle {
+    flex: 0 0 auto;
+    margin-top: 6px;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: rgba(192, 132, 252, 0.10);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    line-height: 1;
+    padding: 0;
+    transition: background 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
+  }
+  .page-theme-toggle:hover {
+    background: rgba(192, 132, 252, 0.18);
+    transform: translateY(-1px);
+  }
+  .page-theme-toggle:focus-visible {
+    outline: 2px solid var(--cyan);
+    outline-offset: 2px;
+  }
+  html.sr-light .page-theme-toggle {
+    background: rgba(110, 60, 146, 0.08);
+    border-color: rgba(110, 60, 146, 0.35);
+    color: var(--cyan);
+  }
+  html.sr-light .page-theme-toggle:hover {
+    background: rgba(110, 60, 146, 0.16);
+  }
   .section-num {
     font-family: 'JetBrains Mono', monospace;
     font-size: 12px;
@@ -649,6 +726,45 @@
     flex-wrap: wrap;
     gap: 10px;
     align-items: center;
+  }
+  /* Zoom controls — small inline group (−  100%  +) next to Expand/Full screen.
+     Center button doubles as the level readout and as the reset button. */
+  .zoom-controls {
+    display: inline-flex;
+    align-items: stretch;
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    overflow: hidden;
+    background: rgba(192, 132, 252, 0.08);
+  }
+  .zoom-btn {
+    appearance: none;
+    background: transparent;
+    border: 0;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+    min-width: 36px;
+  }
+  .zoom-btn + .zoom-btn { border-left: 1px solid var(--border2); }
+  .zoom-btn:hover { background: rgba(192, 132, 252, 0.18); }
+  .zoom-btn:focus-visible {
+    outline: 2px solid var(--cyan);
+    outline-offset: -2px;
+  }
+  .zoom-btn.zoom-level {
+    min-width: 56px;
+    font-weight: 500;
+  }
+  html.sr-light .zoom-controls {
+    background: rgba(110, 60, 146, 0.06);
+  }
+  html.sr-light .zoom-btn:hover {
+    background: rgba(110, 60, 146, 0.14);
   }
   .ecor-panel-head h2 {
     font-family: 'Sora', sans-serif; font-weight: 700;
@@ -1685,8 +1801,15 @@
 
 <main id="main-content">
   <div class="page-head">
-    <span class="section-num">Student Resources</span>
-    <h1 class="page-title">Student Resources</h1>
+    <div class="page-head-row">
+      <div class="page-head-titles">
+        <span class="section-num">Student Resources</span>
+        <h1 class="page-title">Student Resources</h1>
+      </div>
+      <button type="button" id="page-theme-toggle" class="page-theme-toggle" aria-label="Toggle light/dark mode">
+        <span class="page-theme-icon" aria-hidden="true">&#x263E;</span>
+      </button>
+    </div>
     <p class="page-sub">Materials organized by course code. Select a course to load its notes workspace.</p>
   </div>
 
@@ -1699,6 +1822,11 @@
     <article class="course-card" role="button" tabindex="0" data-course-id="maae2202" aria-pressed="false">
       <div class="course-code">MAAE 2202</div>
       <div class="course-name">Mechanics of Solids</div>
+      <div class="course-meta">Final exam notes</div>
+    </article>
+    <article class="course-card" role="button" tabindex="0" data-course-id="math2004_2008" aria-pressed="false">
+      <div class="course-code">MATH 2004 / 2008</div>
+      <div class="course-name">Multivariable Calculus</div>
       <div class="course-meta">Final exam notes</div>
     </article>
     <article class="course-card placeholder">
@@ -1723,6 +1851,11 @@
       <div class="ecor-panel-head-row">
         <h2 id="ecor-heading">ECOR 2050</h2>
         <div class="ecor-panel-actions">
+          <div class="zoom-controls" role="group" aria-label="Notes zoom">
+            <button type="button" class="zoom-btn" id="btn-zoom-out" aria-label="Zoom out" title="Zoom out (Ctrl/⌘ + scroll)">−</button>
+            <button type="button" class="zoom-btn zoom-level" id="btn-zoom-reset" aria-label="Reset zoom to 100%" title="Reset zoom">100%</button>
+            <button type="button" class="zoom-btn" id="btn-zoom-in" aria-label="Zoom in" title="Zoom in (Ctrl/⌘ + scroll)">+</button>
+          </div>
           <button type="button" class="btn btn-primary" id="btn-expand-view" aria-pressed="false">
             Expand view
           </button>
@@ -1944,17 +2077,41 @@
         images: 'tm_student_resources_notes_maae2202_images_v1',
         sidebarCollapsed: 'tm_student_resources_notes_maae2202_sidebar_collapsed_v1'
       }
+    },
+    math2004_2008: {
+      id: 'math2004_2008',
+      code: 'MATH 2004 / 2008',
+      name: 'Multivariable Calculus',
+      /* The upstream HTML is authored on a light grid-paper palette (#F5F5F0 bg +
+         dark ink), and uses its own CSS variables (--bg/--text/--def/--tip/--eq…)
+         for every visual decision. So:
+           - bakedTheme: 'light' tells us the natural look IS the light theme;
+             we skip our generic light-mode content overrides for this course
+             (they'd clobber the document's color organization), and instead
+             inject a dark-mode skin that just flips those CSS variables.
+           - paperColor extends across the parent chrome in light mode so the
+             page bg, panel, and iframe wrap all match the grid paper. */
+      bakedTheme: 'light',
+      paperColor: '#F5F5F0',
+      readmeUrl: 'https://raw.githubusercontent.com/taliamekh/MATH2004-2008/main/README.md',
+      notesHtmlUrl: 'https://raw.githubusercontent.com/taliamekh/MATH2004-2008/main/MATH2004-notes.html',
+      storage: {
+        highlights: 'tm_student_resources_notes_math2004_2008_highlights_v1',
+        stickies: 'tm_student_resources_notes_math2004_2008_stickies_v1',
+        drawings: 'tm_student_resources_notes_math2004_2008_drawings_v1',
+        style: 'tm_student_resources_notes_math2004_2008_style_v1',
+        images: 'tm_student_resources_notes_math2004_2008_images_v1',
+        sidebarCollapsed: 'tm_student_resources_notes_math2004_2008_sidebar_collapsed_v1'
+      }
     }
   };
   var ACTIVE_COURSE_KEY = 'tm_student_resources_active_course_v1';
-  var activeCourseId = (function () {
-    try {
-      var v = localStorage.getItem(ACTIVE_COURSE_KEY);
-      return v && COURSES[v] ? v : 'ecor2050';
-    } catch (e) {
-      return 'ecor2050';
-    }
-  })();
+  /* Default: NO course selected on initial load. The landing/welcome view shows
+   * the page title + course grid; the ecor-panel (and its iframe) stay hidden
+   * until the user explicitly clicks a course card. We intentionally do NOT
+   * restore the previously-active course from localStorage — every visit
+   * starts fresh on the welcome screen. */
+  var activeCourseId = null;
 
   /* ---------- Student Resources theme (dark / light) ----------
    * Stored in localStorage under THEME_KEY. Default dark. Toggles `sr-light`
@@ -2002,10 +2159,28 @@
   window.tmGetTheme = function () { return currentTheme; };
   applyThemeToDocument();
 
+  (function initPageThemeToggle() {
+    var btn = document.getElementById('page-theme-toggle');
+    if (!btn) return;
+    var icon = btn.querySelector('.page-theme-icon');
+    function paint() {
+      if (icon) icon.textContent = currentTheme === 'light' ? '☀' : '☾';
+    }
+    paint();
+    btn.addEventListener('click', function () {
+      setTheme(currentTheme === 'light' ? 'dark' : 'light');
+      paint();
+    });
+    window.addEventListener('tm-sr-theme', paint);
+  })();
+
   function getActiveCourse() {
-    return COURSES[activeCourseId] || COURSES.ecor2050;
+    /* Returns null when no course is selected (landing/welcome state). */
+    return activeCourseId ? (COURSES[activeCourseId] || null) : null;
   }
   function applyActiveCourseStorageKeys() {
+    /* Nothing to apply on the welcome screen — these keys are course-scoped. */
+    if (!activeCourseId) return;
     HL_PARENT_KEY = keyHighlights();
     STICKY_WORKSPACE_KEY = keyStickies();
     DRAWINGS_KEY = keyDrawings();
@@ -2018,12 +2193,12 @@
     try { localStorage.setItem(ACTIVE_COURSE_KEY, id); } catch (e) { /* ignore */ }
     applyActiveCourseStorageKeys();
   }
-  function keyHighlights() { return getActiveCourse().storage.highlights; }
-  function keyStickies() { return getActiveCourse().storage.stickies; }
-  function keyDrawings() { return getActiveCourse().storage.drawings; }
-  function keyStyle() { return getActiveCourse().storage.style; }
-  function keyImages() { return getActiveCourse().storage.images; }
-  function keySidebarCollapsed() { return getActiveCourse().storage.sidebarCollapsed; }
+  function keyHighlights() { var c = getActiveCourse(); return c ? c.storage.highlights : ''; }
+  function keyStickies() { var c = getActiveCourse(); return c ? c.storage.stickies : ''; }
+  function keyDrawings() { var c = getActiveCourse(); return c ? c.storage.drawings : ''; }
+  function keyStyle() { var c = getActiveCourse(); return c ? c.storage.style : ''; }
+  function keyImages() { var c = getActiveCourse(); return c ? c.storage.images : ''; }
+  function keySidebarCollapsed() { var c = getActiveCourse(); return c ? c.storage.sidebarCollapsed : ''; }
 
   /** Formula sheet page file (no .html in the repo) — same “download → patch → show in iframe” path as NOTES_HTML_URL. */
   var FORMULA_SHEET_HTML_URL = 'https://raw.githubusercontent.com/taliamekh/Ecor2050-formula-sheet/main/Ecor2050-formula-sheet';
@@ -3653,7 +3828,54 @@
    * (body background, text, links, code blocks, tables, borders) whenever our
    * sr-light class is on the iframe's <html>. Matches the parent-page palette.
    */
-  function injectContentThemeOverrides(html) {
+  function injectContentThemeOverrides(html, courseDef) {
+    /* Courses whose upstream HTML is authored on a light palette (e.g. MATH 2004/2008,
+       which uses --bg/--text/--def/--tip/--eq CSS vars) get a DIFFERENT treatment:
+       light mode = no overrides at all (let the document's natural colors shine),
+       dark mode = flip the document's own CSS variables to a dark skin so the
+       semantic color organization (red equations, purple defs, blue tips, etc.)
+       stays intact, just brightened for dark contrast. */
+    var bakedLight = !!(courseDef && courseDef.bakedTheme === 'light');
+    if (bakedLight) {
+      var darkCss =
+        '<style id="tm-sr-content-theme">' +
+        /* RESPONSIVE LAYOUT — center .page horizontally inside .main-scroll at
+           any iframe width. `margin: 0 auto` falls back to 0 once the page is
+           wider than the container (e.g. zoomed in), letting natural horizontal
+           scroll take over so the user can pan left/right. min-width:0 on .page
+           prevents flex/grid ancestors from forcing extra width. */
+        '.main-scroll{overflow-x:auto;}' +
+        '.main-scroll .page{margin-left:auto !important;margin-right:auto !important;min-width:0;}' +
+        /* LIGHT mode — gentle warming of just the surface vars so the iframe matches
+           the cream-paper chrome of the parent. Semantic colors (--def/--eq/--tip/
+           --deriv/--example/--units) are left alone so the document's color
+           organization stays intact. */
+        'html.sr-light,html.sr-light body{' +
+          '--bg:#f2ebd3;--surface:#ebe3c3;--border:#c8baa0;--grid:#d9cfb0;' +
+          '--sidebar-bg:#ebe3c3;' +
+        '}' +
+        /* When the iframe is in dark mode (parent toggle), redefine the page's
+           CSS variables. */
+        'html:not(.sr-light),html:not(.sr-light) body{' +
+          /* base palette */
+          '--bg:#1a1814;--surface:#25221c;--border:#4a453c;--text:#ecece6;--muted:#a8a4a0;--grid:#2d2a24;' +
+          /* semantic colors — brighter equivalents that pop on dark bg without losing identity */
+          '--eq:#ff7676;--eq-name:#ff9b9b;--def:#c8a0fc;--tip:#6fb4ff;--deriv:#6bd49a;--example:#ffc988;--units:#b8b8b8;' +
+          /* sidebar / menu */
+          '--sidebar-bg:#1f1d18;--sidebar-text:#c0bcb0;--sidebar-active:#ecece6;--menu-active:#6fb4ff;' +
+          /* variable swatches — slightly desaturate originals for dark bg */
+          '--v1:#ff8a3d;--v2:#5bd6d6;--v3:#e670b8;--v4:#aacc60;--v5:#7ab0ff;--v6:#ff7eb0;' +
+          '--v7:#88d0a8;--v8:#d8a060;--v9:#b96cff;--v10:#ff806f;--v11:#5fc098;--v12:#c890e0;' +
+        '}' +
+        /* Anything baked with a pure-black color (h1, etc.) needs a manual nudge — vars only
+           cover sites that actually use var(...). Keep this list small; rely on vars otherwise. */
+        'html:not(.sr-light) h1,html:not(.sr-light) h2,html:not(.sr-light) h3,html:not(.sr-light) h4,html:not(.sr-light) h5,html:not(.sr-light) h6{color:#f5f5f0;}' +
+        '</style>';
+      if (/<\/head>/i.test(html)) {
+        return html.replace(/<\/head>/i, function (m) { return darkCss + m; });
+      }
+      return html.replace(/<\/body>/i, function (m) { return darkCss + m; });
+    }
     var css =
       '<style id="tm-sr-content-theme">' +
       /* Light-mode content overrides — warm beige paper palette, !important to win over upstream dark styles. */
@@ -3782,6 +4004,73 @@
     );
   }
 
+  /**
+   * Notes zoom — pasted into every notes iframe. Listens for `tm_sr_zoom`
+   * messages from the parent and writes a CSS variable on <html>; pure CSS
+   * then applies `zoom: var(...)` to the scroll container's children so the
+   * notes scale up while the toolbar / sidebar stay at 1x. Ctrl/⌘+wheel
+   * inside the iframe adjusts the level and echoes it back to the parent
+   * via `tm_sr_zoom_request` so the readout + persistence stay in sync.
+   */
+  function injectNotesZoom(html) {
+    var css =
+      '<style id="tm-sr-zoom">' +
+      /* Zoom is applied to .app (everything inside the iframe except the
+         floating toolbar at body level), and body is forced to overflow:auto
+         so the iframe itself gets a horizontal scrollbar once the zoomed app
+         is wider than the viewport. Zoom is a non-standard but well-supported
+         CSS property (Chromium / WebKit / Firefox 126+); on older Firefox
+         browser's Ctrl+wheel still works as a fallback. The body min-width
+         keeps the layout intact when the user scrolls horizontally. */
+      'html.tm-sr-zoomed{overflow:auto !important;}' +
+      'html.tm-sr-zoomed body{' +
+        'overflow:visible !important;' +
+        /* Reserve scroll area sized to the zoomed visual extent so horizontal */
+        /* (and vertical) scrolling actually goes the distance the user sees. */
+        'min-width:calc(100vw * var(--tm-sr-zoom, 1)) !important;' +
+        'min-height:calc(100vh * var(--tm-sr-zoom, 1)) !important;' +
+      '}' +
+      '.app{' +
+        'zoom:var(--tm-sr-zoom, 1);' +
+        /* Lock .app to viewport size so zoom multiplies width by exactly the */
+        /* requested level (otherwise .app inherits body min-width and over-zooms). */
+        'width:100vw !important;height:100vh !important;' +
+      '}' +
+      /* Workspace toolbar / sticky layer are body-level and stay 1x naturally. */
+      '</style>';
+    var scr =
+      '<script>' +
+      '(function(){' +
+      'var ZMIN=0.5,ZMAX=2.5,ZSTEP=0.1;' +
+      'function clamp(v){return Math.min(ZMAX,Math.max(ZMIN,Math.round(v*100)/100));}' +
+      'function applyZoom(lvl){lvl=clamp(lvl);document.documentElement.style.setProperty("--tm-sr-zoom",String(lvl));document.documentElement.classList.toggle("tm-sr-zoomed",lvl!==1);return lvl;}' +
+      'var currentZoom=1;' +
+      'window.addEventListener("message",function(ev){' +
+        'if(!ev.data||ev.data.type!=="tm_sr_zoom")return;' +
+        'var lvl=parseFloat(ev.data.level);' +
+        'if(!isFinite(lvl)||lvl<=0)return;' +
+        'currentZoom=applyZoom(lvl);' +
+      '});' +
+      'window.addEventListener("wheel",function(ev){' +
+        'if(!(ev.ctrlKey||ev.metaKey))return;' +
+        'ev.preventDefault();' +
+        'var dir=ev.deltaY<0?1:-1;' +
+        'var next=clamp(currentZoom+dir*ZSTEP);' +
+        'if(next===currentZoom)return;' +
+        'currentZoom=applyZoom(next);' +
+        'try{window.parent.postMessage({type:"tm_sr_zoom_request",level:next},"*");}catch(e){}' +
+      '},{passive:false});' +
+      '})();' +
+      '</scr' + 'ipt>';
+    var out = html;
+    if (/<\/head>/i.test(out)) {
+      out = out.replace(/<\/head>/i, function (m) { return css + m; });
+    } else {
+      out = css + out;
+    }
+    return out.replace(/<\/body>/i, function (m) { return scr + m; });
+  }
+
   function injectHighlightContrastCss(html) {
     /* Theme-reactive highlight CSS.
      * - Slot-indexed: marks carry data-slot="0..4"; background is driven by
@@ -3805,7 +4094,7 @@
       'position:relative;border-radius:2px;isolation:isolate;' +
       /* color-mix keeps text fully opaque while only fading the background color. */
       'background:color-mix(in srgb, var(--tm-hl, #fff59d) calc(var(--tm-hl-alpha, 85) * 1%), transparent);' +
-      'color:inherit;' +
+      'color:inherit;font-weight:700;' +
       '-webkit-box-decoration-break:clone;box-decoration-break:clone;' +
       'mix-blend-mode:plus-lighter;-webkit-mix-blend-mode:plus-lighter;' +
       'text-shadow:0 0 1px rgba(0,0,0,.92),0 1px 3px rgba(0,0,0,.72);' +
@@ -4131,8 +4420,6 @@
 
       'var brand=document.createElement("div");brand.className="tm-sr-sidebar-brand";' +
       'var title=document.createElement("span");title.className="tm-sr-sidebar-title";title.textContent=titleTxt;brand.appendChild(title);' +
-      'var tbtn=document.createElement("button");tbtn.type="button";tbtn.className="tm-sr-sidebar-theme-btn";tbtn.setAttribute("data-tm-theme-btn","1");' +
-      'tbtn.setAttribute("aria-label","Toggle light/dark mode");tbtn.innerHTML="<span class=\\"tm-theme-icon\\">\u263E</span>";brand.appendChild(tbtn);' +
       'side.appendChild(brand);' +
 
       'var scroll=document.createElement("div");scroll.className="tm-sr-sidebar-scroll";scroll.id="tm-sr-sidebar-scroll";' +
@@ -4203,15 +4490,6 @@
       'try{s.querySelectorAll("#theme-toggle,.theme-toggle").forEach(function(el){el.classList.add("tm-sr-hide");});}catch(eT){}' +
       '/* Measure width so the push-right padding matches. */' +
       'try{var r=s.getBoundingClientRect();if(r.width>120){document.documentElement.style.setProperty("--tm-sr-side-w",Math.round(r.width)+"px");}}catch(eM){}' +
-      '/* Inject theme button in MAAE brand/top area (first child). */' +
-      'if(!s.querySelector("[data-tm-theme-btn]")){' +
-      'var anchor=s.querySelector(".sidebar-brand,.sidebar-logo,.sidebar-header")||s.firstElementChild||s;' +
-      'var tbtn2=document.createElement("button");tbtn2.type="button";tbtn2.className="tm-sr-sidebar-theme-btn";tbtn2.setAttribute("data-tm-theme-btn","1");' +
-      'tbtn2.setAttribute("aria-label","Toggle light/dark mode");tbtn2.innerHTML="<span class=\\"tm-theme-icon\\">\u263E</span>";' +
-      'tbtn2.style.position="absolute";tbtn2.style.top="10px";tbtn2.style.right="10px";' +
-      'if(anchor&&anchor.style)anchor.style.position=anchor.style.position||"relative";' +
-      '(anchor||s).appendChild(tbtn2);' +
-      '}' +
       'return s;' +
       '}' +
 
@@ -4219,38 +4497,7 @@
       '/* Remove any stale hamburger from a previous session — the chevron is the sole control. */' +
       'try{var oldH=document.getElementById("tm-sr-hamburger");if(oldH&&oldH.parentNode)oldH.parentNode.removeChild(oldH);}catch(eHam){}' +
       '/* Chevron is body-level (not inside sidebar) so it remains visible when the sidebar slides off. */' +
-      'var existing=document.getElementById("tm-sr-sidebar-toggle");' +
-      'if(!existing){' +
-      'var chev=document.createElement("button");chev.type="button";chev.id="tm-sr-sidebar-toggle";chev.className="tm-sr-sidebar-toggle";' +
-      'chev.setAttribute("aria-label","Toggle sidebar");chev.innerHTML="\u2039";' +
-      'chev.addEventListener("click",function(ev){ev.stopPropagation();toggle();});' +
-      'document.body.appendChild(chev);' +
-      '}' +
-      'function syncChevIcon(){' +
-      'var btn=document.getElementById("tm-sr-sidebar-toggle");if(!btn)return;' +
-      'var isCol=document.body.classList.contains("tm-sr-sidebar-collapsed");' +
-      'btn.innerHTML=isCol?"\u203A":"\u2039";' +
-      'btn.setAttribute("aria-label",isCol?"Open sidebar":"Collapse sidebar");' +
-      '}' +
-      'syncChevIcon();' +
-      '/* Also expose syncChevIcon to toggle() via window closure. */' +
-      'window.__TM_SR_SYNC_CHEV=syncChevIcon;' +
-      'var tbtn=side.querySelector("[data-tm-theme-btn]");' +
-      'if(tbtn){' +
-      'tbtn.addEventListener("click",function(ev){' +
-      'ev.stopPropagation();ev.preventDefault();' +
-      'var isLight=document.documentElement.classList.contains("sr-light");' +
-      'var next=isLight?"dark":"light";' +
-      'try{document.documentElement.classList.toggle("sr-light",next==="light");document.documentElement.setAttribute("data-sr-theme",next);document.documentElement.setAttribute("data-theme",next);}catch(e){}' +
-      'try{window.parent.postMessage({type:"tm_sr_theme_request",theme:next},"*");}catch(e2){}' +
-      'updateThemeBtn();' +
-      '});' +
-      '}' +
-      'updateThemeBtn();' +
-      '}' +
-      'function updateThemeBtn(){' +
-      'var isLight=document.documentElement.classList.contains("sr-light");' +
-      'Array.prototype.forEach.call(document.querySelectorAll(".tm-sr-sidebar-theme-btn .tm-theme-icon"),function(i){i.textContent=isLight?"\u2600":"\u263E";});' +
+      'try{var oldChev=document.getElementById("tm-sr-sidebar-toggle");if(oldChev&&oldChev.parentNode)oldChev.parentNode.removeChild(oldChev);}catch(eChev){}' +
       '}' +
 
       'function toggle(){' +
@@ -4287,12 +4534,11 @@
       'if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);' +
       'else init();' +
 
-      '/* React to theme messages from the parent (e.g. when toggled from the other iframe). */' +
+      '/* React to theme messages from the parent (e.g. when the parent toggle is clicked). */' +
       'window.addEventListener("message",function(ev){' +
       'if(!ev.data||ev.data.type!=="tm_sr_theme")return;' +
       'if(ev.data.theme!=="light"&&ev.data.theme!=="dark")return;' +
       'try{document.documentElement.classList.toggle("sr-light",ev.data.theme==="light");document.documentElement.setAttribute("data-sr-theme",ev.data.theme);document.documentElement.setAttribute("data-theme",ev.data.theme);}catch(e){}' +
-      'updateThemeBtn();' +
       '});' +
 
       '})();' +
@@ -5147,11 +5393,12 @@
   function prepareHtmlWithWorkspace(html, wsJs, opts) {
     opts = opts || {};
     var courseId = opts.courseId || (opts.formulaSheet ? 'formula' : activeCourseId);
+    var courseDef = COURSES[courseId] || null;
     html = patchEcorHighlightGate(html); /* lets the parent page turn highlighting on/off */
     html = patchEcorScrollPassive(html); /* smoother scrolling inside the iframe */
     html = patchEcorHighlightOpacity(html); /* match opacity behaviour with our tools */
     html = injectHighlightContrastCss(html); /* theme-aware mark CSS (slot-indexed, dark/light) */
-    html = injectContentThemeOverrides(html); /* body/text/link/code light-mode recolor for notes content */
+    html = injectContentThemeOverrides(html, courseDef); /* per-course theme recolor for notes content */
     if (opts.formulaSheet) {
       html = patchFormulaVarDefsGlobal(html);
       html = patchFormulaColorCodingGuide(html);
@@ -5163,6 +5410,7 @@
     /* Sidebar is injected into ALL notes iframes (MAAE, ECOR) AND the formula iframe —
      * so the user keeps access to the course TOC + theme toggle while the formula sheet is open. */
     html = injectSidebarChrome(html, { course: courseId });
+    html = injectNotesZoom(html); /* CSS var + Ctrl+wheel handler; level is hydrated by parent post-load */
     html = injectThemeBootstrap(html, currentTheme); /* inline class on <html> so first paint matches theme */
     html = injectWorkspaceIframeScript(html, wsJs); /* paste toolbar + tools (wsJs file body) */
     if (opts.formulaSheet) html = injectFormulaVariableEnhancements(html); /* vars + nomenclature + popups */
@@ -5189,6 +5437,9 @@
         setTimeout(hydrateIframeChrome, 0);
         tryAttachIframeScrollSync();
         syncAllStickyNoteLayouts();
+        /* Re-apply the persisted zoom for this course (also runs on every
+         * course switch since each switch reloads the iframe). */
+        if (typeof rehydrateZoomForActiveCourse === 'function') rehydrateZoomForActiveCourse();
       });
     };
     frame.src = _tmNotesBlobUrl;
@@ -5313,6 +5564,8 @@
    * Always loads the study guide into the main iframe; optionally opens the formula workspace from ?view=formula.
    */
   function loadMainWorkspaceContent() {
+    /* No course selected (welcome state) → nothing to load. */
+    if (!activeCourseId) return;
     loadRepoContent();
     if (activeCourseId === 'ecor2050' && isFormulaView()) openFormulaDock();
   }
@@ -5328,15 +5581,27 @@
       card.setAttribute('aria-pressed', isActive ? 'true' : 'false');
     });
 
-    // Update section heading (keeps the same DOM structure/styles).
-    var heading = document.getElementById('ecor-heading');
-    if (heading && c && c.code) heading.textContent = c.code;
+    // Hide the notes panel entirely on the welcome screen (no course selected).
+    var panel = document.querySelector('.ecor-panel');
+    if (panel) panel.hidden = !c;
+
+    // Update section heading only when a course is active.
+    if (c && c.code) {
+      var heading = document.getElementById('ecor-heading');
+      if (heading) heading.textContent = c.code;
+    }
 
     // ECOR-only formula controls.
     var formulaWrap = document.querySelector('.formula-sheet-launch-wrap');
     var showFormula = activeCourseId === 'ecor2050';
     if (formulaWrap) formulaWrap.hidden = !showFormula;
     if (!showFormula) closeFormulaDock();
+
+    // Tag <body> with the active course id + a class for courses whose natural
+    // light look uses a custom paper color (so the chrome palette can match it
+    // in light mode without affecting dark mode).
+    document.body.setAttribute('data-active-course', activeCourseId || '');
+    document.body.classList.toggle('tm-sr-paper-active', !!(c && c.paperColor));
   }
 
   function bindCourseCards() {
@@ -5344,6 +5609,13 @@
       if (!id || !COURSES[id]) return;
       if (id === activeCourseId) return;
       setActiveCourseId(id);
+      /* Each course declares its native theme via bakedTheme (default 'dark').
+       * Clicking the card switches the parent page to that theme — MATH (light-
+       * baked) flips to light, ECOR/MAAE (dark-baked) flips back to dark.
+       * The manual ☾/☀ toggle still works after; the next course click will
+       * re-set the theme to that course's natural baseline. */
+      var nextTheme = (COURSES[id].bakedTheme === 'light') ? 'light' : 'dark';
+      setTheme(nextTheme);
       syncCourseUi();
       loadMainWorkspaceContent();
       // Re-init stickies/images after iframe reload to match the new course storage.
@@ -5374,9 +5646,14 @@
 
   if (isUnlocked()) {
     showApp();
+    /* Welcome state: no course is selected → force dark mode for the landing
+     * view regardless of whatever theme was stored last (often light from a
+     * previous MATH session). The first course-click will re-set the theme
+     * to that course's bakedTheme. */
+    setTheme('dark');
     syncCourseUi();
     bindCourseCards();
-    loadMainWorkspaceContent();
+    loadMainWorkspaceContent(); /* bails when no activeCourseId */
   } else {
     showLock();
   }
@@ -5392,6 +5669,68 @@
         closeFormulaDock();
       });
     }
+  })();
+
+  /* ── Notes zoom (parent side) ──────────────────────────────────────────────
+   * Per-course zoom level stored in localStorage under tm_sr_zoom_v1_<course>.
+   * Range: 50–250%. Step: 10% per click, 10% per Ctrl/⌘+wheel notch (handler
+   * lives inside the iframe — see injectNotesZoom). Buttons here also serve as
+   * the readout. Sends { type: 'tm_sr_zoom', level } to the iframe; the iframe
+   * applies `zoom: N` to `.app` (so the toolbar/sticky layer stay at 1x) and
+   * echoes back the same message after wheel events for state sync. */
+  var ZOOM_KEY_PREFIX = 'tm_sr_zoom_v1_';
+  var ZOOM_MIN = 0.5, ZOOM_MAX = 2.5, ZOOM_STEP = 0.1;
+  function zoomKeyForCourse(id) { return ZOOM_KEY_PREFIX + (id || activeCourseId); }
+  function readZoomLevel(id) {
+    try {
+      var v = parseFloat(localStorage.getItem(zoomKeyForCourse(id)));
+      if (!isFinite(v) || v <= 0) return 1;
+      return Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, v));
+    } catch (e) { return 1; }
+  }
+  function writeZoomLevel(id, lvl) {
+    try { localStorage.setItem(zoomKeyForCourse(id), String(lvl)); } catch (e) { /* ignore */ }
+  }
+  function clampZoom(lvl) { return Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Math.round(lvl * 100) / 100)); }
+  function postZoomToIframe(lvl) {
+    try {
+      if (frame && frame.contentWindow) {
+        frame.contentWindow.postMessage({ type: 'tm_sr_zoom', level: lvl }, '*');
+      }
+    } catch (e) { /* ignore */ }
+  }
+  function updateZoomReadout(lvl) {
+    var el = document.getElementById('btn-zoom-reset');
+    if (el) el.textContent = Math.round(lvl * 100) + '%';
+  }
+  /** Apply a new zoom level: clamp, persist, post to iframe, update readout. */
+  function setZoomLevel(lvl) {
+    var clamped = clampZoom(lvl);
+    writeZoomLevel(activeCourseId, clamped);
+    postZoomToIframe(clamped);
+    updateZoomReadout(clamped);
+  }
+  /** Re-apply persisted zoom for the new active course (called on course switch + iframe reload). */
+  function rehydrateZoomForActiveCourse() {
+    var lvl = readZoomLevel(activeCourseId);
+    updateZoomReadout(lvl);
+    postZoomToIframe(lvl);
+  }
+  (function initZoomControls() {
+    var btnIn = document.getElementById('btn-zoom-in');
+    var btnOut = document.getElementById('btn-zoom-out');
+    var btnReset = document.getElementById('btn-zoom-reset');
+    if (btnIn) btnIn.addEventListener('click', function () { setZoomLevel(readZoomLevel(activeCourseId) + ZOOM_STEP); });
+    if (btnOut) btnOut.addEventListener('click', function () { setZoomLevel(readZoomLevel(activeCourseId) - ZOOM_STEP); });
+    if (btnReset) btnReset.addEventListener('click', function () { setZoomLevel(1); });
+    updateZoomReadout(readZoomLevel(activeCourseId));
+    /* Iframe echo back after Ctrl+wheel inside the iframe. */
+    window.addEventListener('message', function (ev) {
+      if (!ev.data || ev.data.type !== 'tm_sr_zoom_request') return;
+      var lvl = parseFloat(ev.data.level);
+      if (!isFinite(lvl) || lvl <= 0) return;
+      setZoomLevel(lvl);
+    });
   })();
 
   function setPasswordVisible(show) {
