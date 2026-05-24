@@ -1456,6 +1456,13 @@
     border-color: var(--cyan);
     color: var(--white);
   }
+  /* Hide the ? workspace-guide button in immersive views (expand + browser
+     full screen) so the notes have zero floating overlays competing with the
+     reading area. The button reappears as soon as you exit either mode. */
+  body.sr-notes-expand .tm-workspace-help-btn,
+  body.tm-sr-fullscreen-active .tm-workspace-help-btn {
+    display: none !important;
+  }
 
   .tm-workspace-guide {
     position: fixed;
@@ -1984,8 +1991,7 @@
       <div class="page-head-controls">
         <div class="spocket-toggle-wrap">
           <button type="button" id="spocket-toggle-btn" class="page-spocket-toggle" aria-haspopup="true" aria-expanded="false" aria-controls="spocket-toggle-popover">
-            <span class="page-spocket-icon" aria-hidden="true">&#x1F916;</span>
-            <span>Spocket</span>
+            <span>Edit where Spocket appears</span>
             <span class="page-spocket-chev" aria-hidden="true">&#x25BE;</span>
           </button>
           <div id="spocket-toggle-popover" class="spocket-popover" role="dialog" aria-label="Spocket visibility settings" hidden>
