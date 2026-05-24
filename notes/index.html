@@ -383,6 +383,11 @@
     min-height: 0;
     overflow: visible;
   }
+  /* The welcome state hides the panel via the [hidden] attribute (syncCourseUi).
+     Our author rule above sets `display: flex`, which has higher specificity than
+     the UA stylesheet's `[hidden] { display: none }` — force the override here so
+     the panel stays hidden when no course is active. */
+  .ecor-panel[hidden] { display: none !important; }
   /* AI chat panel: shrink the notes column to leave room for the side panel */
   body.sr-ai-panel-open .ecor-panel {
     padding-right: var(--ai-panel-width, 35vw);
