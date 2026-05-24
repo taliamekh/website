@@ -363,12 +363,16 @@
       padding 0.35s ease,
       max-width 0.35s ease;
   }
-  /* Expand view: maximize notes; nav stays visible */
+  /* Expand view: maximize notes; nav is hidden entirely so the notes fill the
+     full viewport. The floating .ecor-panel-actions group (zoom controls,
+     Expand-view toggle, Full-screen button) stays anchored bottom-left so the
+     user can exit. */
+  body.sr-notes-expand nav { display: none !important; }
   body.sr-notes-expand main {
     max-width: none;
     width: 100%;
-    min-height: calc(100vh - 64px);
-    padding: 64px 0 0;
+    min-height: 100vh;
+    padding: 0;
     margin: 0;
     transition: padding 0.35s ease, max-width 0.35s ease;
   }
@@ -408,28 +412,23 @@
     border-radius: 0;
     border-left: none;
     border-right: none;
-    min-height: calc(100vh - 64px);
+    border-top: none;
+    min-height: 100vh;
     flex: 1 1 auto;
   }
+  /* The panel-head bar (course title + README + load status) is fully hidden
+     in expand view — the floating .ecor-panel-actions group below is position:
+     fixed so it survives even though its parent collapses. */
   body.sr-notes-expand .ecor-panel-head {
-    padding: 10px 14px;
-    border-bottom: 1px solid var(--border);
-    background: rgba(6, 13, 26, 0.92);
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
   }
   body.sr-notes-expand .ecor-panel-head-row {
-    flex-wrap: nowrap;
-    align-items: center;
-    gap: 10px;
+    display: contents;
   }
-  body.sr-notes-expand #ecor-heading {
-    position: fixed;
-    top: 72px;
-    left: 14px;
-    z-index: 550;
-    font-size: clamp(20px, 3.5vw, 28px);
-    margin: 0;
-    pointer-events: none;
-  }
+  body.sr-notes-expand #ecor-heading { display: none !important; }
+  body.sr-notes-expand .load-status { display: none !important; }
   body.sr-notes-expand .ecor-panel-actions {
     position: fixed;
     bottom: 14px;
@@ -464,6 +463,125 @@
     gap: 24px;
   }
   .page-head-titles { min-width: 0; }
+  .page-head-controls {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    flex: 0 0 auto;
+  }
+  /* ── Spocket visibility pill ──────────────────────────────────────────
+     Sits left of the moon/sun toggle. Click opens a small popover with
+     three persistent preferences (put-away, hide-in-expand-view, hide-in-
+     full-screen). Wired in initSpocketVisibility(). */
+  .spocket-toggle-wrap { position: relative; }
+  .page-spocket-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+    height: 44px;
+    padding: 0 14px;
+    border-radius: 22px;
+    background: rgba(192, 132, 252, 0.10);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: background 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
+  }
+  .page-spocket-toggle:hover {
+    background: rgba(192, 132, 252, 0.18);
+    transform: translateY(-1px);
+  }
+  .page-spocket-toggle:focus-visible {
+    outline: 2px solid var(--cyan);
+    outline-offset: 2px;
+  }
+  .page-spocket-toggle[aria-expanded="true"] {
+    background: rgba(192, 132, 252, 0.22);
+  }
+  .page-spocket-icon { font-size: 16px; line-height: 1; }
+  .page-spocket-chev { font-size: 11px; opacity: 0.7; }
+  html.sr-light .page-spocket-toggle {
+    background: rgba(110, 60, 146, 0.08);
+    border-color: rgba(110, 60, 146, 0.35);
+    color: var(--cyan);
+  }
+  html.sr-light .page-spocket-toggle:hover {
+    background: rgba(110, 60, 146, 0.16);
+  }
+  .spocket-popover {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 600;
+    width: 320px;
+    max-width: calc(100vw - 32px);
+    padding: 14px 14px 12px;
+    border-radius: 14px;
+    background: var(--panel);
+    border: 1px solid var(--border2);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+    color: var(--text);
+    font-family: 'Outfit', sans-serif;
+    font-size: 13px;
+  }
+  html.sr-light .spocket-popover {
+    box-shadow: 0 18px 40px rgba(82, 60, 20, 0.18);
+  }
+  .spocket-popover[hidden] { display: none; }
+  .spocket-popover-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+  .spocket-popover-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 4px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background 0.12s ease;
+  }
+  .spocket-popover-row:hover {
+    background: rgba(192, 132, 252, 0.08);
+  }
+  html.sr-light .spocket-popover-row:hover {
+    background: rgba(110, 60, 146, 0.08);
+  }
+  .spocket-popover-row input[type="checkbox"] {
+    margin-top: 3px;
+    accent-color: var(--cyan);
+    flex: 0 0 auto;
+  }
+  .spocket-popover-label {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+  .spocket-popover-name {
+    font-weight: 500;
+    color: var(--text);
+  }
+  .spocket-popover-help {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    line-height: 1.35;
+  }
+  /* ── Spocket visibility rules ────────────────────────────────────────
+     The popover sets body classes; CSS then hides #spocket-root when the
+     relevant combination matches. */
+  body.tm-sr-spocket-hidden #spocket-root { display: none !important; }
+  body.tm-sr-spocket-hide-expand.sr-notes-expand #spocket-root { display: none !important; }
+  body.tm-sr-spocket-hide-fullscreen.tm-sr-fullscreen-active #spocket-root { display: none !important; }
   .page-theme-toggle {
     flex: 0 0 auto;
     margin-top: 6px;
@@ -1806,9 +1924,42 @@
         <span class="section-num">Student Resources</span>
         <h1 class="page-title">Student Resources</h1>
       </div>
-      <button type="button" id="page-theme-toggle" class="page-theme-toggle" aria-label="Toggle light/dark mode">
-        <span class="page-theme-icon" aria-hidden="true">&#x263E;</span>
-      </button>
+      <div class="page-head-controls">
+        <div class="spocket-toggle-wrap">
+          <button type="button" id="spocket-toggle-btn" class="page-spocket-toggle" aria-haspopup="true" aria-expanded="false" aria-controls="spocket-toggle-popover">
+            <span class="page-spocket-icon" aria-hidden="true">&#x1F916;</span>
+            <span>Spocket</span>
+            <span class="page-spocket-chev" aria-hidden="true">&#x25BE;</span>
+          </button>
+          <div id="spocket-toggle-popover" class="spocket-popover" role="dialog" aria-label="Spocket visibility settings" hidden>
+            <div class="spocket-popover-title">Spocket visibility</div>
+            <label class="spocket-popover-row">
+              <input type="checkbox" id="spocket-pref-hidden">
+              <span class="spocket-popover-label">
+                <span class="spocket-popover-name">Put Spocket away</span>
+                <span class="spocket-popover-help">Hides her completely. Stays hidden across sessions until you bring her back from this menu.</span>
+              </span>
+            </label>
+            <label class="spocket-popover-row">
+              <input type="checkbox" id="spocket-pref-hide-expand">
+              <span class="spocket-popover-label">
+                <span class="spocket-popover-name">Hide her in expand view</span>
+                <span class="spocket-popover-help">On by default.</span>
+              </span>
+            </label>
+            <label class="spocket-popover-row">
+              <input type="checkbox" id="spocket-pref-hide-fullscreen">
+              <span class="spocket-popover-label">
+                <span class="spocket-popover-name">Hide her in full screen</span>
+                <span class="spocket-popover-help">On by default.</span>
+              </span>
+            </label>
+          </div>
+        </div>
+        <button type="button" id="page-theme-toggle" class="page-theme-toggle" aria-label="Toggle light/dark mode">
+          <span class="page-theme-icon" aria-hidden="true">&#x263E;</span>
+        </button>
+      </div>
     </div>
     <p class="page-sub">Materials organized by course code. Select a course to load its notes workspace.</p>
   </div>
@@ -2172,6 +2323,93 @@
       paint();
     });
     window.addEventListener('tm-sr-theme', paint);
+  })();
+
+  /* ── Spocket visibility prefs ──────────────────────────────────────────────
+   * Per-user preferences for when Spocket should be visible. All three persist
+   * in localStorage so they survive logouts/relogins. Body classes drive the
+   * CSS that hides #spocket-root in the relevant combinations.
+   */
+  var SPOCKET_PREF_KEYS = {
+    hidden: 'tm_sr_spocket_pref_hidden_v1',
+    hideExpand: 'tm_sr_spocket_pref_hide_expand_v1',
+    hideFullscreen: 'tm_sr_spocket_pref_hide_fullscreen_v1'
+  };
+  function readBoolPref(key, dflt) {
+    try {
+      var v = localStorage.getItem(key);
+      if (v === null) return dflt;
+      return v === '1';
+    } catch (e) { return dflt; }
+  }
+  function writeBoolPref(key, value) {
+    try { localStorage.setItem(key, value ? '1' : '0'); } catch (e) { /* ignore */ }
+  }
+  function readSpocketPrefs() {
+    return {
+      hidden: readBoolPref(SPOCKET_PREF_KEYS.hidden, false),
+      hideExpand: readBoolPref(SPOCKET_PREF_KEYS.hideExpand, true),
+      hideFullscreen: readBoolPref(SPOCKET_PREF_KEYS.hideFullscreen, true)
+    };
+  }
+  function applySpocketPrefsToBody(prefs) {
+    document.body.classList.toggle('tm-sr-spocket-hidden', !!prefs.hidden);
+    document.body.classList.toggle('tm-sr-spocket-hide-expand', !!prefs.hideExpand);
+    document.body.classList.toggle('tm-sr-spocket-hide-fullscreen', !!prefs.hideFullscreen);
+  }
+  /* Apply early (before Spocket React mounts) so she doesn't flash visible
+   * for a frame when the "put away" pref is on. */
+  applySpocketPrefsToBody(readSpocketPrefs());
+
+  (function initSpocketToggle() {
+    var btn = document.getElementById('spocket-toggle-btn');
+    var pop = document.getElementById('spocket-toggle-popover');
+    var cbHidden = document.getElementById('spocket-pref-hidden');
+    var cbExpand = document.getElementById('spocket-pref-hide-expand');
+    var cbFs = document.getElementById('spocket-pref-hide-fullscreen');
+    if (!btn || !pop || !cbHidden || !cbExpand || !cbFs) return;
+
+    function hydrate() {
+      var p = readSpocketPrefs();
+      cbHidden.checked = p.hidden;
+      cbExpand.checked = p.hideExpand;
+      cbFs.checked = p.hideFullscreen;
+      applySpocketPrefsToBody(p);
+    }
+    hydrate();
+
+    function setOpen(open) {
+      if (open) {
+        pop.hidden = false;
+        btn.setAttribute('aria-expanded', 'true');
+      } else {
+        pop.hidden = true;
+        btn.setAttribute('aria-expanded', 'false');
+      }
+    }
+    btn.addEventListener('click', function (ev) {
+      ev.stopPropagation();
+      setOpen(pop.hidden);
+    });
+    /* Click anywhere outside the popover closes it. */
+    document.addEventListener('click', function (ev) {
+      if (pop.hidden) return;
+      if (pop.contains(ev.target) || btn.contains(ev.target)) return;
+      setOpen(false);
+    });
+    document.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Escape' && !pop.hidden) { setOpen(false); btn.focus(); }
+    });
+
+    function persist() {
+      writeBoolPref(SPOCKET_PREF_KEYS.hidden, cbHidden.checked);
+      writeBoolPref(SPOCKET_PREF_KEYS.hideExpand, cbExpand.checked);
+      writeBoolPref(SPOCKET_PREF_KEYS.hideFullscreen, cbFs.checked);
+      applySpocketPrefsToBody(readSpocketPrefs());
+    }
+    cbHidden.addEventListener('change', persist);
+    cbExpand.addEventListener('change', persist);
+    cbFs.addEventListener('change', persist);
   })();
 
   function getActiveCourse() {
@@ -3748,6 +3986,9 @@
       btnBrowserFullscreen.setAttribute('aria-pressed', active ? 'true' : 'false');
       btnBrowserFullscreen.textContent = active ? 'Exit full screen' : 'Full screen';
     }
+    /* Tag <body> so .tm-sr-spocket-hide-fullscreen + .tm-sr-fullscreen-active
+     * combination CSS can hide Spocket while full-screen is active. */
+    document.body.classList.toggle('tm-sr-fullscreen-active', !!active);
   }
 
   function exitBrowserFullscreen() {
