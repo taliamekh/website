@@ -2184,7 +2184,7 @@
             <button type="button" class="btn btn-primary" id="btn-browser-fullscreen" aria-pressed="false">
               Full screen
             </button>
-            <button type="button" id="btn-actions-hide" class="actions-hide-btn" aria-label="Hide controls (Shift+H)" title="Hide controls — bring back with Shift+H">×</button>
+            <button type="button" id="btn-actions-hide" class="actions-hide-btn" aria-label="Hide controls (Ctrl+H)" title="Hide controls — Ctrl+H to toggle, Esc to exit expand view">×</button>
           </div>
         </div>
       </div>
@@ -4537,20 +4537,20 @@
         'currentZoom=applyZoom(next);' +
         'try{window.parent.postMessage({type:"tm_sr_zoom_request",level:next},"*");}catch(e){}' +
       '},{passive:false});' +
-      /* Relay Shift+H AND Esc to the parent so the user can bring the */
-      /* controls bar back without first clicking out of the iframe. */
+      /* Relay Ctrl/⌘+H (toggle actions bar) and Esc (exit expand view) to */
+      /* the parent so both work without first clicking out of the iframe. */
       /* Ignored when typing in any text input. */
       'window.addEventListener("keydown",function(ev){' +
         'var t=ev.target;' +
         'if(t&&(t.tagName==="INPUT"||t.tagName==="TEXTAREA"||t.tagName==="SELECT"||t.isContentEditable))return;' +
         'var k=ev.key;' +
-        'if(ev.shiftKey&&!ev.ctrlKey&&!ev.metaKey&&!ev.altKey&&(k==="H"||k==="h")){' +
+        'if((ev.ctrlKey||ev.metaKey)&&!ev.shiftKey&&!ev.altKey&&(k==="H"||k==="h")){' +
           'ev.preventDefault();' +
           'try{window.parent.postMessage({type:"tm_sr_toggle_actions_hidden"},"*");}catch(e){}' +
           'return;' +
         '}' +
         'if(k==="Escape"&&!ev.shiftKey&&!ev.ctrlKey&&!ev.metaKey&&!ev.altKey){' +
-          'try{window.parent.postMessage({type:"tm_sr_show_actions"},"*");}catch(e){}' +
+          'try{window.parent.postMessage({type:"tm_sr_exit_expand"},"*");}catch(e){}' +
         '}' +
       '});' +
       '})();' +
@@ -6246,14 +6246,13 @@
     }, 4000);
   }
 
-  /* Hide / show the entire actions bar via the × button or Shift+H / Esc.
-   * NOT persisted — each page load (and each fresh entry into expand view)
-   * starts with the bar visible. This trades a tiny convenience for the
-   * much bigger win that the user can never get trapped in expand view with
-   * no controls visible.
+  /* Hide / show the actions bar (Ctrl/⌘+H or × button) and exit expand view
+   * (Esc). NOT persisted — each page load and each fresh expand-view entry
+   * starts with the bar visible, so the user can never be trapped without
+   * a way out.
    *
-   * The iframe forwards Shift+H AND Esc via postMessage so the shortcuts
-   * work regardless of which document has focus. */
+   * The iframe relays both shortcuts via postMessage so they fire regardless
+   * of which document has focus. */
   var ACTIONS_HIDDEN_KEY = 'tm_sr_actions_hidden_v1';
   /* One-time migration: clear any persisted hidden state from earlier
    * builds so existing users aren't left stuck on their next visit. */
@@ -6262,8 +6261,17 @@
     opts = opts || {};
     document.body.classList.toggle('tm-sr-actions-hidden', !!hidden);
     if (hidden && !opts.silent) {
-      showSrToast('Controls hidden — press <kbd>Shift</kbd>+<kbd>H</kbd> or <kbd>Esc</kbd> to bring them back');
+      showSrToast(
+        '<strong>Controls hidden.</strong><br>' +
+        '<kbd>Ctrl</kbd>+<kbd>H</kbd> to toggle them back · ' +
+        '<kbd>Esc</kbd> to exit expand view'
+      );
     }
+  }
+  function exitExpandView() {
+    if (!document.body.classList.contains('sr-notes-expand')) return;
+    var btn = document.getElementById('btn-expand-view');
+    if (btn) btn.click();
   }
 
   (function initActionsHide() {
@@ -6283,34 +6291,29 @@
       if (!document.body.classList.contains('sr-notes-expand')) return;
       setActionsHidden(!document.body.classList.contains('tm-sr-actions-hidden'));
     }
-    function tryShow() {
-      /* Esc only re-SHOWS the bar (never hides), so accidental presses are safe. */
-      if (!document.body.classList.contains('sr-notes-expand')) return;
-      if (!document.body.classList.contains('tm-sr-actions-hidden')) return;
-      setActionsHidden(false);
-    }
     function handleHotkey(ev) {
       if (isTypingTarget(ev.target)) return;
       var k = ev.key;
-      /* Shift+H toggles (any modifier conflict skips). */
-      if (ev.shiftKey && !ev.ctrlKey && !ev.metaKey && !ev.altKey && (k === 'H' || k === 'h')) {
+      /* Ctrl/⌘+H toggles the bar (in expand view only). */
+      if ((ev.ctrlKey || ev.metaKey) && !ev.shiftKey && !ev.altKey && (k === 'H' || k === 'h')) {
+        if (!document.body.classList.contains('sr-notes-expand')) return;
         ev.preventDefault();
         tryToggle();
         return;
       }
-      /* Plain Esc — bring the bar back if it's hidden. Won't interfere with
-       * full-screen exit (browser handles that first). */
+      /* Plain Esc — exit expand view. Browser's native full-screen-exit on
+       * Esc still wins first when in fullscreen, which is the desired order. */
       if (k === 'Escape' && !ev.shiftKey && !ev.ctrlKey && !ev.metaKey && !ev.altKey) {
-        tryShow();
+        exitExpandView();
       }
     }
     document.addEventListener('keydown', handleHotkey);
-    /* Iframes post a relay message when Shift+H or Esc is pressed inside them
+    /* Iframes post a relay message when Ctrl/⌘+H or Esc is pressed inside them
      * (see iframe-side listener in injectNotesZoom). */
     window.addEventListener('message', function (ev) {
       if (!ev.data) return;
       if (ev.data.type === 'tm_sr_toggle_actions_hidden') { tryToggle(); }
-      else if (ev.data.type === 'tm_sr_show_actions') { tryShow(); }
+      else if (ev.data.type === 'tm_sr_exit_expand') { exitExpandView(); }
     });
   })();
 
