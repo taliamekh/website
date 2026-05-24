@@ -850,8 +850,60 @@
     gap: 10px;
     align-items: center;
   }
+  /* Expand-view-only collapse toggle for the floating actions bar. Lives at
+     the left of .ecor-panel-actions; when clicked, hides the rest of the bar
+     so the user has more visible note area. State persists in localStorage
+     (see initActionsCollapse). Hidden entirely outside expand view since the
+     bar is naturally compact when it sits in the panel header. */
+  .actions-collapse-btn {
+    display: none;
+    appearance: none;
+    background: rgba(192, 132, 252, 0.12);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    color: var(--text);
+    cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    line-height: 1;
+    height: 36px;
+    width: 32px;
+    padding: 0;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  body.sr-notes-expand .actions-collapse-btn {
+    display: inline-flex;
+  }
+  .actions-collapse-btn:hover {
+    background: rgba(192, 132, 252, 0.22);
+  }
+  .actions-collapse-btn:focus-visible {
+    outline: 2px solid var(--cyan);
+    outline-offset: 2px;
+  }
+  html.sr-light .actions-collapse-btn {
+    background: rgba(110, 60, 146, 0.08);
+    border-color: rgba(110, 60, 146, 0.35);
+    color: var(--cyan);
+  }
+  html.sr-light .actions-collapse-btn:hover {
+    background: rgba(110, 60, 146, 0.16);
+  }
+  /* When the bar is collapsed (expand view only), hide the rest of the
+     actions group; the small chevron button remains and re-expands on click. */
+  body.sr-notes-expand.tm-sr-actions-collapsed .actions-collapsible {
+    display: none;
+  }
   /* Zoom controls — small inline group (−  100%  +) next to Expand/Full screen.
      Center button doubles as the level readout and as the reset button. */
+  .actions-collapsible {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+  }
   .zoom-controls {
     display: inline-flex;
     align-items: stretch;
@@ -2007,17 +2059,20 @@
       <div class="ecor-panel-head-row">
         <h2 id="ecor-heading">ECOR 2050</h2>
         <div class="ecor-panel-actions">
-          <div class="zoom-controls" role="group" aria-label="Notes zoom">
-            <button type="button" class="zoom-btn" id="btn-zoom-out" aria-label="Zoom out" title="Zoom out (Ctrl/⌘ + scroll)">−</button>
-            <button type="button" class="zoom-btn zoom-level" id="btn-zoom-reset" aria-label="Reset zoom to 100%" title="Reset zoom">100%</button>
-            <button type="button" class="zoom-btn" id="btn-zoom-in" aria-label="Zoom in" title="Zoom in (Ctrl/⌘ + scroll)">+</button>
+          <button type="button" id="btn-actions-collapse" class="actions-collapse-btn" aria-label="Hide controls" aria-expanded="true" title="Hide controls">&#x2039;</button>
+          <div class="actions-collapsible" id="actions-collapsible">
+            <div class="zoom-controls" role="group" aria-label="Notes zoom">
+              <button type="button" class="zoom-btn" id="btn-zoom-out" aria-label="Zoom out" title="Zoom out (Ctrl/⌘ + scroll)">−</button>
+              <button type="button" class="zoom-btn zoom-level" id="btn-zoom-reset" aria-label="Reset zoom to 100%" title="Reset zoom">100%</button>
+              <button type="button" class="zoom-btn" id="btn-zoom-in" aria-label="Zoom in" title="Zoom in (Ctrl/⌘ + scroll)">+</button>
+            </div>
+            <button type="button" class="btn btn-primary" id="btn-expand-view" aria-pressed="false">
+              Expand view
+            </button>
+            <button type="button" class="btn btn-primary" id="btn-browser-fullscreen" aria-pressed="false">
+              Full screen
+            </button>
           </div>
-          <button type="button" class="btn btn-primary" id="btn-expand-view" aria-pressed="false">
-            Expand view
-          </button>
-          <button type="button" class="btn btn-primary" id="btn-browser-fullscreen" aria-pressed="false">
-            Full screen
-          </button>
         </div>
       </div>
       <!-- Filled from README_URL (learning-notes repo) while the study guide stays the main iframe. -->
@@ -5975,6 +6030,29 @@
       var lvl = parseFloat(ev.data.level);
       if (!isFinite(lvl) || lvl <= 0) return;
       setZoomLevel(lvl);
+    });
+  })();
+
+  /* Expand-view-only: collapse/expand the floating actions bar so it gets out
+   * of the way while reading. State persists per browser (not per course). */
+  (function initActionsCollapse() {
+    var btn = document.getElementById('btn-actions-collapse');
+    if (!btn) return;
+    var KEY = 'tm_sr_actions_collapsed_v1';
+    function applyState(collapsed) {
+      document.body.classList.toggle('tm-sr-actions-collapsed', collapsed);
+      btn.innerHTML = collapsed ? '›' : '‹'; /* › when collapsed (click to show), ‹ when expanded */
+      btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+      btn.setAttribute('aria-label', collapsed ? 'Show controls' : 'Hide controls');
+      btn.title = collapsed ? 'Show controls' : 'Hide controls';
+    }
+    var stored = false;
+    try { stored = localStorage.getItem(KEY) === '1'; } catch (e) { /* ignore */ }
+    applyState(stored);
+    btn.addEventListener('click', function () {
+      var next = !document.body.classList.contains('tm-sr-actions-collapsed');
+      applyState(next);
+      try { localStorage.setItem(KEY, next ? '1' : '0'); } catch (e) { /* ignore */ }
     });
   })();
 
