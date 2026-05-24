@@ -4419,6 +4419,70 @@
   }
 
   /**
+   * MATH formula search fix. The upstream MATH HTML has a search box (#fs-search)
+   * that lists matching equations in #fs-results. Clicking a result is supposed to
+   * scroll to the equation, but the inline onclick does `getElementById('eq-' + n)`
+   * — and the cataloging script only adds those IDs to cards that don't already have
+   * one (and every card in this MATH file already has its own ID like #fs-magnitude).
+   * Result: the lookup returns null and clicking the result does nothing.
+   *
+   * Rather than modify the upstream HTML, we attach a capture-phase click listener
+   * to #fs-results that fires before the broken inline onclick and uses the
+   * `data-eq-num` attribute (which IS set on every card) to find the equation.
+   * Also wires Enter on #fs-search to click the first result.
+   */
+  function injectFormulaSearchFix(html) {
+    var scr =
+      '<script>' +
+      '(function(){' +
+      'function jumpToEq(num){' +
+        'var el=document.querySelector("[data-eq-num=\\\"" + num + "\\\"]");' +
+        'if(!el)return false;' +
+        'try{el.scrollIntoView({behavior:"smooth",block:"center"});}catch(e){}' +
+        '/* brief highlight so the user can see where they landed */' +
+        'var prev=el.style.boxShadow;' +
+        'el.style.transition="box-shadow 0.35s ease";' +
+        'el.style.boxShadow="0 0 0 3px rgba(107,63,160,0.55)";' +
+        'setTimeout(function(){el.style.boxShadow=prev||"";},1500);' +
+        'return true;' +
+      '}' +
+      'function init(){' +
+        'var results=document.getElementById("fs-results");' +
+        'if(results){' +
+          /* Capture phase so we beat the broken inline onclick. */
+          'results.addEventListener("click",function(ev){' +
+            'var item=ev.target.closest&&ev.target.closest(".fs-result-item");' +
+            'if(!item)return;' +
+            'var badge=item.querySelector("span");' +
+            'if(!badge)return;' +
+            'var raw=(badge.textContent||"").replace("#","").trim();' +
+            'var num=parseInt(raw,10);' +
+            'if(isNaN(num))return;' +
+            'ev.preventDefault();ev.stopPropagation();' +
+            'if(jumpToEq(num)){' +
+              'results.style.display="none";' +
+              'var inp=document.getElementById("fs-search");' +
+              'if(inp)inp.value="";' +
+            '}' +
+          '},true);' +
+        '}' +
+        'var fsInput=document.getElementById("fs-search");' +
+        'if(fsInput){' +
+          'fsInput.addEventListener("keydown",function(ev){' +
+            'if(ev.key!=="Enter")return;' +
+            'ev.preventDefault();' +
+            'var first=document.querySelector("#fs-results .fs-result-item");' +
+            'if(first)first.click();' +
+          '});' +
+        '}' +
+      '}' +
+      'if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",init);}else{init();}' +
+      '})();' +
+      '</scr' + 'ipt>';
+    return html.replace(/<\/body>/i, function (m) { return scr + m; });
+  }
+
+  /**
    * Notes zoom — pasted into every notes iframe. Listens for `tm_sr_zoom`
    * messages from the parent and writes a CSS variable on <html>; pure CSS
    * then applies `zoom: var(...)` to the scroll container's children so the
@@ -5833,6 +5897,7 @@
     /* Sidebar is injected into ALL notes iframes (MAAE, ECOR) AND the formula iframe —
      * so the user keeps access to the course TOC + theme toggle while the formula sheet is open. */
     html = injectSidebarChrome(html, { course: courseId });
+    html = injectFormulaSearchFix(html); /* MATH's fs-search click → equation jump (works via data-eq-num) */
     html = injectNotesZoom(html); /* CSS var + Ctrl+wheel handler; level is hydrated by parent post-load */
     html = injectThemeBootstrap(html, currentTheme); /* inline class on <html> so first paint matches theme */
     html = injectWorkspaceIframeScript(html, wsJs); /* paste toolbar + tools (wsJs file body) */
