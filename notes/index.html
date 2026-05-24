@@ -447,6 +447,19 @@
     padding: 8px 10px;
     box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
   }
+  /* Light-mode override: the dark Aurora bg is the wrong color when the page
+     is in light/paper mode — swap to a cream/paper tone matching the panel
+     chrome so the bar blends in instead of floating as a black brick. */
+  html.sr-light body.sr-notes-expand .ecor-panel-actions {
+    background: rgba(250, 243, 224, 0.96);
+    border-color: var(--border);
+    box-shadow: 0 8px 28px rgba(82, 60, 20, 0.22);
+  }
+  html.sr-light body.sr-notes-expand.tm-sr-paper-active .ecor-panel-actions {
+    background: rgba(242, 235, 211, 0.96);
+    border-color: #c8baa0;
+    box-shadow: 0 8px 28px rgba(82, 60, 20, 0.22);
+  }
   body.sr-notes-expand .readme-block {
     display: none;
   }
@@ -895,6 +908,99 @@
      actions group; the small chevron button remains and re-expands on click. */
   body.sr-notes-expand.tm-sr-actions-collapsed .actions-collapsible {
     display: none;
+  }
+  /* ── Hide-bar button + Shift+H shortcut ───────────────────────────────────
+     The × button at the right of the bar (expand view only) removes the bar
+     entirely. The user gets it back via Shift+H — a toast at hide-time tells
+     them the shortcut. */
+  .actions-hide-btn {
+    display: none;
+    appearance: none;
+    background: rgba(192, 132, 252, 0.12);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    color: var(--text);
+    cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px;
+    line-height: 1;
+    height: 36px;
+    width: 36px;
+    padding: 0;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  body.sr-notes-expand .actions-hide-btn {
+    display: inline-flex;
+  }
+  .actions-hide-btn:hover {
+    background: rgba(248, 113, 113, 0.20);
+    color: #ff8a8a;
+    border-color: rgba(248, 113, 113, 0.5);
+  }
+  .actions-hide-btn:focus-visible {
+    outline: 2px solid var(--cyan);
+    outline-offset: 2px;
+  }
+  html.sr-light .actions-hide-btn {
+    background: rgba(110, 60, 146, 0.08);
+    border-color: rgba(110, 60, 146, 0.35);
+    color: var(--cyan);
+  }
+  html.sr-light .actions-hide-btn:hover {
+    background: rgba(160, 32, 32, 0.12);
+    color: #a02020;
+    border-color: rgba(160, 32, 32, 0.45);
+  }
+  /* When the bar is fully hidden, the actions container itself is gone. */
+  body.sr-notes-expand.tm-sr-actions-hidden .ecor-panel-actions {
+    display: none !important;
+  }
+  /* Toast that appears at the bottom-center when the bar is hidden,
+     reminding the user how to bring it back. */
+  .tm-sr-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(12px);
+    background: rgba(20, 16, 10, 0.95);
+    color: #fff;
+    padding: 12px 18px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    font-family: 'Outfit', sans-serif;
+    font-size: 14px;
+    opacity: 0;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    pointer-events: none;
+    z-index: 700;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
+  }
+  .tm-sr-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  .tm-sr-toast kbd {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    background: rgba(255, 255, 255, 0.14);
+    padding: 2px 8px;
+    border-radius: 5px;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    margin: 0 2px;
+  }
+  html.sr-light .tm-sr-toast {
+    background: rgba(250, 243, 224, 0.98);
+    color: #2a2618;
+    border-color: var(--border);
+    box-shadow: 0 12px 36px rgba(82, 60, 20, 0.30);
+  }
+  html.sr-light .tm-sr-toast kbd {
+    background: rgba(82, 60, 20, 0.10);
+    border-color: rgba(82, 60, 20, 0.30);
+    color: #14100a;
   }
   /* Zoom controls — small inline group (−  100%  +) next to Expand/Full screen.
      Center button doubles as the level readout and as the reset button. */
@@ -2078,6 +2184,7 @@
             <button type="button" class="btn btn-primary" id="btn-browser-fullscreen" aria-pressed="false">
               Full screen
             </button>
+            <button type="button" id="btn-actions-hide" class="actions-hide-btn" aria-label="Hide controls (Shift+H)" title="Hide controls — bring back with Shift+H">×</button>
           </div>
         </div>
       </div>
@@ -4366,6 +4473,16 @@
         'currentZoom=applyZoom(next);' +
         'try{window.parent.postMessage({type:"tm_sr_zoom_request",level:next},"*");}catch(e){}' +
       '},{passive:false});' +
+      /* Relay Shift+H to the parent so the user can toggle the actions bar */
+      /* without first clicking out of the iframe. Ignored when typing. */
+      'window.addEventListener("keydown",function(ev){' +
+        'if(!ev.shiftKey||ev.ctrlKey||ev.metaKey||ev.altKey)return;' +
+        'if(ev.key!=="H"&&ev.key!=="h")return;' +
+        'var t=ev.target;' +
+        'if(t&&(t.tagName==="INPUT"||t.tagName==="TEXTAREA"||t.tagName==="SELECT"||t.isContentEditable))return;' +
+        'ev.preventDefault();' +
+        'try{window.parent.postMessage({type:"tm_sr_toggle_actions_hidden"},"*");}catch(e){}' +
+      '});' +
       '})();' +
       '</scr' + 'ipt>';
     var out = html;
@@ -6036,6 +6153,77 @@
       var lvl = parseFloat(ev.data.level);
       if (!isFinite(lvl) || lvl <= 0) return;
       setZoomLevel(lvl);
+    });
+  })();
+
+  /* Tiny generic toast: pass HTML for the message. Auto-dismisses after 4s.
+   * Used by the actions-hide flow to surface the keyboard shortcut. */
+  var _tmToastEl = null, _tmToastTimer = null;
+  function showSrToast(html) {
+    if (!_tmToastEl) {
+      _tmToastEl = document.createElement('div');
+      _tmToastEl.className = 'tm-sr-toast';
+      _tmToastEl.setAttribute('role', 'status');
+      _tmToastEl.setAttribute('aria-live', 'polite');
+      document.body.appendChild(_tmToastEl);
+    }
+    _tmToastEl.innerHTML = html;
+    _tmToastEl.classList.add('show');
+    if (_tmToastTimer) clearTimeout(_tmToastTimer);
+    _tmToastTimer = setTimeout(function () {
+      if (_tmToastEl) _tmToastEl.classList.remove('show');
+    }, 4000);
+  }
+
+  /* Hide / show the entire actions bar via the × button or Shift+H.
+   * Works only in expand view (the bar lives in the panel header otherwise).
+   * State persists in localStorage. The iframe forwards Shift+H via postMessage
+   * so the shortcut works regardless of which document has focus. */
+  var ACTIONS_HIDDEN_KEY = 'tm_sr_actions_hidden_v1';
+  function readActionsHidden() {
+    try { return localStorage.getItem(ACTIONS_HIDDEN_KEY) === '1'; } catch (e) { return false; }
+  }
+  function setActionsHidden(hidden, opts) {
+    opts = opts || {};
+    document.body.classList.toggle('tm-sr-actions-hidden', !!hidden);
+    try { localStorage.setItem(ACTIONS_HIDDEN_KEY, hidden ? '1' : '0'); } catch (e) { /* ignore */ }
+    if (hidden && !opts.silent) {
+      showSrToast('Controls hidden — press <kbd>Shift</kbd>+<kbd>H</kbd> to bring them back');
+    }
+  }
+  /* Restore persisted hidden state on load (only kicks in once the user enters
+   * expand view since the CSS rule is gated on body.sr-notes-expand). */
+  setActionsHidden(readActionsHidden(), { silent: true });
+
+  (function initActionsHide() {
+    var btn = document.getElementById('btn-actions-hide');
+    if (btn) {
+      btn.addEventListener('click', function () { setActionsHidden(true); });
+    }
+    function isTypingTarget(t) {
+      if (!t) return false;
+      var tag = t.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return true;
+      if (t.isContentEditable) return true;
+      return false;
+    }
+    function handleHotkey(ev) {
+      if (!ev.shiftKey || ev.ctrlKey || ev.metaKey || ev.altKey) return;
+      var k = ev.key;
+      if (k !== 'H' && k !== 'h') return;
+      if (isTypingTarget(ev.target)) return;
+      /* Only meaningful in expand view — otherwise the bar lives in the panel header. */
+      if (!document.body.classList.contains('sr-notes-expand')) return;
+      ev.preventDefault();
+      setActionsHidden(!document.body.classList.contains('tm-sr-actions-hidden'));
+    }
+    document.addEventListener('keydown', handleHotkey);
+    /* Iframes post a relay message when Shift+H is pressed inside them
+     * (see injectActionsHotkey). */
+    window.addEventListener('message', function (ev) {
+      if (!ev.data || ev.data.type !== 'tm_sr_toggle_actions_hidden') return;
+      if (!document.body.classList.contains('sr-notes-expand')) return;
+      setActionsHidden(!document.body.classList.contains('tm-sr-actions-hidden'));
     });
   })();
 
