@@ -2184,7 +2184,7 @@
             <button type="button" class="btn btn-primary" id="btn-browser-fullscreen" aria-pressed="false">
               Full screen
             </button>
-            <button type="button" id="btn-actions-hide" class="actions-hide-btn" aria-label="Hide controls (Ctrl+H)" title="Hide controls — Ctrl+H to toggle, Esc to exit expand view">×</button>
+            <button type="button" id="btn-actions-hide" class="actions-hide-btn" aria-label="Hide controls (Ctrl+\)" title="Hide controls — Ctrl+\ to toggle, Esc to exit expand view">×</button>
           </div>
         </div>
       </div>
@@ -4537,14 +4537,16 @@
         'currentZoom=applyZoom(next);' +
         'try{window.parent.postMessage({type:"tm_sr_zoom_request",level:next},"*");}catch(e){}' +
       '},{passive:false});' +
-      /* Relay Ctrl/⌘+H (toggle actions bar) and Esc (exit expand view) to */
+      /* Relay Ctrl/⌘+\ (toggle actions bar) and Esc (exit expand view) to */
       /* the parent so both work without first clicking out of the iframe. */
-      /* Ignored when typing in any text input. */
+      /* Ignored when typing in any text input. Backslash chosen because it */
+      /* is unbound in browsers AND doesn't collide with the workspace */
+      /* toolbar's own Ctrl+H / Ctrl+A / Ctrl+Z / Ctrl+Y / Ctrl+Shift+S. */
       'window.addEventListener("keydown",function(ev){' +
         'var t=ev.target;' +
         'if(t&&(t.tagName==="INPUT"||t.tagName==="TEXTAREA"||t.tagName==="SELECT"||t.isContentEditable))return;' +
         'var k=ev.key;' +
-        'if((ev.ctrlKey||ev.metaKey)&&!ev.shiftKey&&!ev.altKey&&(k==="H"||k==="h")){' +
+        'if((ev.ctrlKey||ev.metaKey)&&!ev.shiftKey&&!ev.altKey&&k==="\\\\"){' +
           'ev.preventDefault();' +
           'try{window.parent.postMessage({type:"tm_sr_toggle_actions_hidden"},"*");}catch(e){}' +
           'return;' +
@@ -6263,7 +6265,7 @@
     if (hidden && !opts.silent) {
       showSrToast(
         '<strong>Controls hidden.</strong><br>' +
-        '<kbd>Ctrl</kbd>+<kbd>H</kbd> to toggle them back · ' +
+        '<kbd>Ctrl</kbd>+<kbd>\\</kbd> to toggle them back · ' +
         '<kbd>Esc</kbd> to exit expand view'
       );
     }
@@ -6294,8 +6296,11 @@
     function handleHotkey(ev) {
       if (isTypingTarget(ev.target)) return;
       var k = ev.key;
-      /* Ctrl/⌘+H toggles the bar (in expand view only). */
-      if ((ev.ctrlKey || ev.metaKey) && !ev.shiftKey && !ev.altKey && (k === 'H' || k === 'h')) {
+      /* Ctrl/⌘+\ toggles the bar (in expand view only). Chosen because
+       * backslash is unbound across all major browsers AND doesn't collide
+       * with the workspace toolbar's own shortcuts (Ctrl+H highlighter,
+       * Ctrl+A arrow, Ctrl+Z/Y undo/redo, Ctrl+Shift+S sticky). */
+      if ((ev.ctrlKey || ev.metaKey) && !ev.shiftKey && !ev.altKey && k === '\\') {
         if (!document.body.classList.contains('sr-notes-expand')) return;
         ev.preventDefault();
         tryToggle();
