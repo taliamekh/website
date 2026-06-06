@@ -2582,7 +2582,10 @@ function ensureMap() {
   const defaultView = state.detected?.lat != null && state.detected?.lng != null
     ? { center: [state.detected.lat, state.detected.lng], zoom: 7 }
     : { center: [45, -75], zoom: 4 };
-  map.instance = L.map(el, { zoomControl: true, attributionControl: true })
+  // scrollWheelZoom: false — wheel events keep scrolling the page when the
+  // cursor is over the map, instead of getting trapped as a zoom gesture.
+  // Users still have +/- buttons, double-click, and pinch on touch.
+  map.instance = L.map(el, { zoomControl: true, attributionControl: true, scrollWheelZoom: false })
     .setView(defaultView.center, defaultView.zoom);
   applyMapTiles();
   bindStationPopupHandlers();
@@ -4494,3 +4497,11 @@ async function safeInit() {
   }
 }
 document.addEventListener('DOMContentLoaded', safeInit);
+
+// "← Portfolio" only makes sense when this app is hosted at mekh.ca/fuel-economy/.
+// Anywhere else (local dev, GitHub Pages clone, embedded standalone) the link
+// goes nowhere — remove it. Mirrors the same convention in sift/app.js.
+document.addEventListener('DOMContentLoaded', () => {
+  const navBack = document.querySelector('.nav-back');
+  if (navBack && !window.location.pathname.startsWith('/fuel-economy/')) navBack.remove();
+});

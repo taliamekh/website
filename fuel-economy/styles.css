@@ -102,6 +102,32 @@ h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -0.015em; }
   margin: 0 auto;
   flex-wrap: wrap;
 }
+.topbar-left { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; min-width: 0; }
+.back-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px 8px 12px;
+  background: var(--bg-glass);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: border-color 0.15s, color 0.15s, transform 0.15s, background 0.15s;
+}
+.back-pill:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--bg-elev-2);
+  transform: translateX(-2px);
+}
+.back-pill > span:first-child { font-size: 14px; line-height: 1; }
+
 .brand { display: flex; align-items: center; gap: 12px; }
 .brand-icon {
   display: inline-grid;
