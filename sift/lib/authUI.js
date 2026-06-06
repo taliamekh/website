@@ -1,93 +1,191 @@
-// Sign-in card + nav widget for sift's email-magic-link auth.
+// Sign-in card + nav widget for sift's email + password auth.
 //
-// Both the home view (when signed out) and the dedicated /signin route
-// render the same `SignInCard` element so the visual + behaviour stays
-// consistent. `mountNavAuth` keeps the topbar widget in sync via
-// onAuthStateChange — it shows "Sign in" when signed out and the user's
-// email + a sign-out button when signed in.
+// One card hosts both Sign in and Sign up — toggling tabs at the top switches
+// the submit handler and button label, no full re-render needed. Forgot
+// password sends a reset email and returns the visitor to /sift/ where the
+// updated session will be picked up by detectSessionInUrl.
+//
+// `mountNavAuth` keeps the topbar widget in sync via onAuthStateChange.
 
 import { h } from './h.js';
-import { icon } from './icons.js';
 import { supabase, currentUser, onAuthChange } from './supabase.js';
 import * as toast from './toast.js';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MIN_PASSWORD = 8;
 
-// Render a self-contained sign-in card. Used in two places: the /signin
-// route and the home view fallback when the visitor is signed out.
+const MAIL_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>';
+const LOCK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+
+// Render a self-contained sign-in / sign-up card.
 export function SignInCard({ onSignedIn } = {}) {
-  const card = h('section.signin-card.stack-5');
-  card.appendChild(h('h2', 'Save recipes to your cookbook'));
-  card.appendChild(h('p.lead',
-    'Sift keeps your cookbooks private to you. Drop your email and we send a one-tap magic link — no password to remember.'));
+  const card = h('section.signin-card');
 
+  // Mode toggle — tabs at the top of the card
+  const tabs = h('div.signin-tabs', { role: 'tablist' });
+  const signInTab = h('button.signin-tab', { type: 'button', role: 'tab', 'aria-selected': 'true' }, 'Sign in');
+  const signUpTab = h('button.signin-tab', { type: 'button', role: 'tab', 'aria-selected': 'false' }, 'Sign up');
+  tabs.appendChild(signInTab);
+  tabs.appendChild(signUpTab);
+  card.appendChild(tabs);
+
+  // Form
   const form = h('form.signin-form');
-  const inputWrap = h('div.input-icon.flex-1');
-  const glyph = h('span.input-icon-glyph', { 'aria-hidden': 'true' });
-  glyph.innerHTML = icon('link');
-  inputWrap.appendChild(glyph);
-  const input = h('input.input', {
+
+  const emailField = h('label.signin-field');
+  emailField.appendChild(h('span.signin-label', 'Email'));
+  const emailWrap = h('div.input-icon');
+  const emailGlyph = h('span.input-icon-glyph', { 'aria-hidden': 'true' });
+  emailGlyph.innerHTML = MAIL_SVG;
+  emailWrap.appendChild(emailGlyph);
+  const emailInput = h('input.input', {
     type: 'email',
     name: 'email',
     placeholder: 'you@example.com',
     autocomplete: 'email',
-    'aria-label': 'Your email address',
     required: '',
   });
-  inputWrap.appendChild(input);
-  form.appendChild(inputWrap);
+  emailWrap.appendChild(emailInput);
+  emailField.appendChild(emailWrap);
+  form.appendChild(emailField);
 
-  const btn = h('button.btn.btn-primary.btn-lg', { type: 'submit' });
-  btn.innerHTML = `<span>Send magic link</span>${icon('arrowRight')}`;
-  form.appendChild(btn);
+  const passwordField = h('label.signin-field');
+  const passwordLabelRow = h('div.signin-field-row');
+  passwordLabelRow.appendChild(h('span.signin-label', 'Password'));
+  const forgot = h('button.signin-forgot', { type: 'button' }, 'Forgot?');
+  passwordLabelRow.appendChild(forgot);
+  passwordField.appendChild(passwordLabelRow);
+  const passwordWrap = h('div.input-icon');
+  const passwordGlyph = h('span.input-icon-glyph', { 'aria-hidden': 'true' });
+  passwordGlyph.innerHTML = LOCK_SVG;
+  passwordWrap.appendChild(passwordGlyph);
+  const passwordInput = h('input.input', {
+    type: 'password',
+    name: 'password',
+    placeholder: '••••••••',
+    autocomplete: 'current-password',
+    required: '',
+    minlength: String(MIN_PASSWORD),
+  });
+  passwordWrap.appendChild(passwordInput);
+  passwordField.appendChild(passwordWrap);
+  form.appendChild(passwordField);
+
+  const submit = h('button.btn.btn-primary.btn-lg.signin-submit', { type: 'submit' }, 'Sign in');
+  form.appendChild(submit);
 
   const status = h('p.signin-status', { 'aria-live': 'polite' });
+  form.appendChild(status);
 
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const email = input.value.trim();
+  card.appendChild(form);
+
+  // Mode state — 'signin' or 'signup'
+  let mode = 'signin';
+  function setMode(next) {
+    mode = next;
+    const isSignIn = mode === 'signin';
+    signInTab.setAttribute('aria-selected', String(isSignIn));
+    signUpTab.setAttribute('aria-selected', String(!isSignIn));
+    submit.textContent = isSignIn ? 'Sign in' : 'Create account';
+    forgot.hidden = !isSignIn;
+    passwordInput.setAttribute('autocomplete', isSignIn ? 'current-password' : 'new-password');
+    status.textContent = '';
+    delete status.dataset.state;
+  }
+  signInTab.addEventListener('click', () => setMode('signin'));
+  signUpTab.addEventListener('click', () => setMode('signup'));
+
+  // Forgot password — sends a reset email and switches the status line to a
+  // success note. The reset link drops the user back at /sift/ where the
+  // Supabase client picks up the recovery session.
+  forgot.addEventListener('click', async () => {
+    const email = emailInput.value.trim();
     if (!EMAIL_RE.test(email)) {
-      status.textContent = 'Please enter a valid email address.';
       status.dataset.state = 'error';
+      status.textContent = 'Enter your email above first.';
+      emailInput.focus();
       return;
     }
-    btn.disabled = true;
+    forgot.disabled = true;
     status.dataset.state = 'pending';
-    status.textContent = 'Sending magic link…';
-    // Redirect back to the current /sift/ URL (works in dev + prod).
-    // detectSessionInUrl on the createClient picks up the auth hash.
+    status.textContent = 'Sending reset link…';
     const redirectTo = window.location.origin + window.location.pathname;
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: redirectTo },
-    });
-    btn.disabled = false;
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+    forgot.disabled = false;
     if (error) {
       status.dataset.state = 'error';
-      status.textContent = error.message || 'Could not send the magic link.';
+      status.textContent = error.message;
       return;
     }
     status.dataset.state = 'success';
-    status.textContent = `Check ${email} for a sign-in link. The link signs you in and brings you back here.`;
-    input.value = '';
-    if (typeof onSignedIn === 'function') {
-      // Caller may want to subscribe via onAuthChange itself — we keep the
-      // callback for symmetry with components that fire it on completion.
-      const stop = onAuthChange(user => { if (user) { stop(); onSignedIn(user); } });
-    }
+    status.textContent = `Check ${email} for a password reset link.`;
   });
 
-  card.appendChild(form);
-  card.appendChild(status);
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
+    if (!EMAIL_RE.test(email)) {
+      status.dataset.state = 'error';
+      status.textContent = 'Please enter a valid email address.';
+      return;
+    }
+    if (password.length < MIN_PASSWORD) {
+      status.dataset.state = 'error';
+      status.textContent = `Password must be at least ${MIN_PASSWORD} characters.`;
+      return;
+    }
+    submit.disabled = true;
+    status.dataset.state = 'pending';
+    status.textContent = mode === 'signin' ? 'Signing in…' : 'Creating your account…';
 
-  card.appendChild(h('p.signin-footnote',
-    'Your data is partitioned per-account by Postgres row-level security. Other visitors never see your cookbook.'));
+    if (mode === 'signin') {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      submit.disabled = false;
+      if (error) {
+        status.dataset.state = 'error';
+        status.textContent = error.message;
+        return;
+      }
+      status.dataset.state = 'success';
+      status.textContent = 'Signed in.';
+      if (typeof onSignedIn === 'function') {
+        const user = await currentUser();
+        if (user) onSignedIn(user);
+      }
+      return;
+    }
+
+    // Sign-up path. Supabase defaults to requiring email confirmation; if so,
+    // the session is null after signUp and the user must click the link in
+    // their inbox before signInWithPassword will succeed.
+    const redirectTo = window.location.origin + window.location.pathname;
+    const { data, error } = await supabase.auth.signUp({
+      email, password,
+      options: { emailRedirectTo: redirectTo },
+    });
+    submit.disabled = false;
+    if (error) {
+      status.dataset.state = 'error';
+      status.textContent = error.message;
+      return;
+    }
+    if (data.session) {
+      status.dataset.state = 'success';
+      status.textContent = 'Account created — you’re signed in.';
+      if (typeof onSignedIn === 'function') onSignedIn(data.user);
+    } else {
+      status.dataset.state = 'success';
+      status.textContent = `Check ${email} to confirm your address, then come back and sign in.`;
+      setMode('signin');
+    }
+  });
 
   return card;
 }
 
 // Topbar widget — shows "Sign in" when signed out, "{email} · Sign out"
-// when signed in. Called once at app boot from app.js.
+// when signed in.
 export function mountNavAuth(slot) {
   if (!slot) return;
   slot.hidden = false;
