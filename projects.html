@@ -1052,9 +1052,8 @@ const SIFT_MARK_SVG = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/
   <!-- Page edges along the right side -->
   <line x1="80" y1="18" x2="80" y2="84" stroke="#a52a6a" stroke-width="0.6" opacity="0.35"/>
   <line x1="81" y1="20" x2="81" y2="82" stroke="#a52a6a" stroke-width="0.4" opacity="0.2"/>
-  <!-- White title label on the cover -->
+  <!-- Empty white title label on the cover -->
   <rect x="34" y="30" width="40" height="20" rx="3" fill="white" stroke="#a52a6a" stroke-width="1"/>
-  <text x="54" y="44" text-anchor="middle" font-family="Georgia, serif" font-size="9" font-weight="700" fill="#a52a6a" letter-spacing="1">SIFT</text>
   <!-- Cupcake illustration on the cover under the label -->
   <path d="M47 70 L61 70 L59 80 L49 80 Z" fill="white" stroke="#a52a6a" stroke-width="1.1"/>
   <path d="M47 70 Q47 60 54 60 Q61 60 61 70" fill="white" stroke="#a52a6a" stroke-width="1.1"/>
@@ -1066,7 +1065,7 @@ const SIFT_MARK_SVG = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/
 
 /* Inline Spocket SVG — matches spocket.svg but with .spocket-arm-left class hooks
    so the CSS wave-on-hover animation can target the arm group. */
-const SPOCKET_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 480" preserveAspectRatio="xMidYMid meet">
+const SPOCKET_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 480" preserveAspectRatio="xMidYMid slice">
   <defs>
     <linearGradient id="sp-bg" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#3d2055"/><stop offset="100%" stop-color="#1d0e35"/>
