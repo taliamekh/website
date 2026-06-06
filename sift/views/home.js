@@ -7,7 +7,6 @@ import * as toast from '../lib/toast.js';
 import { StarRating } from '../components/starRating.js';
 import { getRecentlyViewed } from '../lib/recentlyViewed.js';
 import { currentUser } from '../lib/supabase.js';
-import { SignInCard } from '../lib/authUI.js';
 
 export async function HomeView() {
   const root = h('div.container.stack-7');
@@ -16,7 +15,8 @@ export async function HomeView() {
   const hero = h('section.hero');
   const title = h('h1', 'Skip the story, get to the recipe.');
   hero.appendChild(title);
-  hero.appendChild(h('p.lead', 'Paste any recipe URL. We sift through and hand you the ingredients, instructions, and ratings so you can get cooking straight away. Save anything worth keeping to a cookbook of your own.'));
+  hero.appendChild(h('p.lead', 'Paste any recipe URL. We sift through and hand you the ingredients, instructions, and ratings so you can get cooking straight away.'));
+  hero.appendChild(h('p.hero-fineprint', 'Free to browse — no account needed. Sign in only when you want to save recipes to your own private cookbook.'));
 
   // Paste card
   const pasteCard = h('div.paste-card');
@@ -57,21 +57,19 @@ export async function HomeView() {
   hero.appendChild(pasteCard);
   root.appendChild(hero);
 
-  // Cookbooks — if the visitor is signed in, render the editable grid
-  // (with a sentinel "+ New cookbook" tile last). Otherwise we render the
-  // sign-in card right where the cookbooks would go so they get a smooth
-  // path from "I want to save this" to "now I can".
+  // Cookbooks — signed in: editable grid (with sentinel "+ New cookbook"
+  // tile last). Signed out: a small CTA banner. The big sign-in form lives
+  // on /signin so it doesn't dominate the home page.
   const user = await currentUser();
   const cookbooksSection = h('section');
-  const head = h('div.section-head');
-  head.appendChild(h('h2', user ? 'Your Cookbooks' : 'Save recipes to a cookbook'));
-  cookbooksSection.appendChild(head);
-
   const grid = h('div.cookbook-grid');
   if (user) {
+    const head = h('div.section-head');
+    head.appendChild(h('h2', 'Your Cookbooks'));
+    cookbooksSection.appendChild(head);
     cookbooksSection.appendChild(grid);
   } else {
-    cookbooksSection.appendChild(SignInCard());
+    cookbooksSection.appendChild(SignedOutBanner());
   }
   root.appendChild(cookbooksSection);
 
@@ -118,6 +116,22 @@ export async function HomeView() {
 
   await render();
   return root;
+}
+
+function SignedOutBanner() {
+  // Small inline CTA the home page renders in place of the cookbook grid
+  // when the visitor is signed out. Keeps the focus on the paste-URL hero;
+  // the dedicated /signin route is where the real form lives.
+  const banner = h('div.signedout-banner');
+  const body = h('div.signedout-body');
+  body.appendChild(h('h3.signedout-title', 'Want to keep recipes you love?'));
+  body.appendChild(h('p.signedout-copy',
+    'Sift works just fine without an account — paste any URL above and read the clean recipe. ' +
+    'Sign in only when you want to save recipes to your own cookbook with tabs, notes, and photos. Your cookbook is private to you.'));
+  const cta = h('a.btn.btn-primary.signedout-cta', { href: '#/signin' }, 'Sign in or create an account');
+  body.appendChild(cta);
+  banner.appendChild(body);
+  return banner;
 }
 
 function cookbookCard(cb) {
