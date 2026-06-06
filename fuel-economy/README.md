@@ -2,7 +2,8 @@
 
 Plan the cost of any road trip in any country. Pick your car or enter custom efficiency, route the trip on a map, adjust for driving conditions, and see fuel cost (split by passenger if you want).
 
-**Live site:** <https://taliamekh.github.io/Fuel-Economy-Calculator/>
+**Live demo:** <https://mekh.ca/fuel-economy/> (primary, deployed from this repo via the [taliamekh/website](https://github.com/taliamekh/website) subtree)
+**Standalone deploy:** <https://taliamekh.github.io/Fuel-Economy-Calculator/> (GitHub Pages mirror)
 
 ## Features
 

@@ -8,3 +8,15 @@ sift/scripts
 sift/package.json
 sift/package-lock.json
 sift/.claude
+
+# fuel-economy is a git subtree of taliamekh/Fuel-Economy-Calculator. The
+# frontend (index.html / app.js / styles.css / data/) needs to ship, but the
+# Node tooling, internal research notes, GH Pages workflow, and package
+# metadata do not.
+fuel-economy/scripts
+fuel-economy/package.json
+fuel-economy/.claude
+fuel-economy/.github
+fuel-economy/FUEL_ECONOMY_RESEARCH.md
+fuel-economy/IMPROVEMENTS.md
+fuel-economy/config.example.js

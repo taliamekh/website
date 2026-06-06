@@ -687,6 +687,95 @@
     }
   }
 
+  /* Fuel Economy — teal/mint stage matches the road-trip / eco vibe and
+     deliberately contrasts with Sift's pastel pink so the two "live demo"
+     tiles read as distinct in the bento. */
+  .fuel-stage {
+    margin-top: 24px; padding: 28px; border-radius: 14px;
+    background: linear-gradient(145deg, #ecfeff 0%, #cffafe 60%, #a5f3fc 100%);
+    border: 1px solid #67e8f9;
+    color: #0c4a4d;
+    display: flex; align-items: center; gap: 22px; flex-wrap: wrap;
+  }
+  .fuel-mark {
+    flex-shrink: 0;
+    width: 84px; height: 84px;
+    border-radius: 18px;
+    background: linear-gradient(140deg, #ffffff 0%, #cffafe 100%);
+    border: 1px solid #67e8f9;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 6px 18px rgba(20, 184, 166, 0.30);
+  }
+  .fuel-mark svg { width: 56px; height: 56px; }
+  .fuel-msg { flex: 1; min-width: 240px; }
+  .fuel-whisper {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: #0d7377; margin-bottom: 8px;
+  }
+  .fuel-msg p { font-size: 14px; line-height: 1.6; color: #0c4a4d; }
+  .fuel-hi { color: #0d7377; font-weight: 500; }
+  .fuel-cta {
+    display: inline-flex; align-items: center; gap: 8px;
+    margin-top: 14px; padding: 12px 22px;
+    font-family: var(--tag-font); font-size: 11px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    font-weight: 700;
+    color: #fffaf3;
+    text-decoration: none; border-radius: 999px;
+    background: linear-gradient(100deg, #14b8a6 0%, #0d9488 60%, #0f766e 100%);
+    border: 1px solid #134e4a;
+    box-shadow: 0 4px 18px rgba(15, 118, 110, 0.45);
+    transition: transform 0.2s, box-shadow 0.2s, filter 0.2s;
+  }
+  .fuel-cta:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 26px rgba(15, 118, 110, 0.65);
+    filter: brightness(1.08);
+  }
+  .fuel-cta.ghost {
+    background: transparent;
+    color: #0d7377;
+    border: 1px solid #67e8f9;
+    box-shadow: none;
+    margin-left: 10px;
+  }
+  .fuel-cta.ghost:hover {
+    background: rgba(103, 232, 249, 0.18);
+    box-shadow: none;
+  }
+
+  /* Fuel-Economy tile cover — wine base with teal radials, custom gas-pump SVG */
+  .bento .tile[data-id="fuel-economy"] {
+    background:
+      radial-gradient(ellipse at 0% 100%, rgba(127, 219, 202, 0.30), transparent 55%),
+      radial-gradient(ellipse at 100% 0%, rgba(165, 243, 252, 0.25), transparent 55%),
+      linear-gradient(135deg, #1a1d2e 0%, #1f2f3a 50%, #1a3a40 100%);
+  }
+  .bento .tile[data-id="fuel-economy"]::before {
+    background-image: radial-gradient(circle, rgba(127, 219, 202, 0.18) 1px, transparent 1.5px);
+    background-size: 22px 22px;
+    opacity: 0.45;
+  }
+  .bento .tile[data-id="fuel-economy"] .fuel-tile-mark {
+    position: absolute;
+    top: 38%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 150px; height: 150px;
+    z-index: 2;
+    opacity: 0.95;
+    transition: transform 0.5s cubic-bezier(0.22,1,0.36,1);
+  }
+  .bento .tile[data-id="fuel-economy"]:hover .fuel-tile-mark {
+    transform: translate(-50%, -50%) rotate(-4deg) scale(1.06);
+  }
+  @media (max-width: 720px) {
+    .bento .tile[data-id="fuel-economy"] .fuel-tile-mark {
+      width: 110px; height: 110px;
+    }
+  }
+
   footer { text-align: center; padding: 36px; border-top: 1px solid var(--border); font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-muted); position: relative; z-index: 1; }
 
   @media (max-width: 1100px) {
@@ -928,6 +1017,34 @@ window.PROJECTS = [
     photos:[],
     sift:true
   },
+  { id:'fuel-economy', num:'08', title:'Fuel Economy Calculator',
+    summary:'Pick your car, plan a route, see the fuel cost — split with passengers if you want. Works in any country.',
+    awards:[{kind:'pop',text:'Live demo'}],
+    tags:['Vanilla JS','Leaflet','OpenStreetMap','OpenRouteService','OSRM','GitHub Actions','EIA','NRCan'],
+    cover:null,
+    description:'Plan the cost of any road trip in any country. Pick your car from 1984–2026 models (or VIN-decode it), plan the route on a map with multiple stops, adjust for driving conditions, and see what the fuel will cost — split between passengers if you want.',
+    sections:[
+      {label:'What it does',bullets:[
+        '<strong>Vehicle picker</strong> — every model 1984–2026 (40k+ entries) sourced from FuelEconomy.gov, or paste a 17-character VIN to auto-decode year/make/model via NHTSA vPIC.',
+        '<strong>Route planner</strong> — origin + destination + multiple stops, alternative routes, real distances pulled from OpenStreetMap.',
+        '<strong>Live regional gas prices</strong> — daily-refreshed averages by US state / region and Canadian province, scraped from EIA and Natural Resources Canada.',
+        '<strong>Per-station prices</strong> — click any green dot on the map → station popup with a one-tap GasBuddy link and a "saw a price" input that saves to <code>localStorage</code> so your next visit shows your last reported price.',
+        '<strong>Price history chart</strong> — recent weekly history for the active region with a 4-week linear-regression trend line. Directional, not a forecast.',
+        '<strong>Driving adjustments</strong> — eco / aggressive style, AC on, towing, cold weather, mountainous terrain, etc.',
+        '<strong>Vehicle comparison</strong> — pit two cars against each other on the same trip.',
+        '<strong>Unit-system aware</strong> — L/100km, km/L, MPG (US), MPG (UK).'
+      ]},
+      {label:'How it is built',bullets:[
+        '<strong>Frontend:</strong> Single-file vanilla JS, no framework, no build step — open <code>index.html</code> and it runs.',
+        '<strong>Maps:</strong> Leaflet + OpenStreetMap tiles. <strong>OpenRouteService</strong> for routing with avoid-features (highways, tolls, ferries); <strong>OSRM</strong> as a key-less fallback so the app never hard-fails on missing config.',
+        '<strong>Daily price refresh:</strong> a GitHub Action runs <code>scripts/update-prices.mjs</code> every morning, scrapes EIA + NRCan, and commits the new <code>data/prices.json</code> back to <code>main</code>. The parser is defensive — if a source changes shape it logs a warning and keeps the existing values rather than clobbering them with bad data.',
+        '<strong>Per-station memory:</strong> price reports save to <code>localStorage</code> keyed by OSM station ID so your last-seen price comes back automatically on the next visit.',
+        '<strong>Resilient by design:</strong> missing <code>prices.json</code> → fall back to in-code defaults. Missing ORS key → fall back to OSRM. Nothing crashes if a source goes dark.'
+      ]}
+    ],
+    photos:[],
+    fuelEconomy:true
+  },
   { id:'haptic-gloves', num:'06', title:'Force Feedback Haptic Gloves',
     summary:'VR glove that physically stops your fingers when you grab a virtual object.',
     awards:[{kind:'pop',text:'On-going'}],
@@ -983,8 +1100,18 @@ window.renderProjectDetail = function(p) {
         <a href="https://github.com/taliamekh/sift" target="_blank" rel="noopener" class="sift-cta ghost" onclick="event.stopPropagation()">View source</a>
       </div>
     </div>` : '';
+  const fuelHTML = p.fuelEconomy ? `
+    <div class="fuel-stage">
+      <div class="fuel-mark" aria-hidden="true">${FUEL_MARK_SVG}</div>
+      <div class="fuel-msg">
+        <span class="fuel-whisper">Try it live · mekh.ca/fuel-economy</span>
+        <p><span class="fuel-hi">Plan a real road trip end-to-end.</span> Pick a vehicle, drop pins on the map, adjust for driving style and weather, and see what the gas will cost using the latest regional averages — or your own custom price. Runs entirely in the browser.</p>
+        <a href="/fuel-economy/" class="fuel-cta" onclick="event.stopPropagation()">Open Fuel Economy →</a>
+        <a href="https://github.com/taliamekh/Fuel-Economy-Calculator" target="_blank" rel="noopener" class="fuel-cta ghost" onclick="event.stopPropagation()">View source</a>
+      </div>
+    </div>` : '';
   return `<div class="p-awards">${awardsHTML}</div>
-    <h3 class="p-title">${p.title}</h3>${descHTML}${descBullets}${sectionsHTML}${spocketHTML}${siftHTML}${photosHTML}
+    <h3 class="p-title">${p.title}</h3>${descHTML}${descBullets}${sectionsHTML}${spocketHTML}${siftHTML}${fuelHTML}${photosHTML}
     <div class="p-tags">${tagsHTML}</div>`;
 };
 
@@ -996,11 +1123,69 @@ const sizes = {
   'spocket':'size-tall',
   'wind-turbine':'size-mid',
   'haptic-gloves':'size-mid',
-  'sift':'size-tall'
+  'sift':'size-tall',
+  'fuel-economy':'size-tall'
 };
-const noImage = { 'wind-turbine': true, 'haptic-gloves': true, 'sift': true };
-const tileOrder = ['deskclaw','sleep-apnea','spocket','water-filter','wind-turbine','haptic-gloves','sift'];
+const noImage = { 'wind-turbine': true, 'haptic-gloves': true, 'sift': true, 'fuel-economy': true };
+const tileOrder = ['deskclaw','sleep-apnea','spocket','water-filter','wind-turbine','haptic-gloves','sift','fuel-economy'];
 const tagLimit = { 'size-2x2': 6, 'size-2x1': 5, 'size-wide': 6, 'size-tall': 4, 'size-mid': 3 };
+
+/* Fuel-Economy mark — pastel-mint gas pump with a green LED display
+   showing a sample trip total, a hose curving down to a chunky nozzle, and
+   a tiny fuel-drop accent. Used in both the tile cover and the modal
+   fuel-stage. Single source of truth. */
+const FUEL_MARK_SVG = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="none" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <linearGradient id="fe-body" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ccfbf1"/>
+      <stop offset="55%" stop-color="#5eead4"/>
+      <stop offset="100%" stop-color="#2dd4bf"/>
+    </linearGradient>
+    <linearGradient id="fe-base" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0d9488"/>
+      <stop offset="100%" stop-color="#0f766e"/>
+    </linearGradient>
+    <linearGradient id="fe-screen" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#062e2e"/>
+      <stop offset="100%" stop-color="#0a3a3a"/>
+    </linearGradient>
+  </defs>
+  <!-- Soft drop shadow under the pump -->
+  <ellipse cx="50" cy="92" rx="30" ry="3" fill="#0f766e" opacity="0.30"/>
+  <!-- Pump base / footprint -->
+  <rect x="18" y="82" width="48" height="9" rx="2.5" fill="url(#fe-base)" stroke="#134e4a" stroke-width="1.4"/>
+  <!-- Main pump body -->
+  <rect x="22" y="18" width="40" height="65" rx="6" fill="url(#fe-body)" stroke="#134e4a" stroke-width="1.8"/>
+  <!-- Top cap with grip -->
+  <rect x="28" y="13" width="28" height="7" rx="2" fill="#134e4a"/>
+  <rect x="34" y="9" width="16" height="5" rx="1.5" fill="#0f766e" stroke="#134e4a" stroke-width="0.8"/>
+  <!-- Digital display screen -->
+  <rect x="27" y="25" width="30" height="22" rx="2.5" fill="url(#fe-screen)" stroke="#134e4a" stroke-width="1.2"/>
+  <!-- Mini "TRIP $" label -->
+  <text x="42" y="33" text-anchor="middle" fill="#5eead4" font-family="'JetBrains Mono', monospace" font-size="4.2" font-weight="700" letter-spacing="1.4">TRIP TOTAL</text>
+  <!-- Bright LED total -->
+  <text x="42" y="44" text-anchor="middle" fill="#a5f3fc" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="800">$45.20</text>
+  <!-- White brand strip -->
+  <rect x="29" y="52" width="26" height="7" rx="1.4" fill="white" stroke="#134e4a" stroke-width="1"/>
+  <text x="42" y="57.3" text-anchor="middle" fill="#0f766e" font-family="'JetBrains Mono', monospace" font-size="4.5" font-weight="800" letter-spacing="2.4">FUEL</text>
+  <!-- Decorative gauge dots under the brand strip -->
+  <circle cx="33" cy="66" r="1.8" fill="#134e4a"/>
+  <circle cx="42" cy="66" r="1.8" fill="#5eead4" stroke="#134e4a" stroke-width="0.5"/>
+  <circle cx="51" cy="66" r="1.8" fill="#134e4a"/>
+  <!-- Lower control / button strip -->
+  <rect x="29" y="72" width="26" height="7" rx="1.5" fill="#134e4a"/>
+  <line x1="33" y1="75.5" x2="51" y2="75.5" stroke="#5eead4" stroke-width="0.9" opacity="0.7"/>
+  <!-- Pump fitting where the hose exits the side -->
+  <rect x="62" y="56" width="6" height="10" rx="1.5" fill="#134e4a"/>
+  <!-- Hose — curves down and around to the nozzle -->
+  <path d="M68 61 Q86 62 86 76 Q86 86 78 90" fill="none" stroke="#134e4a" stroke-width="3.2" stroke-linecap="round"/>
+  <!-- Nozzle body -->
+  <rect x="74" y="86" width="11" height="6" rx="1.5" fill="#0f766e" stroke="#134e4a" stroke-width="1"/>
+  <!-- Nozzle spout pointing left -->
+  <rect x="68" y="87.5" width="7" height="3" rx="0.8" fill="#134e4a"/>
+  <!-- Tiny fuel drop -->
+  <path d="M65 92 Q63.5 95 65 96.5 Q66.5 95 65 92 Z" fill="#5eead4" stroke="#134e4a" stroke-width="0.6"/>
+</svg>`;
 
 /* Sift mark — pastel-pink cookbook with a SIFT label band, a cupcake on the
    cover, and a bookmark ribbon. Used in both the tile cover and the modal
@@ -1176,15 +1361,17 @@ bento.innerHTML = tileOrder.map(id => {
     : '';
   const coverHTML = id === 'spocket'
     ? SPOCKET_SVG
-    : id === 'sift'
+    : (id === 'sift' || id === 'fuel-economy')
       ? ''
       : `<img src="${p.cover}" alt="${p.title}">`;
   const siftMarkHTML = id === 'sift' ? `<div class="sift-tile-mark" aria-hidden="true">${SIFT_MARK_SVG}</div>` : '';
+  const fuelMarkHTML = id === 'fuel-economy' ? `<div class="fuel-tile-mark" aria-hidden="true">${FUEL_MARK_SVG}</div>` : '';
   return `
     <article class="tile ${size} ${noImage[id] ? 'no-image' : ''} ${p.awards.length > 1 ? 'large' : ''}" data-id="${p.id}" data-num="${p.num}" onclick="openModal('${p.id}')">
       <div class="tile-img">${coverHTML}</div>
       <div class="tile-overlay"></div>
       ${siftMarkHTML}
+      ${fuelMarkHTML}
       <div class="tile-content">
         <div class="tile-bottom">
           ${awardsBlock}
@@ -1290,6 +1477,13 @@ function setPalette(id) {
   const siftTile = document.querySelector('.tile[data-id="sift"]');
   if (siftTile && palette.colors.spocket) {
     siftTile.style.setProperty('--tile-accent', palette.colors.spocket);
+  }
+  // Fuel Economy derives from the wind-turbine slot — it varies the most
+  // across palettes, so the teal-tinted tile gets a fresh hover pop on each
+  // theme rather than locking in one fixed accent.
+  const fuelTile = document.querySelector('.tile[data-id="fuel-economy"]');
+  if (fuelTile && palette.colors['wind-turbine']) {
+    fuelTile.style.setProperty('--tile-accent', palette.colors['wind-turbine']);
   }
   const colorArr = tileOrder.map(pid => palette.colors[pid]);
   document.documentElement.style.setProperty(
