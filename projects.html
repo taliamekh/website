@@ -633,15 +633,17 @@
     font-family: var(--tag-font); font-size: 11px;
     letter-spacing: 0.1em; text-transform: uppercase;
     font-weight: 700;
-    color: #3d1f47;
+    color: #fffaf3;
     text-decoration: none; border-radius: 999px;
-    background: linear-gradient(100deg, #fce7f3 0%, #fbcfe8 50%, #f9a8d4 100%);
-    box-shadow: 0 4px 18px rgba(249, 168, 212, 0.35);
-    transition: transform 0.2s, box-shadow 0.2s;
+    background: linear-gradient(100deg, #c2487c 0%, #a52a6a 60%, #7a1a4e 100%);
+    border: 1px solid #5a103a;
+    box-shadow: 0 4px 18px rgba(122, 26, 78, 0.45);
+    transition: transform 0.2s, box-shadow 0.2s, filter 0.2s;
   }
   .sift-cta:hover {
     transform: translateY(-1px);
-    box-shadow: 0 6px 22px rgba(249, 168, 212, 0.5);
+    box-shadow: 0 8px 26px rgba(122, 26, 78, 0.65);
+    filter: brightness(1.08);
   }
   .sift-cta.ghost {
     background: transparent;
