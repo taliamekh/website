@@ -1,0 +1,9 @@
+{
+  "name": "mekh-ca",
+  "version": "1.0.0",
+  "private": true,
+  "description": "mekh.ca — portfolio + Student Resources + Sift recipe reader. Vercel-deployed static site with serverless functions for Gemini (Spocket) and the Sift recipe parser.",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.12"
+  }
+}
