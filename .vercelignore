@@ -8,3 +8,14 @@ sift/scripts
 sift/package.json
 sift/package-lock.json
 sift/.claude
+
+# expenses is a git subtree of taliamekh/expenses (PRIVATE repo). The
+# spending-tracker SPA is built by Vercel at deploy time; statements-backup
+# contains personal financial documents that must NEVER ship to Vercel.
+# Source files under spending-tracker/src must stay in the upload so Vercel
+# can build them — Vercel-side URL rewrites map /expenses/* to the built
+# dist/ output, so source files aren't reachable by HTTP.
+expenses/statements-backup
+expenses/spending-tracker/.claude
+expenses/spending-tracker/eslint.config.js
+expenses/spending-tracker/README.md
