@@ -1,0 +1,11 @@
+.DS_Store
+Thumbs.db
+*.log
+node_modules/
+
+# Local-only Claude Code settings (per-machine permissions)
+.claude/settings.local.json
+
+# Real API keys live in config.js, generated at deploy time by the Pages workflow
+# from the ORS_API_KEY repo secret. Never committed.
+config.js
