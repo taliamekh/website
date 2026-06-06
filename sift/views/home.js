@@ -132,8 +132,7 @@ function SignInNotice() {
   const lockGlyph = h('span.signin-notice-glyph', { 'aria-hidden': 'true' });
   lockGlyph.innerHTML = icon('bookmark');
   notice.appendChild(lockGlyph);
-  const text = h('p.signin-notice-text');
-  text.innerHTML = '<strong>Sign in to save cookbooks.</strong> You can browse and read any recipe without an account, but cookbooks need somewhere to live — that\'s your account.';
+  const text = h('p.signin-notice-text', 'Sign in to save your cookbooks.');
   notice.appendChild(text);
   const cta = h('a.btn.btn-soft.signin-notice-cta', { href: '#/signin' }, 'Sign in');
   notice.appendChild(cta);
