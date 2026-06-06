@@ -1,0 +1,10 @@
+# sift is pulled in as a git subtree from taliamekh/sift. The standalone repo
+# also ships the original Express server, Chrome extension, build scripts, and
+# its own package.json — none of which belong on mekh.ca/sift/. Keep them in
+# git (so subtree push/pull stay clean) but skip them from the deploy.
+sift/server
+sift/extension
+sift/scripts
+sift/package.json
+sift/package-lock.json
+sift/.claude

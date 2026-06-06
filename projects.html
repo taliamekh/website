@@ -300,13 +300,10 @@
   .tile.size-wide { grid-column: span 6; grid-row: span 1; }
   .tile.size-mid  { grid-column: span 2; grid-row: span 1; }
 
-  /* DESKTOP EXPLICIT GRID PLACEMENT */
-  .bento .tile[data-id="deskclaw"]      { grid-column: 1 / 3 !important; grid-row: 1 / 4 !important; }
-  .bento .tile[data-id="sleep-apnea"]   { grid-column: 3 / 5 !important; grid-row: 1 / 3 !important; }
-  .bento .tile[data-id="spocket"]       { grid-column: 5 / 7 !important; grid-row: 1 / 3 !important; }
-  .bento .tile[data-id="water-filter"]  { grid-column: 7 / 9 !important; grid-row: 1 / 4 !important; }
-  .bento .tile[data-id="wind-turbine"]  { grid-column: 3 / 5 !important; grid-row: 3 / 4 !important; }
-  .bento .tile[data-id="haptic-gloves"] { grid-column: 5 / 7 !important; grid-row: 3 / 4 !important; }
+  /* No per-tile grid placement. Size classes + grid-auto-flow: dense pack
+     the tiles automatically — adding a new project means picking a size
+     and appending to tileOrder, no CSS edit per project. Uneven bottom
+     edges are expected and will fill in as more projects ship. */
 
   .bento .tile[data-id="sleep-apnea"] .tile-img img {
     object-fit: cover !important;
@@ -603,16 +600,99 @@
     box-shadow: 0 6px 22px rgba(249, 168, 212, 0.5);
   }
 
+  /* Sift — pastel pink stage matches the app's own palette */
+  .sift-stage {
+    margin-top: 24px; padding: 28px; border-radius: 14px;
+    background: linear-gradient(145deg, #fff0f5 0%, #ffe1ee 60%, #ffd0e3 100%);
+    border: 1px solid #f9bcd3;
+    color: #5a2740;
+    display: flex; align-items: center; gap: 22px; flex-wrap: wrap;
+  }
+  .sift-mark {
+    flex-shrink: 0;
+    width: 84px; height: 84px;
+    border-radius: 18px;
+    background: linear-gradient(140deg, #ffffff 0%, #ffe6f0 100%);
+    border: 1px solid #f9bcd3;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 6px 18px rgba(249, 168, 212, 0.35);
+  }
+  .sift-mark svg { width: 56px; height: 56px; }
+  .sift-msg { flex: 1; min-width: 240px; }
+  .sift-whisper {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: #c2487c; margin-bottom: 8px;
+  }
+  .sift-msg p { font-size: 14px; line-height: 1.6; color: #5a2740; }
+  .sift-hi { color: #a52a6a; font-weight: 500; }
+  .sift-cta {
+    display: inline-flex; align-items: center; gap: 8px;
+    margin-top: 14px; padding: 12px 22px;
+    font-family: var(--tag-font); font-size: 11px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    font-weight: 700;
+    color: #fffaf3;
+    text-decoration: none; border-radius: 999px;
+    background: linear-gradient(100deg, #c2487c 0%, #a52a6a 60%, #7a1a4e 100%);
+    border: 1px solid #5a103a;
+    box-shadow: 0 4px 18px rgba(122, 26, 78, 0.45);
+    transition: transform 0.2s, box-shadow 0.2s, filter 0.2s;
+  }
+  .sift-cta:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 26px rgba(122, 26, 78, 0.65);
+    filter: brightness(1.08);
+  }
+  .sift-cta.ghost {
+    background: transparent;
+    color: #a52a6a;
+    border: 1px solid #f9bcd3;
+    box-shadow: none;
+    margin-left: 10px;
+  }
+  .sift-cta.ghost:hover {
+    background: rgba(249, 168, 212, 0.18);
+    box-shadow: none;
+  }
+
+  /* Sift tile cover — pastel gradient instead of the default no-image dots */
+  .bento .tile[data-id="sift"] {
+    background:
+      radial-gradient(ellipse at 0% 100%, rgba(255, 209, 226, 0.55), transparent 55%),
+      radial-gradient(ellipse at 100% 0%, rgba(255, 230, 240, 0.55), transparent 55%),
+      linear-gradient(135deg, #2a142b 0%, #3d1f3f 50%, #4a1e3d 100%);
+  }
+  .bento .tile[data-id="sift"]::before {
+    background-image: radial-gradient(circle, rgba(249, 168, 212, 0.18) 1px, transparent 1.5px);
+    background-size: 22px 22px;
+    opacity: 0.45;
+  }
+  .bento .tile[data-id="sift"] .sift-tile-mark {
+    position: absolute;
+    top: 38%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 150px; height: 150px;
+    z-index: 2;
+    opacity: 0.95;
+    transition: transform 0.5s cubic-bezier(0.22,1,0.36,1);
+  }
+  .bento .tile[data-id="sift"]:hover .sift-tile-mark {
+    transform: translate(-50%, -50%) rotate(-6deg) scale(1.06);
+  }
+  @media (max-width: 720px) {
+    .bento .tile[data-id="sift"] .sift-tile-mark {
+      width: 110px; height: 110px;
+    }
+  }
+
   footer { text-align: center; padding: 36px; border-top: 1px solid var(--border); font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-muted); position: relative; z-index: 1; }
 
   @media (max-width: 1100px) {
+    /* Drop to a 4-column grid; let size classes + dense flow re-pack. */
     .bento { grid-template-columns: repeat(4, 1fr); }
-    .bento .tile[data-id="deskclaw"]      { grid-column: span 2 !important; grid-row: span 3 !important; }
-    .bento .tile[data-id="sleep-apnea"]   { grid-column: span 2 !important; grid-row: span 2 !important; }
-    .bento .tile[data-id="spocket"]       { grid-column: span 2 !important; grid-row: span 2 !important; }
-    .bento .tile[data-id="wind-turbine"]  { grid-column: span 2 !important; grid-row: span 1 !important; }
-    .bento .tile[data-id="haptic-gloves"] { grid-column: span 2 !important; grid-row: span 1 !important; }
-    .bento .tile[data-id="water-filter"]  { grid-column: 1 / -1 !important; grid-row: span 1 !important; }
+    .tile.size-wide { grid-column: 1 / -1; grid-row: span 1; }
   }
   @media (max-width: 720px) {
     nav { padding: 0 20px; }
@@ -622,15 +702,6 @@
     .projects-title { font-size: 48px; }
     .bento { grid-template-columns: 1fr; }
     .tile, .tile.size-2x2, .tile.size-2x1, .tile.size-wide, .tile.size-tall, .tile.size-mid { grid-column: span 1; grid-row: span 1; }
-    .bento .tile[data-id="deskclaw"],
-    .bento .tile[data-id="sleep-apnea"],
-    .bento .tile[data-id="spocket"],
-    .bento .tile[data-id="water-filter"],
-    .bento .tile[data-id="wind-turbine"],
-    .bento .tile[data-id="haptic-gloves"] {
-      grid-column: span 1 !important;
-      grid-row: span 1 !important;
-    }
     .modal-body { padding: 28px 20px 50px; }
   }
 </style>
@@ -829,6 +900,34 @@ window.PROJECTS = [
     ],
     photos:[]
   },
+  { id:'sift', num:'07', title:'Sift',
+    summary:'Paste a recipe link, get the ingredients and instructions instantly. No more scrolling through the whole baking page.',
+    awards:[{kind:'pop',text:'Live demo'}],
+    tags:['Vanilla JS','Supabase','Postgres','Auth','Cheerio','Schema.org/Recipe','Vercel Functions','Chrome Extension'],
+    cover:null,
+    description:'Paste any recipe link and Sift gives you the ingredients and instructions instantly — no scrolling through the whole baking page. Save anything worth keeping to a private cookbook of your own.',
+    sections:[
+      {label:'What it does',bullets:[
+        '<strong>Paste any recipe URL</strong> → parsed server-side from <strong>schema.org/Recipe</strong> JSON-LD (~95% of major recipe sites), with microdata and WordPress-plugin-selector fallbacks for the holdouts.',
+        '<strong>Reader-proxy fallback</strong> — if the site blocks bots (AllRecipes, etc.), Sift transparently retries through <code>r.jina.ai</code> so you still get the recipe.',
+        '<strong>Interactive cooking aids</strong> — tap-to-cross-off ingredient checklist, tap-to-mark-done numbered steps, and a <strong>ratio-based batch scaler</strong> (¼×, ⅓×, ½×, ⅔×, ¾×, 1×, 1½×, 2×, 3×, 4×) that snaps quantities back to pretty fractions so you never end up with "1.83 eggs".',
+        '<strong>Your cookbook</strong> — make any number of cookbooks (each with its own cover color or image, icon, and text color), organize recipes into custom-coloured tabs, write per-recipe notes that auto-save, upload your own bake photos, give it your own 1-5 star rating.',
+        '<strong>Chrome extension</strong> — toolbar icon on any recipe page opens the same clean view in a popup. Runs locally in the browser, so it bypasses bot-blocking sites.'
+      ]},
+      {label:'How it is built',bullets:[
+        '<strong>Frontend:</strong> Vanilla JS ES modules, no build step. Hash-based router, hand-rolled <code>h()</code> hyperscript helper, a tiny modal / toast / icon library. Edits feel instant.',
+        '<strong>Backend:</strong> Originally Express + <strong>better-sqlite3</strong> for a single-user local install. Refactored for mekh.ca to <strong>Supabase Postgres</strong> with email magic-link auth and Row Level Security so each visitor gets their own private cookbook.',
+        '<strong>Parser:</strong> <strong>Cheerio</strong>-based JSON-LD walker with microdata and heuristic fallbacks, deployed as a Vercel serverless function under <code>/api/sift-parse</code>.',
+        '<strong>Photos:</strong> Supabase Storage bucket scoped per user via RLS so users can only read/write their own uploads.',
+        '<strong>Ingredient parser</strong> handles <code>1 1/2 cups</code>, <code>½</code>, <code>1½</code>, <code>2 to 3 tablespoons</code>, <code>(8 oz) package</code>, ranges, and word numbers — fractions parsed before decimals so <code>3/4 cup</code> does not degrade to "decimal 3 with /4 stranded".'
+      ]},
+      {label:'Why ratios, not ±1 servings',bullets:[
+        'Going from 12 → 11 servings creates ugly fractional eggs. Going from 12 → ¾× (= 9 servings) keeps every ingredient on a clean fraction. That is the kind of small choice the whole app is built around — the path that leaves you with a usable recipe at the end, not a math problem.'
+      ]}
+    ],
+    photos:[],
+    sift:true
+  },
   { id:'haptic-gloves', num:'06', title:'Force Feedback Haptic Gloves',
     summary:'VR glove that physically stops your fingers when you grab a virtual object.',
     awards:[{kind:'pop',text:'On-going'}],
@@ -874,8 +973,18 @@ window.renderProjectDetail = function(p) {
         <a href="notes/?from=spocket-project" class="spocket-cta" onclick="event.stopPropagation()">Open Student Resources →</a>
       </div>
     </div>` : '';
+  const siftHTML = p.sift ? `
+    <div class="sift-stage">
+      <div class="sift-mark" aria-hidden="true">${SIFT_MARK_SVG}</div>
+      <div class="sift-msg">
+        <span class="sift-whisper">Try Sift live · mekh.ca/sift</span>
+        <p><span class="sift-hi">Sign in with your email to keep your cookbook private to you.</span> Paste any recipe URL to get a clean reading view — or save it to your own cookbook with custom tabs, notes, photos, and ratings. Each visitor gets their own data, partitioned by Supabase Row Level Security.</p>
+        <a href="/sift/" class="sift-cta" onclick="event.stopPropagation()">Open Sift →</a>
+        <a href="https://github.com/taliamekh/sift" target="_blank" rel="noopener" class="sift-cta ghost" onclick="event.stopPropagation()">View source</a>
+      </div>
+    </div>` : '';
   return `<div class="p-awards">${awardsHTML}</div>
-    <h3 class="p-title">${p.title}</h3>${descHTML}${descBullets}${sectionsHTML}${spocketHTML}${photosHTML}
+    <h3 class="p-title">${p.title}</h3>${descHTML}${descBullets}${sectionsHTML}${spocketHTML}${siftHTML}${photosHTML}
     <div class="p-tags">${tagsHTML}</div>`;
 };
 
@@ -883,18 +992,57 @@ window.renderProjectDetail = function(p) {
 const sizes = {
   'deskclaw':'size-2x2',
   'sleep-apnea':'size-tall',
-  'water-filter':'size-2x2',
+  'water-filter':'size-tall',
   'spocket':'size-tall',
   'wind-turbine':'size-mid',
-  'haptic-gloves':'size-mid'
+  'haptic-gloves':'size-mid',
+  'sift':'size-tall'
 };
-const noImage = { 'wind-turbine': true, 'haptic-gloves': true };
-const tileOrder = ['deskclaw','sleep-apnea','spocket','wind-turbine','haptic-gloves','water-filter'];
+const noImage = { 'wind-turbine': true, 'haptic-gloves': true, 'sift': true };
+const tileOrder = ['deskclaw','sleep-apnea','spocket','water-filter','wind-turbine','haptic-gloves','sift'];
 const tagLimit = { 'size-2x2': 6, 'size-2x1': 5, 'size-wide': 6, 'size-tall': 4, 'size-mid': 3 };
+
+/* Sift mark — pastel-pink cookbook with a SIFT label band, a cupcake on the
+   cover, and a bookmark ribbon. Used in both the tile cover and the modal
+   sift-stage. Single source of truth. */
+const SIFT_MARK_SVG = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="none" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <linearGradient id="sift-cover" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffe6f0"/>
+      <stop offset="55%" stop-color="#f9bcd3"/>
+      <stop offset="100%" stop-color="#e88dbb"/>
+    </linearGradient>
+    <linearGradient id="sift-spine" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#c2487c"/>
+      <stop offset="100%" stop-color="#a52a6a"/>
+    </linearGradient>
+  </defs>
+  <!-- Soft drop shadow under the book -->
+  <ellipse cx="50" cy="91" rx="30" ry="3" fill="#a52a6a" opacity="0.18"/>
+  <!-- Bookmark ribbon dropping from the top of the book -->
+  <path d="M62 12 L62 36 L66 32 L70 36 L70 12 Z" fill="#7a1a4e"/>
+  <!-- Book cover -->
+  <rect x="20" y="14" width="60" height="74" rx="4" fill="url(#sift-cover)" stroke="#a52a6a" stroke-width="1.6"/>
+  <!-- Spine band on the left -->
+  <rect x="20" y="14" width="8" height="74" rx="2" fill="url(#sift-spine)"/>
+  <line x1="28" y1="14" x2="28" y2="88" stroke="#a52a6a" stroke-width="1" opacity="0.6"/>
+  <!-- Page edges along the right side -->
+  <line x1="80" y1="18" x2="80" y2="84" stroke="#a52a6a" stroke-width="0.6" opacity="0.35"/>
+  <line x1="81" y1="20" x2="81" y2="82" stroke="#a52a6a" stroke-width="0.4" opacity="0.2"/>
+  <!-- Empty white title label on the cover -->
+  <rect x="34" y="30" width="40" height="20" rx="3" fill="white" stroke="#a52a6a" stroke-width="1"/>
+  <!-- Cupcake illustration on the cover under the label -->
+  <path d="M47 70 L61 70 L59 80 L49 80 Z" fill="white" stroke="#a52a6a" stroke-width="1.1"/>
+  <path d="M47 70 Q47 60 54 60 Q61 60 61 70" fill="white" stroke="#a52a6a" stroke-width="1.1"/>
+  <circle cx="54" cy="58.5" r="1.6" fill="#a52a6a"/>
+  <!-- Decorative corner dots -->
+  <circle cx="36" cy="22" r="1" fill="#a52a6a" opacity="0.45"/>
+  <circle cx="72" cy="22" r="1" fill="#a52a6a" opacity="0.45"/>
+</svg>`;
 
 /* Inline Spocket SVG — matches spocket.svg but with .spocket-arm-left class hooks
    so the CSS wave-on-hover animation can target the arm group. */
-const SPOCKET_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 480" preserveAspectRatio="xMidYMid meet">
+const SPOCKET_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 480" preserveAspectRatio="xMidYMid slice">
   <defs>
     <linearGradient id="sp-bg" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#3d2055"/><stop offset="100%" stop-color="#1d0e35"/>
@@ -1028,11 +1176,15 @@ bento.innerHTML = tileOrder.map(id => {
     : '';
   const coverHTML = id === 'spocket'
     ? SPOCKET_SVG
-    : `<img src="${p.cover}" alt="${p.title}">`;
+    : id === 'sift'
+      ? ''
+      : `<img src="${p.cover}" alt="${p.title}">`;
+  const siftMarkHTML = id === 'sift' ? `<div class="sift-tile-mark" aria-hidden="true">${SIFT_MARK_SVG}</div>` : '';
   return `
     <article class="tile ${size} ${noImage[id] ? 'no-image' : ''} ${p.awards.length > 1 ? 'large' : ''}" data-id="${p.id}" data-num="${p.num}" onclick="openModal('${p.id}')">
       <div class="tile-img">${coverHTML}</div>
       <div class="tile-overlay"></div>
+      ${siftMarkHTML}
       <div class="tile-content">
         <div class="tile-bottom">
           ${awardsBlock}
@@ -1133,6 +1285,12 @@ function setPalette(id) {
     const tile = document.querySelector(`.tile[data-id="${projectId}"]`);
     if (tile) tile.style.setProperty('--tile-accent', color);
   });
+  // Sift lives in every palette as a derived color — pick the boldest pink
+  // available (spocket slot) so its "Try it" tile always reads as pastel.
+  const siftTile = document.querySelector('.tile[data-id="sift"]');
+  if (siftTile && palette.colors.spocket) {
+    siftTile.style.setProperty('--tile-accent', palette.colors.spocket);
+  }
   const colorArr = tileOrder.map(pid => palette.colors[pid]);
   document.documentElement.style.setProperty(
     '--palette-gradient',

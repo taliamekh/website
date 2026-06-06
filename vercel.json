@@ -2,6 +2,9 @@
   "functions": {
     "api/gemini.js": {
       "maxDuration": 30
+    },
+    "api/sift-parse.mjs": {
+      "maxDuration": 30
     }
   }
 }
