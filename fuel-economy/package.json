@@ -1,0 +1,21 @@
+{
+  "name": "fuel-economy-calculator",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Plan the cost of any road trip in any country. Static front-end + daily refreshed regional gas-price averages.",
+  "homepage": "https://taliamekh.github.io/Fuel-Economy-Calculator/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/taliamekh/Fuel-Economy-Calculator.git"
+  },
+  "license": "MIT",
+  "author": "Talia Mekhayche",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "serve": "python -m http.server 5173",
+    "update-prices": "node scripts/update-prices.mjs"
+  }
+}

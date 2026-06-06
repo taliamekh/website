@@ -1,0 +1,52 @@
+name: Deploy to Pages
+
+# Builds the static site for GitHub Pages, generating config.js from the
+# ORS_API_KEY repository secret so the real key never enters the public repo.
+#
+# Required one-time setup in the repo:
+#   1. Settings → Secrets and variables → Actions → New repository secret
+#      Name:  ORS_API_KEY
+#      Value: <your OpenRouteService key>
+#   2. Settings → Pages → Source: GitHub Actions
+#
+# Triggers: every push to main (including the daily price-refresh commit) and
+# manual dispatch.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Inject ORS API key into config.js
+        env:
+          ORS_API_KEY: ${{ secrets.ORS_API_KEY }}
+        run: |
+          # Empty if secret is unset — app falls back to OSRM gracefully.
+          printf "window.__ORS_API_KEY = '%s';\n" "$ORS_API_KEY" > config.js
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
