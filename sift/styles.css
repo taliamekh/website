@@ -2252,14 +2252,6 @@ main { padding-top: var(--s-6); padding-bottom: var(--s-8); }
 .nav-signout:hover { background: var(--pink-50); color: var(--cocoa); }
 .nav-back { font-size: var(--step--1); opacity: 0.85; }
 
-/* ----- hero fineprint (sign-in is optional hint under the lead) ----- */
-.hero-fineprint {
-  margin-top: calc(-1 * var(--s-2));
-  font-size: var(--step--1);
-  color: var(--cocoa-muted);
-  text-align: center;
-}
-
 /* ----- signed-out cookbook notice (sits above the grid, explains why
         "+ New cookbook" routes to sign-in instead of opening the editor) -- */
 .signin-notice {

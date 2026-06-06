@@ -15,8 +15,7 @@ export async function HomeView() {
   const hero = h('section.hero');
   const title = h('h1', 'Skip the story, get to the recipe.');
   hero.appendChild(title);
-  hero.appendChild(h('p.lead', 'Paste any recipe URL. We sift through and hand you the ingredients, instructions, and ratings so you can get cooking straight away.'));
-  hero.appendChild(h('p.hero-fineprint', 'Free to browse — no account needed. Sign in only when you want to save recipes to your own private cookbook.'));
+  hero.appendChild(h('p.lead', 'Paste any recipe URL. We sift through and hand you the ingredients, instructions, and ratings so you can get cooking straight away. Save anything worth keeping to a cookbook of your own.'));
 
   // Paste card
   const pasteCard = h('div.paste-card');
