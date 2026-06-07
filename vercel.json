@@ -1,4 +1,5 @@
 {
+  "buildCommand": "npm install --prefix expenses/spending-tracker && VITE_BASE=/expenses/ npm run build --prefix expenses/spending-tracker",
   "functions": {
     "api/gemini.js": {
       "maxDuration": 30
@@ -6,5 +7,10 @@
     "api/sift-parse.mjs": {
       "maxDuration": 30
     }
-  }
+  },
+  "rewrites": [
+    { "source": "/expenses", "destination": "/expenses/spending-tracker/dist/index.html" },
+    { "source": "/expenses/", "destination": "/expenses/spending-tracker/dist/index.html" },
+    { "source": "/expenses/:path+", "destination": "/expenses/spending-tracker/dist/:path+" }
+  ]
 }

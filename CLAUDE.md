@@ -29,6 +29,8 @@ Do not push directly to `main` for unreviewed work. Use a feature branch (named 
 - **`api/`** — Vercel serverless functions. `gemini.js` is the Spocket AI proxy; `sift-parse.mjs` is the recipe URL parser for Sift. Leave alone unless explicitly working on those integrations.
 - **`lib/`** — server-side helpers for the Vercel functions (currently the cheerio-based sift parser modules). Not served as functions itself.
 - **`sift/`** — git subtree of [`taliamekh/sift`](https://github.com/taliamekh/sift). See the **Synced projects** section below before editing files here.
+- **`expenses/`** — git subtree of [`taliamekh/expenses`](https://github.com/taliamekh/expenses) (PRIVATE). Contains `spending-tracker/` (Vite + React SPA that ships to `mekh.ca/expenses`) and `statements-backup/` (personal financial PDFs/PNGs, excluded from deploy via `.vercelignore`). Password-gated by `middleware.js`. See the **Synced projects** and **Expenses gate** sections below.
+- **`middleware.js`** — Vercel Edge middleware. Currently used to password-gate `/expenses/*`. Reads `EXPENSES_PASSWORD` and `EXPENSES_AUTH_SECRET` from Vercel env vars.
 - **`spocket.svg`** at the root and the matching `SPOCKET_SVG` constant inside `projects.html` need to stay in sync — they're two copies of the same Spocket character render (one standalone, one inlined so the bento tile can animate her wave on hover).
 
 ## Synced projects (git subtree pattern)
@@ -40,6 +42,7 @@ Projects that have a standalone GitHub repo are pulled into the website as a **g
 | Path | Remote | Repo | Branch |
 |---|---|---|---|
 | `sift/` | `sift-upstream` | [`taliamekh/sift`](https://github.com/taliamekh/sift) | `main` |
+| `expenses/` | `expenses-upstream` | [`taliamekh/expenses`](https://github.com/taliamekh/expenses) (private) | `main` |
 
 **Workflow when editing files inside a synced project directory:**
 
@@ -58,6 +61,7 @@ Projects that have a standalone GitHub repo are pulled into the website as a **g
 
 ```sh
 git remote add sift-upstream https://github.com/taliamekh/sift.git
+git remote add expenses-upstream https://github.com/taliamekh/expenses.git
 ```
 
 **Adding a new synced project from a GitHub repo:**
@@ -69,3 +73,18 @@ git remote add sift-upstream https://github.com/taliamekh/sift.git
 5. If the standalone repo ships non-frontend code (Express server, browser extension, build scripts, its own `package.json`), add those paths to `.vercelignore` so Vercel doesn't expose them at `mekh.ca/<project>/server/...` etc.
 
 **Hosted-only convention.** When we sync a project, the standalone repo is rewritten to be hosted-mode-first — i.e. cloning + `npm start` requires whatever backend the hosted site uses (Supabase project, env vars, etc.). The standalone repo isn't expected to remain trivially runnable as a local-only app after a sync. If you need a local-only mode, add it as an explicit fallback inside the project's own config layer — don't fork the standalone.
+
+## Expenses gate
+
+`mekh.ca/expenses` is the Vite + React `spending-tracker` SPA from `taliamekh/expenses` (private repo, pulled in as a subtree at `expenses/`). It is built by Vercel on every deploy via the `buildCommand` in `vercel.json`, which runs `npm install && VITE_BASE=/expenses/ npm run build` inside `expenses/spending-tracker`. URL rewrites in `vercel.json` then map `/expenses/*` to the built `dist/` output, so source files under `expenses/spending-tracker/src` aren't reachable by HTTP.
+
+The route is gated by `middleware.js` at the repo root (Vercel Edge runtime). On first visit, the user gets a dark-mode login form; submitting the correct password sets an HMAC-signed `expenses_auth` cookie that's HttpOnly, Secure, SameSite=Lax, and `Max-Age` of 1 year — so subsequent visits on the same device skip the form.
+
+**Required Vercel env vars** (set via the Vercel dashboard under Project → Settings → Environment Variables, or with `vercel env add`):
+
+- `EXPENSES_PASSWORD` — the plaintext password users will enter.
+- `EXPENSES_AUTH_SECRET` — a long random string (32+ chars) used to sign the auth cookie. Rotating this value forces every existing session to re-authenticate.
+
+If either env var is missing at runtime, `/expenses` returns a 500 with a clear "not configured" message instead of crashing silently.
+
+`expenses/statements-backup/` contains personal bank/credit card statements and is excluded from the Vercel upload entirely via `.vercelignore`. The standalone repo is private, so the files do still live in git history — keep the repo private.

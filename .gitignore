@@ -7,3 +7,6 @@ notes/auth.config.js
 
 # Node deps (cheerio for /api/sift-parse — Vercel installs from package.json)
 node_modules/
+
+# Vite build output for the expenses sub-app (Vercel rebuilds on every deploy)
+expenses/spending-tracker/dist/
