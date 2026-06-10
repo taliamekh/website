@@ -157,28 +157,28 @@
      overridden to match (in injectContentThemeOverrides) so the iframe blends
      seamlessly into the surrounding chrome. */
   html.sr-light body.tm-sr-paper-active {
-    --navy: #f2ebd3;
-    --deep: #ebe3c3;
-    --mid: #e2d8b3;
-    --panel: #f2ebd3;
-    --border: #c8baa0;
-    --border2: #948663;
-    --text: #2a2618;
-    --text-muted: #5a4f30;
+    --navy: var(--sr-paper-bg, #f2ebd3);
+    --deep: var(--sr-paper-deep, #ebe3c3);
+    --mid: var(--sr-paper-mid, #e2d8b3);
+    --panel: var(--sr-paper-bg, #f2ebd3);
+    --border: var(--sr-paper-border, #c8baa0);
+    --border2: var(--sr-paper-border2, #948663);
+    --text: var(--sr-paper-text, #2a2618);
+    --text-muted: var(--sr-paper-text-muted, #5a4f30);
   }
   html.sr-light body.tm-sr-paper-active nav {
-    background: rgba(242, 235, 211, 0.92);
-    border-bottom-color: #c8baa0;
+    background: var(--sr-paper-nav-bg, rgba(242, 235, 211, 0.92));
+    border-bottom-color: var(--sr-paper-border, #c8baa0);
   }
   html.sr-light body.tm-sr-paper-active .ecor-panel-head .btn,
   html.sr-light body.tm-sr-paper-active .ecor-panel-head button {
-    background: #f2ebd3;
-    border-color: #c8baa0;
-    color: #2a2618;
+    background: var(--sr-paper-bg, #f2ebd3);
+    border-color: var(--sr-paper-border, #c8baa0);
+    color: var(--sr-paper-text, #2a2618);
   }
   html.sr-light body.tm-sr-paper-active .notes-frame-wrap,
   html.sr-light body.tm-sr-paper-active .notes-frame {
-    background: #f2ebd3 !important;
+    background: var(--sr-paper-bg, #f2ebd3) !important;
   }
   /* Suppress the parent's blueprint grid in paper-mode so it doesn't double
      up on the iframe's own engineering-grid background. */
@@ -456,8 +456,8 @@
     box-shadow: 0 8px 28px rgba(82, 60, 20, 0.22);
   }
   html.sr-light body.sr-notes-expand.tm-sr-paper-active .ecor-panel-actions {
-    background: rgba(242, 235, 211, 0.96);
-    border-color: #c8baa0;
+    background: var(--sr-paper-expand-bg, rgba(242, 235, 211, 0.96));
+    border-color: var(--sr-paper-border, #c8baa0);
     box-shadow: 0 8px 28px rgba(82, 60, 20, 0.22);
   }
   body.sr-notes-expand .readme-block {
@@ -2149,6 +2149,11 @@
       <div class="course-name">Multivariable Calculus</div>
       <div class="course-meta">Final exam notes</div>
     </article>
+    <article class="course-card" role="button" tabindex="0" data-course-id="maae2003" aria-pressed="false">
+      <div class="course-code">MAAE 2300</div>
+      <div class="course-name">Fluid Mechanics I</div>
+      <div class="course-meta">Exam notes</div>
+    </article>
     <article class="course-card placeholder">
       <div class="course-code">Coming soon</div>
       <div class="course-name">Additional courses</div>
@@ -2417,6 +2422,40 @@
              page bg, panel, and iframe wrap all match the grid paper. */
       bakedTheme: 'light',
       paperColor: '#F5F5F0',
+      paperPalette: {
+        bg:        '#f2ebd3',
+        deep:      '#ebe3c3',
+        mid:       '#e2d8b3',
+        border:    '#c8baa0',
+        border2:   '#948663',
+        text:      '#2a2618',
+        textMuted: '#5a4f30',
+        navBg:     'rgba(242, 235, 211, 0.92)',
+        expandBg:  'rgba(242, 235, 211, 0.96)'
+      },
+      darkModeVars: {
+        '--bg':             '#1a1814',
+        '--surface':        '#25221c',
+        '--border':         '#4a453c',
+        '--text':           '#ecece6',
+        '--muted':          '#a8a4a0',
+        '--grid':           '#2d2a24',
+        '--eq':             '#ff7676',
+        '--eq-name':        '#ff9b9b',
+        '--def':            '#c8a0fc',
+        '--tip':            '#6fb4ff',
+        '--deriv':          '#6bd49a',
+        '--example':        '#ffc988',
+        '--units':          '#b8b8b8',
+        '--sidebar-bg':     '#1f1d18',
+        '--sidebar-text':   '#c0bcb0',
+        '--sidebar-active': '#ecece6',
+        '--menu-active':    '#6fb4ff',
+        '--v1':  '#ff8a3d', '--v2':  '#5bd6d6', '--v3':  '#e670b8', '--v4':  '#aacc60',
+        '--v5':  '#7ab0ff', '--v6':  '#ff7eb0', '--v7':  '#88d0a8', '--v8':  '#d8a060',
+        '--v9':  '#b96cff', '--v10': '#ff806f', '--v11': '#5fc098', '--v12': '#c890e0'
+      },
+      darkHeadingColor: '#f5f5f0',
       readmeUrl: 'https://raw.githubusercontent.com/taliamekh/MATH2004-2008/main/README.md',
       notesHtmlUrl: 'https://raw.githubusercontent.com/taliamekh/MATH2004-2008/main/MATH2004-notes.html',
       storage: {
@@ -2426,6 +2465,69 @@
         style: 'tm_student_resources_notes_math2004_2008_style_v1',
         images: 'tm_student_resources_notes_math2004_2008_images_v1',
         sidebarCollapsed: 'tm_student_resources_notes_math2004_2008_sidebar_collapsed_v1'
+      }
+    },
+    maae2003: {
+      id: 'maae2003',
+      code: 'MAAE 2300',
+      name: 'Fluid Mechanics I',
+      /* Original notes are light-baked: warm off-white bg (#F8F6F1) with a
+         dark navy sidebar. bakedTheme:'light' auto-opens in light mode;
+         dark mode flips the CSS vars defined in darkModeVars below.
+         localFile is used because the HTML is 13 MB (embedded images) —
+         fetching it raw from GitHub would crash the string pipeline. */
+      bakedTheme: 'light',
+      paperColor: '#F8F6F1',
+      paperPalette: {
+        bg:        '#f0ebe0',
+        deep:      '#e8e2d5',
+        mid:       '#dfd9ca',
+        border:    '#c4b8a4',
+        border2:   '#9a8c78',
+        text:      '#1a2a3a',
+        textMuted: '#4a5a6a',
+        navBg:     'rgba(240, 235, 224, 0.92)',
+        expandBg:  'rgba(240, 235, 224, 0.96)'
+      },
+      darkModeVars: {
+        '--bg':            '#0d1d2c',
+        '--surface':       '#142536',
+        '--surface-hover': '#1c3348',
+        '--text':          '#dce9f5',
+        '--muted':         '#8aa0b8',
+        '--border':        '#2a3e52',
+        '--code-bg':       '#152030',
+        '--sidebar-bg':    '#091e30',
+        '--sidebar-text':  '#8a9db0',
+        '--menu-active':   '#ff8c5a',
+        '--eq':            '#ff8c5a',
+        '--def':           '#4ab8d4',
+        '--tip':           '#3dcfb8',
+        '--tip-bright':    '#7df8e0',
+        '--deriv':         '#4a90c8',
+        '--example':       '#f0a060',
+        '--unit':          '#9ab8d0',
+        '--ch1-title':     '#ff8c5a',
+        '--ch2-title':     '#4ab8d4',
+        '--ch3-title':     '#4a90c8',
+        '--ch4-title':     '#f0a060',
+        '--ch5-title':     '#3dcfb8',
+        '--ch6-title':     '#9ab8d0',
+        '--vc-primary':    '#ff6464',
+        '--vc-secondary':  '#5090d8',
+        '--vc-tertiary':   '#4ab870',
+        '--vc-angle':      '#b06ccc',
+        '--vc-scale':      '#ff7842',
+        '--vc-field':      '#26b8c8'
+      },
+      localFile: 'maae2003.html',
+      storage: {
+        highlights:       'tm_student_resources_notes_maae2003_highlights_v1',
+        stickies:         'tm_student_resources_notes_maae2003_stickies_v1',
+        drawings:         'tm_student_resources_notes_maae2003_drawings_v1',
+        style:            'tm_student_resources_notes_maae2003_style_v1',
+        images:           'tm_student_resources_notes_maae2003_images_v1',
+        sidebarCollapsed: 'tm_student_resources_notes_maae2003_sidebar_collapsed_v1'
       }
     }
   };
@@ -2445,13 +2547,9 @@
    */
   var THEME_KEY = 'tm_student_resources_theme_v1';
   var SIDEBAR_STATE_KEY_PREFIX = 'tm_student_resources_sidebar_v1_';
-  var currentTheme = (function () {
-    try {
-      var t = localStorage.getItem(THEME_KEY);
-      if (t === 'light' || t === 'dark') return t;
-    } catch (e) { /* ignore */ }
-    return 'dark';
-  })();
+  // Always start in dark mode regardless of localStorage.
+  // Theme is driven by which note is selected (bakedTheme), not persisted state.
+  var currentTheme = 'dark';
   function applyThemeToDocument() {
     var root = document.documentElement;
     if (currentTheme === 'light') root.classList.add('sr-light');
@@ -4039,6 +4137,7 @@
     overlay.setAttribute('aria-hidden', 'true');
     overlay.setAttribute('inert', '');
     lockError.textContent = '';
+    setTheme('dark');
     initStickyWorkspaceFromStorage();
     // Course card click/keydown handlers. bindCourseCards is idempotent (guards on _tmBoundCourses),
     // and syncCourseUi paints the active highlight — both must run whether the user refreshed an
@@ -4265,25 +4364,32 @@
            --deriv/--example/--units) are left alone so the document's color
            organization stays intact. */
         'html.sr-light,html.sr-light body{' +
-          '--bg:#f2ebd3;--surface:#ebe3c3;--border:#c8baa0;--grid:#d9cfb0;' +
-          '--sidebar-bg:#ebe3c3;' +
+          '--bg:' + ((courseDef && courseDef.paperPalette && courseDef.paperPalette.bg) || (courseDef && courseDef.paperColor) || '#f2ebd3') + ';' +
+          '--surface:' + ((courseDef && courseDef.paperPalette && courseDef.paperPalette.deep) || '#ebe3c3') + ';' +
+          '--border:' + ((courseDef && courseDef.paperPalette && courseDef.paperPalette.border) || '#c8baa0') + ';' +
+          '--grid:#d9cfb0;' +
+          '--sidebar-bg:' + ((courseDef && courseDef.paperPalette && courseDef.paperPalette.deep) || '#ebe3c3') + ';' +
         '}' +
         /* When the iframe is in dark mode (parent toggle), redefine the page's
-           CSS variables. */
-        'html:not(.sr-light),html:not(.sr-light) body{' +
-          /* base palette */
-          '--bg:#1a1814;--surface:#25221c;--border:#4a453c;--text:#ecece6;--muted:#a8a4a0;--grid:#2d2a24;' +
-          /* semantic colors — brighter equivalents that pop on dark bg without losing identity */
-          '--eq:#ff7676;--eq-name:#ff9b9b;--def:#c8a0fc;--tip:#6fb4ff;--deriv:#6bd49a;--example:#ffc988;--units:#b8b8b8;' +
-          /* sidebar / menu */
-          '--sidebar-bg:#1f1d18;--sidebar-text:#c0bcb0;--sidebar-active:#ecece6;--menu-active:#6fb4ff;' +
-          /* variable swatches — slightly desaturate originals for dark bg */
-          '--v1:#ff8a3d;--v2:#5bd6d6;--v3:#e670b8;--v4:#aacc60;--v5:#7ab0ff;--v6:#ff7eb0;' +
-          '--v7:#88d0a8;--v8:#d8a060;--v9:#b96cff;--v10:#ff806f;--v11:#5fc098;--v12:#c890e0;' +
-        '}' +
-        /* Anything baked with a pure-black color (h1, etc.) needs a manual nudge — vars only
-           cover sites that actually use var(...). Keep this list small; rely on vars otherwise. */
-        'html:not(.sr-light) h1,html:not(.sr-light) h2,html:not(.sr-light) h3,html:not(.sr-light) h4,html:not(.sr-light) h5,html:not(.sr-light) h6{color:#f5f5f0;}' +
+           CSS variables. Use darkModeVars from the course definition if provided;
+           fall back to the MATH-derived generic palette. */
+        (function () {
+          var dv = courseDef && courseDef.darkModeVars;
+          if (dv) {
+            var parts = Object.keys(dv).map(function (k) { return k + ':' + dv[k]; });
+            return 'html:not(.sr-light),html:not(.sr-light) body{' + parts.join(';') + ';}';
+          }
+          return 'html:not(.sr-light),html:not(.sr-light) body{' +
+            '--bg:#1a1814;--surface:#25221c;--border:#4a453c;--text:#ecece6;--muted:#a8a4a0;--grid:#2d2a24;' +
+            '--eq:#ff7676;--eq-name:#ff9b9b;--def:#c8a0fc;--tip:#6fb4ff;--deriv:#6bd49a;--example:#ffc988;--units:#b8b8b8;' +
+            '--sidebar-bg:#1f1d18;--sidebar-text:#c0bcb0;--sidebar-active:#ecece6;--menu-active:#6fb4ff;' +
+            '--v1:#ff8a3d;--v2:#5bd6d6;--v3:#e670b8;--v4:#aacc60;--v5:#7ab0ff;--v6:#ff7eb0;' +
+            '--v7:#88d0a8;--v8:#d8a060;--v9:#b96cff;--v10:#ff806f;--v11:#5fc098;--v12:#c890e0;' +
+            '}';
+        })() +
+        /* Heading nudge for notes that bake pure-black heading colors inline.
+           Use the course's darkHeadingColor if provided, else fall back to off-white. */
+        'html:not(.sr-light) h1,html:not(.sr-light) h2,html:not(.sr-light) h3,html:not(.sr-light) h4,html:not(.sr-light) h5,html:not(.sr-light) h6{color:' + ((courseDef && courseDef.darkHeadingColor) || '#f5f5f0') + ';}' +
         '</style>';
       if (/<\/head>/i.test(html)) {
         return html.replace(/<\/head>/i, function (m) { return darkCss + m; });
@@ -6021,13 +6127,16 @@
 
   /** Default mode: ECOR 2050 learning notes from NOTES_HTML_URL + local workspace script. */
   function loadRepoContent() {
-    if (frameStatus) {
-      frameStatus.textContent = 'Loading notes from GitHub…';
-      frameStatus.classList.remove('err');
-    }
     loadReadmeBlock();
     var c = getActiveCourse();
-    var notesUrl = c && c.notesHtmlUrl ? String(c.notesHtmlUrl) : '';
+    var isLocal = !!(c && c.localFile);
+    var notesUrl = isLocal
+      ? c.localFile
+      : (c && c.notesHtmlUrl ? String(c.notesHtmlUrl) : '');
+    if (frameStatus) {
+      frameStatus.textContent = isLocal ? 'Loading notes…' : 'Loading notes from GitHub…';
+      frameStatus.classList.remove('err');
+    }
     if (!notesUrl) {
       if (frameStatus) {
         frameStatus.textContent = 'No notes URL configured for this course.';
@@ -6097,7 +6206,30 @@
     // light look uses a custom paper color (so the chrome palette can match it
     // in light mode without affecting dark mode).
     document.body.setAttribute('data-active-course', activeCourseId || '');
-    document.body.classList.toggle('tm-sr-paper-active', !!(c && c.paperColor));
+    var hasPaper = !!(c && c.paperColor);
+    document.body.classList.toggle('tm-sr-paper-active', hasPaper);
+    var paperVars = ['--sr-paper-bg','--sr-paper-deep','--sr-paper-mid','--sr-paper-border',
+      '--sr-paper-border2','--sr-paper-text','--sr-paper-text-muted','--sr-paper-nav-bg','--sr-paper-expand-bg'];
+    if (hasPaper) {
+      var pal = c.paperPalette || {};
+      var palMap = {
+        '--sr-paper-bg':         pal.bg        || c.paperColor,
+        '--sr-paper-deep':       pal.deep       || null,
+        '--sr-paper-mid':        pal.mid        || null,
+        '--sr-paper-border':     pal.border     || null,
+        '--sr-paper-border2':    pal.border2    || null,
+        '--sr-paper-text':       pal.text       || null,
+        '--sr-paper-text-muted': pal.textMuted  || null,
+        '--sr-paper-nav-bg':     pal.navBg      || null,
+        '--sr-paper-expand-bg':  pal.expandBg   || null
+      };
+      paperVars.forEach(function(v) {
+        if (palMap[v]) document.body.style.setProperty(v, palMap[v]);
+        else document.body.style.removeProperty(v);
+      });
+    } else {
+      paperVars.forEach(function(v) { document.body.style.removeProperty(v); });
+    }
   }
 
   function bindCourseCards() {
