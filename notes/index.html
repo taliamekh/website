@@ -5214,11 +5214,11 @@
    */
   function ensureHlBarForWorkspace(html, opts) {
     if (/\bid\s*=\s*["']hl-bar["']/i.test(html)) return html;
-    var inner = '';
+    // Always include the opacity slider so workspace-iframe.js can find #hl-op
+    // and wire up the opacity row. Formula sheet also gets a clear button.
+    var inner = '<input type="range" id="hl-op" min="60" max="100" value="82" title="Highlight strength" style="max-width:160px"/>';
     if (opts && opts.formulaSheet) {
-      inner =
-        '<input type="range" id="hl-op" min="60" max="100" value="82" title="Highlight strength" style="max-width:160px"/>' +
-        '<button type="button" onclick="clearAll()">Clear highlights</button>';
+      inner += '<button type="button" onclick="clearAll()">Clear highlights</button>';
     }
     return html.replace(/<\/body>/i, function (m) {
       return '<div id="hl-bar">' + inner + '</div>' + m;
