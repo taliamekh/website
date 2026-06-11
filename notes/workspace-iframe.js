@@ -3071,7 +3071,7 @@
           var tn = nodes[i];
           if (!tn.nodeValue) continue;
           // Don't wrap text inside existing highlights or toolbar chrome.
-          if (tn.parentNode && tn.parentNode.closest && tn.parentNode.closest('mark.usr,#hl-bar,.tm-ws-host,.tm-sr-sidebar,.tm-pop,.tm-drawing-ctx')) continue;
+          if (tn.parentNode && tn.parentNode.closest && tn.parentNode.closest('mark.usr,#hl-bar,.tm-ws-host,#sidebar,.sidebar,.tm-sr-sidebar,.tm-pop,.tm-drawing-ctx')) continue;
           var sOffset = (tn === range.startContainer) ? range.startOffset : 0;
           var eOffset = (tn === range.endContainer) ? range.endOffset : tn.nodeValue.length;
           if (eOffset <= sOffset) continue;
@@ -3092,7 +3092,7 @@
     document.addEventListener('mouseup', function (ev) {
       if (!window.__TM_HIGHLIGHT_ARMED) return;
       var tgt = ev.target;
-      if (tgt && tgt.closest && tgt.closest('#hl-bar,.tm-ws-host,.tm-pop,.tm-popwrap,.tm-drawing-ctx,.tm-sr-sidebar,.tm-sr-sidebar-host,.tm-sr-hamburger,.tm-sr-sidebar-toggle')) return;
+      if (tgt && tgt.closest && tgt.closest('#hl-bar,.tm-ws-host,.tm-pop,.tm-popwrap,.tm-drawing-ctx,#sidebar,.sidebar,.tm-sr-sidebar,.tm-sr-sidebar-host,.tm-sr-hamburger,.tm-sr-sidebar-toggle')) return;
       var sel;
       try { sel = window.getSelection(); } catch (eSel) { return; }
       if (!sel || sel.isCollapsed || sel.rangeCount === 0) return;
