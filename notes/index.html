@@ -5384,10 +5384,10 @@
       'return best;' +
       '}' +
       'function tmStripMarks(){document.querySelectorAll("mark.usr").forEach(function(m){var p=m.parentNode;if(!p)return;while(m.firstChild)p.insertBefore(m.firstChild,m);p.removeChild(m);});}' +
-      'function tmSerializeMarks(){var d=[];document.querySelectorAll("mark.usr").forEach(function(m){var slot=parseInt(m.getAttribute("data-slot")||"0",10);if(isNaN(slot)||slot<0||slot>4)slot=0;d.push({text:m.textContent,slot:slot});});return d;}' +
+      'function tmSerializeMarks(){var d=[];document.querySelectorAll("mark.usr").forEach(function(m){var slot=parseInt(m.getAttribute("data-slot")||"0",10);if(isNaN(slot)||slot<0||slot>4)slot=0;d.push({text:m.textContent,slot:slot,alpha:m.style.getPropertyValue("--tm-hl-alpha")||null});});return d;}' +
       'window.saveHL=function(){try{var d=tmSerializeMarks();localStorage.setItem(LS_KEY,JSON.stringify(d));window.parent.postMessage({type:"tm_student_resources_hl",action:"save",payload:JSON.stringify(d)},"*");}catch(e1){}};' +
       'window.clearAll=function(){try{tmStripMarks();localStorage.removeItem(LS_KEY);window.parent.postMessage({type:"tm_student_resources_hl",action:"save",payload:"[]"},"*");}catch(e2){}};' +
-      'function tmWrapOnce(needle,slot){' +
+      'function tmWrapOnce(needle,slot,alpha){' +
       'if(!needle)return false;' +
       'var tw=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,null);var n;' +
       'while(n=tw.nextNode()){' +
@@ -5396,7 +5396,7 @@
       'var idx=n.nodeValue.indexOf(needle);' +
       'if(idx<0)continue;' +
       'var r=document.createRange();r.setStart(n,idx);r.setEnd(n,idx+needle.length);' +
-      'var mk=document.createElement("mark");mk.className="usr";mk.setAttribute("data-slot",String(slot|0));' +
+      'var mk=document.createElement("mark");mk.className="usr";mk.setAttribute("data-slot",String(slot|0));if(alpha)mk.style.setProperty("--tm-hl-alpha",String(alpha));' +
       'try{r.surroundContents(mk);return true;}catch(e3){return false;}' +
       '}' +
       'return false;' +
@@ -5411,7 +5411,7 @@
       'for(var i=0;i<d.length;i++){' +
       'var it=d[i];if(!it||it.text==null)continue;' +
       'var slot=(typeof it.slot==="number")?it.slot:tmNearestSlot(it.bg||"");' +
-      'tmWrapOnce(String(it.text),slot);' +
+      'tmWrapOnce(String(it.text),slot,it.alpha||null);' +
       '}' +
       '}catch(e5){}' +
       '};' +

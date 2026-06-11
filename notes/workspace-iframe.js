@@ -149,7 +149,7 @@
       return Array.prototype.map.call(document.querySelectorAll('mark.usr'), function (m) {
         var slot = parseInt(m.getAttribute('data-slot') || '0', 10);
         if (isNaN(slot) || slot < 0 || slot > 4) slot = 0;
-        return { text: m.textContent, slot: slot };
+        return { text: m.textContent, slot: slot, alpha: m.style.getPropertyValue('--tm-hl-alpha') || null };
       });
     } catch (e) { return []; }
   }
@@ -171,7 +171,7 @@
       var wrap = (window.__TM_SR_HL && window.__TM_SR_HL.wrapOnce) || null;
       for (var i = 0; i < snap.length; i++) {
         var it = snap[i]; if (!it || it.text == null) continue;
-        if (wrap) wrap(String(it.text), (typeof it.slot === 'number' ? it.slot : 0));
+        if (wrap) wrap(String(it.text), (typeof it.slot === 'number' ? it.slot : 0), it.alpha || null);
       }
       if (typeof window.__TM_SR_HL_REWIRE === 'function') window.__TM_SR_HL_REWIRE();
       if (typeof saveHL === 'function') saveHL();
@@ -3026,6 +3026,9 @@
       var mk = document.createElement('mark');
       mk.className = 'usr';
       mk.setAttribute('data-slot', String(slotIndex | 0));
+      // Bake current slider alpha into the mark so future slider moves don't affect it.
+      var _alpha = document.documentElement.style.getPropertyValue('--tm-hl-alpha');
+      if (_alpha) mk.style.setProperty('--tm-hl-alpha', _alpha);
       try {
         range.surroundContents(mk);
         return [mk];
@@ -3063,6 +3066,8 @@
           var mk = document.createElement('mark');
           mk.className = 'usr';
           mk.setAttribute('data-slot', String(slotIndex | 0));
+          var _alpha = document.documentElement.style.getPropertyValue('--tm-hl-alpha');
+          if (_alpha) mk.style.setProperty('--tm-hl-alpha', _alpha);
           try { sub.surroundContents(mk); produced.push(mk); } catch (e3) { /* skip this node */ }
         }
       } catch (eWalk) { /* ignore */ }
