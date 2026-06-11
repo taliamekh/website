@@ -1220,8 +1220,19 @@
     flex: 1 1 auto;
     min-height: 0;
   }
+  /* Expand view fills the full tab width edge-to-edge. The resizable-column
+     gutters + drag handles (which exist only to carve out the side space the
+     user did not want) are hidden here, and the !important width overrides the
+     inline 88% that applyNotesColumnPct writes. */
+  body.sr-notes-expand .notes-gutter,
+  body.sr-notes-expand .notes-resize-handle {
+    display: none !important;
+  }
   body.sr-notes-expand .notes-column-inner {
     min-height: 0;
+    width: 100% !important;
+    max-width: none !important;
+    flex: 1 1 auto !important;
   }
   .notes-column-inner {
     flex: 0 0 88%;
