@@ -4359,17 +4359,10 @@
            prevents flex/grid ancestors from forcing extra width. */
         '.main-scroll{overflow-x:auto;}' +
         '.main-scroll .page{margin-left:auto !important;margin-right:auto !important;min-width:0;}' +
-        /* LIGHT mode — gentle warming of just the surface vars so the iframe matches
-           the cream-paper chrome of the parent. Semantic colors (--def/--eq/--tip/
-           --deriv/--example/--units) are left alone so the document's color
-           organization stays intact. */
-        'html.sr-light,html.sr-light body{' +
-          '--bg:' + ((courseDef && courseDef.paperPalette && courseDef.paperPalette.bg) || (courseDef && courseDef.paperColor) || '#f2ebd3') + ';' +
-          '--surface:' + ((courseDef && courseDef.paperPalette && courseDef.paperPalette.deep) || '#ebe3c3') + ';' +
-          '--border:' + ((courseDef && courseDef.paperPalette && courseDef.paperPalette.border) || '#c8baa0') + ';' +
-          '--grid:#d9cfb0;' +
-          '--sidebar-bg:' + ((courseDef && courseDef.paperPalette && courseDef.paperPalette.deep) || '#ebe3c3') + ';' +
-        '}' +
+        /* LIGHT mode — no overrides. Light-baked notes are authored for light mode;
+           their own CSS variables are already correct. Injecting surface vars
+           (including --sidebar-bg) would destroy notes whose sidebar is a
+           non-paper color (e.g. MAAE2003's navy #0B2E48). */
         /* When the iframe is in dark mode (parent toggle), redefine the page's
            CSS variables. Use darkModeVars from the course definition if provided;
            fall back to the MATH-derived generic palette. */
@@ -4620,6 +4613,9 @@
         'max-width:none !important;' +
         'min-width:0 !important;' +
       '}' +
+      /* Notes using sidebar + content-area flex layout (e.g. MAAE2003).
+         Zoom applies only to .content-area; .sidebar is a sibling and is untouched. */
+      '.content-area{zoom:var(--tm-sr-zoom, 1);}' +
       '</style>';
     var scr =
       '<script>' +
