@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Meridian Robotics — Project Plan · Talia Mekhayche</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&family=Sora:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ─── AURORA ROYAL THEME ─── */
+  :root {
+    --bg: #170a1c; --deep: #21102a; --panel: #2e1640; --panel-hi: #3d2055;
+    --border: #4a2a68; --border2: #6f44a0; --accent: #c084fc; --accent-2: #fbbf24;
+    --pink: #e879f9; --text: #ecdef7; --text-muted: #b09bc8; --text-dim: #7a6588;
+    --white: #fffaf3;
+    --grid-1: rgba(192,132,252,0.045); --grid-2: rgba(251,191,36,0.025); --grid-3: rgba(192,132,252,0.055);
+    --tag-font: 'Roboto Mono', monospace;
+    --ok: #86efac; --warn: #fbbf24; --info: #7dd3fc;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Outfit', sans-serif; font-weight: 300; line-height: 1.7;
+    min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden;
+    -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility;
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background-image:
+      linear-gradient(var(--grid-1) 1px, transparent 2px),
+      linear-gradient(90deg, var(--grid-2) 1px, transparent 2px),
+      linear-gradient(var(--grid-3) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-2) 1px, transparent 2px);
+    background-size: 80px 80px, 80px 80px, 16px 16px, 16px 16px;
+    pointer-events: none; z-index: 0;
+  }
+
+  /* ─── NAV ─── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: color-mix(in srgb, var(--bg) 92%, transparent);
+    backdrop-filter: blur(16px); border-bottom: 1px solid var(--border);
+    padding: 0 48px; height: 64px; display: flex; align-items: center; justify-content: space-between;
+  }
+  .nav-logo { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 22px; letter-spacing: -0.01em; color: var(--white); text-decoration: none; }
+  .nav-logo span { color: var(--accent); }
+  .nav-links { display: flex; gap: 4px; list-style: none; }
+  .nav-links a {
+    padding: 7px 15px; font-family: var(--tag-font); font-size: 12px; letter-spacing: 0.08em;
+    text-transform: uppercase; text-decoration: none; color: var(--text-muted); border-radius: 4px;
+    transition: color 0.2s, background 0.2s;
+  }
+  .nav-links a:hover { color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
+  .nav-links a.active { color: var(--accent); }
+
+  /* ─── LAYOUT ─── */
+  main { flex: 1; position: relative; z-index: 1; padding: 104px 32px 72px; max-width: 920px; margin: 0 auto; width: 100%; }
+
+  .exit-link {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: var(--tag-font); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--text-muted); text-decoration: none; margin-bottom: 26px;
+    transition: color 0.2s, transform 0.2s;
+  }
+  .exit-link:hover { color: var(--accent); }
+  .exit-link .a { transition: transform 0.2s; display: inline-block; }
+  .exit-link:hover .a { transform: translateX(-3px); }
+
+  /* ─── PROJECT HEADER ─── */
+  .proj-head { border-bottom: 1px solid var(--border); padding-bottom: 30px; margin-bottom: 40px; }
+  .proj-eyebrow {
+    font-family: var(--tag-font); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 14px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .status-pill {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-family: var(--tag-font); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600;
+    padding: 4px 11px; border-radius: 999px;
+    color: var(--ok); background: rgba(134,239,172,0.10); border: 1px solid rgba(134,239,172,0.38);
+  }
+  .status-pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 0 rgba(134,239,172,0.6); animation: pulse 1.8s ease-out infinite; }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(134,239,172,0.6); } 100% { box-shadow: 0 0 0 7px rgba(134,239,172,0); } }
+  h1.proj-title { font-family: 'Sora', sans-serif; font-weight: 700; font-size: clamp(38px, 6vw, 60px); line-height: 1.02; letter-spacing: -0.02em; color: var(--white); margin-bottom: 12px; }
+  h1.proj-title .accent { color: var(--accent); }
+  .proj-sub { font-size: 17px; color: var(--text); max-width: 660px; }
+  .proj-sub strong { color: var(--accent); font-weight: 500; }
+  .meta-row { display: flex; flex-wrap: wrap; gap: 26px; margin-top: 22px; }
+  .meta { }
+  .meta-k { font-family: var(--tag-font); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 3px; }
+  .meta-v { font-family: 'Sora', sans-serif; font-weight: 600; font-size: 15px; color: var(--white); }
+
+  /* ─── SECTIONS ─── */
+  section.block { margin-bottom: 44px; }
+  .block-label {
+    font-family: var(--tag-font); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--accent-2); margin-bottom: 18px; display: flex; align-items: center; gap: 12px;
+  }
+  .block-label::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, var(--border), transparent); }
+  .prose { font-size: 16px; color: var(--text); max-width: 720px; }
+  .prose p { margin-bottom: 14px; }
+  .prose strong { color: var(--accent); font-weight: 500; }
+
+  /* ─── TWO-COLUMN SCOPE ─── */
+  .scope-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .scope-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 22px 22px 8px; }
+  .scope-card h3 { font-family: 'Sora', sans-serif; font-size: 15px; font-weight: 600; color: var(--white); margin-bottom: 14px; display: flex; align-items: center; gap: 9px; }
+  .scope-card h3 .mark { width: 20px; height: 20px; border-radius: 6px; display: grid; place-items: center; font-size: 12px; font-weight: 700; }
+  .scope-card.in h3 .mark { background: rgba(134,239,172,0.14); color: var(--ok); border: 1px solid rgba(134,239,172,0.4); }
+  .scope-card.out h3 .mark { background: rgba(180,160,200,0.10); color: var(--text-dim); border: 1px solid var(--border); }
+  .scope-card ul { list-style: none; }
+  .scope-card li { font-size: 14.5px; color: var(--text-muted); padding: 9px 0 9px 20px; position: relative; border-top: 1px solid color-mix(in srgb, var(--border) 55%, transparent); }
+  .scope-card li:first-child { border-top: 0; }
+  .scope-card li::before { content: '›'; position: absolute; left: 2px; color: var(--accent); }
+  .scope-card.out li::before { content: '–'; color: var(--text-dim); }
+
+  /* ─── TIMELINE ─── */
+  .timeline { position: relative; padding-left: 28px; }
+  .timeline::before { content: ''; position: absolute; left: 7px; top: 6px; bottom: 6px; width: 2px; background: linear-gradient(180deg, var(--accent), var(--border)); border-radius: 2px; }
+  .ms { position: relative; padding-bottom: 26px; }
+  .ms:last-child { padding-bottom: 0; }
+  .ms::before { content: ''; position: absolute; left: -28px; top: 3px; width: 16px; height: 16px; border-radius: 50%; background: var(--bg); border: 2px solid var(--accent); }
+  .ms.done::before { background: var(--accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 16%, transparent); }
+  .ms.active::before { border-color: var(--info); background: var(--bg); box-shadow: 0 0 0 4px color-mix(in srgb, var(--info) 16%, transparent); }
+  .ms-top { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
+  .ms-date { font-family: var(--tag-font); font-size: 11px; letter-spacing: 0.08em; color: var(--text-dim); }
+  .ms-tag { font-family: var(--tag-font); font-size: 9.5px; letter-spacing: 0.12em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; font-weight: 600; }
+  .ms.done .ms-tag { color: var(--ok); background: rgba(134,239,172,0.10); border: 1px solid rgba(134,239,172,0.32); }
+  .ms.active .ms-tag { color: var(--info); background: rgba(125,211,252,0.10); border: 1px solid rgba(125,211,252,0.32); }
+  .ms.todo .ms-tag { color: var(--text-dim); background: rgba(180,160,200,0.08); border: 1px solid var(--border); }
+  .ms-title { font-family: 'Sora', sans-serif; font-weight: 600; font-size: 16px; color: var(--white); }
+  .ms-desc { font-size: 14.5px; color: var(--text-muted); margin-top: 3px; max-width: 640px; }
+
+  /* ─── DELIVERABLES ─── */
+  .deliv { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .deliv-item { display: flex; gap: 12px; align-items: flex-start; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; }
+  .deliv-check { flex: 0 0 auto; width: 22px; height: 22px; border-radius: 6px; display: grid; place-items: center; font-size: 13px; font-weight: 700; margin-top: 1px; }
+  .deliv-item.done .deliv-check { background: rgba(134,239,172,0.14); color: var(--ok); border: 1px solid rgba(134,239,172,0.4); }
+  .deliv-item.todo .deliv-check { background: var(--deep); color: var(--text-dim); border: 1px solid var(--border); }
+  .deliv-t { font-family: 'Sora', sans-serif; font-weight: 600; font-size: 14.5px; color: var(--white); }
+  .deliv-d { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+
+  /* ─── CHIPS / NEXT STEPS ─── */
+  .chips { display: flex; flex-wrap: wrap; gap: 9px; }
+  .chip { font-family: var(--tag-font); font-size: 12px; letter-spacing: 0.04em; color: var(--text); background: var(--panel); border: 1px solid var(--border); padding: 8px 14px; border-radius: 999px; }
+  .chip b { color: var(--accent); font-weight: 600; }
+  .next { background: var(--panel); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 12px; padding: 18px 22px; margin-bottom: 12px; }
+  .next-t { font-family: 'Sora', sans-serif; font-weight: 600; font-size: 15px; color: var(--white); margin-bottom: 3px; }
+  .next-d { font-size: 14px; color: var(--text-muted); }
+
+  /* ─── CONTACT STRIP ─── */
+  .contact-strip {
+    margin-top: 8px; background: linear-gradient(120deg, var(--panel), var(--deep));
+    border: 1px solid var(--border); border-radius: 16px; padding: 26px 28px;
+    display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;
+  }
+  .contact-strip .cs-t { font-family: 'Sora', sans-serif; font-weight: 600; font-size: 18px; color: var(--white); }
+  .contact-strip .cs-d { font-size: 14px; color: var(--text-muted); margin-top: 3px; }
+  .cs-btn {
+    display: inline-flex; align-items: center; gap: 10px; padding: 13px 24px;
+    font-family: var(--tag-font); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 700;
+    color: #3d1f47; text-decoration: none; border-radius: 999px;
+    background: linear-gradient(100deg, #fce7f3 0%, #fbcfe8 50%, #f9a8d4 100%);
+    box-shadow: 0 8px 24px rgba(249,168,212,0.30); transition: transform 0.22s, box-shadow 0.22s;
+  }
+  .cs-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(249,168,212,0.46); }
+
+  footer { text-align: center; padding: 28px 32px; border-top: 1px solid var(--border); font-family: var(--tag-font); font-size: 11px; color: var(--text-muted); position: relative; z-index: 1; }
+
+  @media (max-width: 720px) {
+    nav { padding: 0 14px; gap: 8px; }
+    .nav-links {
+      flex: 1 1 auto; min-width: 0;
+      flex-wrap: nowrap; justify-content: flex-start;
+      overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+    }
+    .nav-links::-webkit-scrollbar { display: none; }
+    .nav-links a { flex: 0 0 auto; white-space: nowrap; padding: 6px 11px; font-size: 11px; }
+    main { padding: 96px 20px 56px; }
+    .scope-grid { grid-template-columns: 1fr; }
+    .deliv { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="../../index.html" class="nav-logo">T.<span>M</span></a>
+  <ul class="nav-links">
+    <li><a href="../../index.html">Home</a></li>
+    <li><a href="../../projects.html">Projects</a></li>
+    <li><a href="../../notes/">Student Resources</a></li>
+    <li><a href="../../portal.html" class="active">Client Portal</a></li>
+    <li><a href="../../contact.html">Contact</a></li>
+  </ul>
+</nav>
+
+<main>
+  <a href="../../portal.html" class="exit-link"><span class="a">←</span> Exit portal</a>
+
+  <!-- ─── PROJECT HEADER ─── -->
+  <div class="proj-head">
+    <div class="proj-eyebrow">
+      <span>Project Plan · Meridian Robotics</span>
+      <span class="status-pill"><span class="dot"></span> In progress</span>
+    </div>
+    <h1 class="proj-title">Autonomous <span class="accent">Inspection Rover</span></h1>
+    <p class="proj-sub">
+      A tracked, tele-operable rover that runs <strong>autonomous pipe-gallery inspection</strong> passes —
+      capturing synced thermal + RGB imagery and flagging anomalies for human review.
+    </p>
+    <div class="meta-row">
+      <div class="meta"><div class="meta-k">Engagement</div><div class="meta-v">Mechatronics + firmware</div></div>
+      <div class="meta"><div class="meta-k">Phase</div><div class="meta-v">2 of 4 — Prototype</div></div>
+      <div class="meta"><div class="meta-k">Target</div><div class="meta-v">Field demo · Q4 2026</div></div>
+      <div class="meta"><div class="meta-k">Updated</div><div class="meta-v">June 2026</div></div>
+    </div>
+  </div>
+
+  <!-- ─── OVERVIEW ─── -->
+  <section class="block">
+    <div class="block-label">Overview</div>
+    <div class="prose">
+      <p>
+        Meridian needs to retire manual confined-space inspections. The rover carries a stabilised camera head
+        through gallery runs, holds a steady crawl over uneven substrate, and produces a <strong>georeferenced
+        defect report</strong> per pass — no operator in the space.
+      </p>
+      <p>
+        My role spans the <strong>mechanical drivetrain</strong>, the <strong>embedded control stack</strong>, and the
+        sensor-fusion glue that turns raw frames into actionable flags. The plan below is the working agreement —
+        scope, milestones, and what lands when.
+      </p>
+    </div>
+  </section>
+
+  <!-- ─── SCOPE ─── -->
+  <section class="block">
+    <div class="block-label">Scope</div>
+    <div class="scope-grid">
+      <div class="scope-card in">
+        <h3><span class="mark">✓</span> In scope</h3>
+        <ul>
+          <li>Tracked chassis + suspension for ≤ 25° grades</li>
+          <li>STM32 motor-control firmware, closed-loop speed</li>
+          <li>Stabilised 2-axis camera gimbal</li>
+          <li>Thermal + RGB capture, hardware-synced</li>
+          <li>On-board anomaly pre-flagging (edge model)</li>
+          <li>Tele-op fallback over 900 MHz link</li>
+        </ul>
+      </div>
+      <div class="scope-card out">
+        <h3><span class="mark">—</span> Out of scope (for now)</h3>
+        <ul>
+          <li>Cloud dashboard / long-term data store</li>
+          <li>Multi-rover fleet coordination</li>
+          <li>Intrinsically-safe (ATEX) certification</li>
+          <li>Robotic manipulation / sample collection</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── MILESTONES ─── -->
+  <section class="block">
+    <div class="block-label">Milestones</div>
+    <div class="timeline">
+      <div class="ms done">
+        <div class="ms-top"><span class="ms-tag">Done</span><span class="ms-date">Mar 2026</span></div>
+        <div class="ms-title">Requirements + drivetrain concept</div>
+        <div class="ms-desc">Locked duty cycle, grade, and payload. Down-selected tracked over wheeled after a traction trade study.</div>
+      </div>
+      <div class="ms done">
+        <div class="ms-top"><span class="ms-tag">Done</span><span class="ms-date">May 2026</span></div>
+        <div class="ms-title">Chassis v1 + bench motor control</div>
+        <div class="ms-desc">CAD frozen, first frame machined. Closed-loop speed holding ±3% on the bench dyno.</div>
+      </div>
+      <div class="ms active">
+        <div class="ms-top"><span class="ms-tag">In progress</span><span class="ms-date">Jun–Aug 2026</span></div>
+        <div class="ms-title">Sensor head + capture pipeline</div>
+        <div class="ms-desc">Integrating the gimbal and hardware-syncing thermal/RGB. Standing up the on-board pre-flag model.</div>
+      </div>
+      <div class="ms todo">
+        <div class="ms-top"><span class="ms-tag">Planned</span><span class="ms-date">Sep–Oct 2026</span></div>
+        <div class="ms-title">Autonomy + tele-op handoff</div>
+        <div class="ms-desc">Crawl-and-capture autonomy with a clean manual takeover path. Endurance + thermal soak testing.</div>
+      </div>
+      <div class="ms todo">
+        <div class="ms-top"><span class="ms-tag">Planned</span><span class="ms-date">Q4 2026</span></div>
+        <div class="ms-title">Field demo at Meridian site</div>
+        <div class="ms-desc">Full gallery run, defect report generated end-to-end, sign-off against acceptance criteria.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── DELIVERABLES ─── -->
+  <section class="block">
+    <div class="block-label">Deliverables</div>
+    <div class="deliv">
+      <div class="deliv-item done"><div class="deliv-check">✓</div><div><div class="deliv-t">Drivetrain trade study</div><div class="deliv-d">Tracked vs wheeled, with test data.</div></div></div>
+      <div class="deliv-item done"><div class="deliv-check">✓</div><div><div class="deliv-t">Chassis CAD + BOM</div><div class="deliv-d">Released drawings, sourced parts list.</div></div></div>
+      <div class="deliv-item todo"><div class="deliv-check">○</div><div><div class="deliv-t">Firmware repo + docs</div><div class="deliv-d">Motor control, sensor sync, tele-op.</div></div></div>
+      <div class="deliv-item todo"><div class="deliv-check">○</div><div><div class="deliv-t">Capture pipeline</div><div class="deliv-d">Synced thermal/RGB + pre-flag model.</div></div></div>
+      <div class="deliv-item todo"><div class="deliv-check">○</div><div><div class="deliv-t">Test + acceptance report</div><div class="deliv-d">Endurance, grade, defect-recall.</div></div></div>
+      <div class="deliv-item todo"><div class="deliv-check">○</div><div><div class="deliv-t">Field-demo handover</div><div class="deliv-d">Runbook + maintenance notes.</div></div></div>
+    </div>
+  </section>
+
+  <!-- ─── APPROACH ─── -->
+  <section class="block">
+    <div class="block-label">Approach &amp; stack</div>
+    <div class="chips">
+      <span class="chip"><b>MCU</b> STM32G4</span>
+      <span class="chip"><b>Compute</b> Jetson Orin Nano</span>
+      <span class="chip"><b>CAD</b> SolidWorks</span>
+      <span class="chip"><b>Firmware</b> C / FreeRTOS</span>
+      <span class="chip"><b>Vision</b> OpenCV + TFLite</span>
+      <span class="chip"><b>Link</b> 900 MHz LoRa tele-op</span>
+      <span class="chip"><b>Power</b> 6S LiFePO₄</span>
+    </div>
+  </section>
+
+  <!-- ─── NEXT STEPS ─── -->
+  <section class="block">
+    <div class="block-label">Next up</div>
+    <div class="next"><div class="next-t">Finish gimbal integration</div><div class="next-d">Mount the stabilised head and validate sync jitter under vibration (&lt; 2 ms target).</div></div>
+    <div class="next"><div class="next-t">Decide: edge model size</div><div class="next-d">Open question — do we ship the heavier pre-flag model now, or keep frames raw until the field demo? Need Meridian's call on false-positive tolerance.</div></div>
+    <div class="next"><div class="next-t">Schedule endurance soak</div><div class="next-d">Book the thermal chamber for the September window.</div></div>
+  </section>
+
+  <!-- ─── CONTACT ─── -->
+  <div class="contact-strip">
+    <div>
+      <div class="cs-t">Questions on this plan?</div>
+      <div class="cs-d">Anything here is open to a conversation — scope, timing, or priorities.</div>
+    </div>
+    <a href="../../contact.html" class="cs-btn">Reach out →</a>
+  </div>
+</main>
+
+<footer>© 2026 Talia Mekhayche · Confidential — shared with Meridian Robotics</footer>
+
+</body>
+</html>

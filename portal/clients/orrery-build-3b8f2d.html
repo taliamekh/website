@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Motorized Orrery — Build Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --space:#0a0e18;--space-2:#0e1322;--panel:#141b2d;--panel-2:#192136;
+    --line:#283353;--line-soft:#1f2942;--ink:#eef1f8;--ink-mid:#aab3c9;--ink-dim:#7c87a2;
+    --brass:#cba75e;--brass-bright:#e7c982;--brass-deep:#9a7c3e;
+    --ok:#56d38a;--warn:#f3b54a;--risk:#f0686f;--sky:#62a0ee;--violet:#a78bdc;
+    --radius:14px;--shadow:0 10px 30px -12px rgba(0,0,0,.6);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:radial-gradient(1200px 600px at 80% -10%, rgba(203,167,94,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 10%, rgba(98,160,238,.08), transparent 55%),var(--space);
+    color:var(--ink);font-family:'Space Grotesk',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    line-height:1.5;-webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1060px;margin:0 auto;padding:0 18px 80px}
+
+  header.top{position:sticky;top:0;z-index:50;background:linear-gradient(180deg, rgba(10,14,24,.96), rgba(10,14,24,.82));backdrop-filter:blur(10px);border-bottom:1px solid var(--line-soft)}
+  .top-inner{max-width:1060px;margin:0 auto;padding:14px 18px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+  .mark{flex:0 0 auto}.mark svg{display:block}
+  .title-block{flex:1 1 240px;min-width:200px}
+  .eyebrow{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--brass);font-weight:600}
+  h1{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:23px;margin:2px 0 0;line-height:1.1;letter-spacing:-.01em}
+  .sub{color:var(--ink-dim);font-size:12.5px;margin-top:3px}
+  .opt-ind{font-size:11px;color:var(--ink-dim);margin-top:5px}
+  .opt-ind b{color:var(--brass-bright)}
+  .budget-chip{flex:0 0 auto;display:flex;gap:14px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 14px}
+  .budget-chip .b{display:flex;flex-direction:column;line-height:1.05}
+  .budget-chip .lbl{font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-dim)}
+  .budget-chip .val{font-family:'Space Mono',monospace;font-size:15px;font-weight:700;margin-top:3px}
+  .v-total{color:var(--ink)}.v-have{color:var(--ok)}.v-left{color:var(--brass-bright)}
+
+  nav.tabs{display:flex;gap:4px;overflow-x:auto;padding:10px 0 2px;scrollbar-width:none;-ms-overflow-style:none}
+  nav.tabs::-webkit-scrollbar{display:none}
+  .tab{flex:0 0 auto;border:1px solid transparent;background:transparent;color:var(--ink-dim);font-family:inherit;font-size:13px;font-weight:500;padding:8px 13px;border-radius:9px;cursor:pointer;white-space:nowrap;transition:.15s}
+  .tab:hover{color:var(--ink-mid);background:var(--panel)}
+  .tab.active{color:var(--space);background:var(--brass);border-color:var(--brass);font-weight:600}
+
+  section.view{display:none;animation:fade .25s ease}
+  section.view.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){section.view.active{animation:none}.spin{animation:none!important}}
+
+  .card{background:var(--panel);border:1px solid var(--line-soft);border-radius:var(--radius);padding:20px;margin:16px 0;box-shadow:var(--shadow)}
+  .card h2{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:19px;margin:0 0 4px;letter-spacing:-.01em}
+  .card h3{font-size:14px;font-weight:600;margin:18px 0 8px;color:var(--ink)}
+  .lead{color:var(--ink-mid);font-size:14px;margin:6px 0 0}
+  p{font-size:13.5px;color:var(--ink-mid)}.card p{margin:8px 0}
+  a{color:var(--brass-bright);text-decoration:none;border-bottom:1px solid rgba(231,201,130,.32)}
+  a:hover{border-bottom-color:var(--brass-bright)}
+  .muted{color:var(--ink-dim);font-size:12px}
+  hr.soft{border:none;border-top:1px solid var(--line-soft);margin:18px 0}
+
+  .badges{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 2px}
+  .badge{font-size:11px;font-weight:600;letter-spacing:.04em;padding:5px 10px;border-radius:999px;border:1px solid var(--line);background:var(--panel-2);color:var(--ink-mid)}
+  .badge b{color:var(--ink)}
+  .badge.heavy{border-color:rgba(240,104,111,.4);background:rgba(240,104,111,.08);color:#f2a0a4}
+  .badge.med{border-color:rgba(243,181,74,.4);background:rgba(243,181,74,.08);color:#f3c87f}
+  .badge.light{border-color:rgba(86,211,138,.35);background:rgba(86,211,138,.07);color:#86d9aa}
+  .badge.none{opacity:.6}
+
+  .spec-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:14px}
+  .spec{background:var(--panel-2);border:1px solid var(--line-soft);border-radius:11px;padding:12px 14px}
+  .spec .k{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-dim)}
+  .spec .v{font-family:'Space Mono',monospace;font-size:16px;font-weight:700;margin-top:4px;color:var(--ink)}
+  .spec .v.small{font-size:13px}
+
+  .callout{border-left:3px solid var(--brass);background:var(--panel-2);border-radius:0 10px 10px 0;padding:12px 16px;margin:14px 0}
+  .callout.warn{border-left-color:var(--warn)}.callout.risk{border-left-color:var(--risk)}
+  .callout .t{font-weight:600;color:var(--ink);font-size:13px;margin-bottom:3px}
+  .callout p{margin:2px 0;font-size:12.5px}
+
+  .optbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:6px 0 14px;padding:6px;background:var(--space-2);border:1px solid var(--line-soft);border-radius:12px}
+  .optbar .ttl{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-dim);padding:0 6px;width:100%;margin-bottom:2px}
+  .optbtn{flex:1 1 180px;text-align:left;border:1px solid var(--line);background:var(--panel);color:var(--ink-mid);border-radius:9px;padding:8px 11px;cursor:pointer;font-family:inherit;transition:.15s}
+  .optbtn:hover{border-color:var(--brass-deep);color:var(--ink)}
+  .optbtn.active{background:var(--brass);border-color:var(--brass);color:var(--space)}
+  .optbtn .ok{display:block;font-weight:700;font-size:13px}
+  .optbtn .od{display:block;font-size:10.5px;opacity:.8;margin-top:1px}
+  .optbtn.active .od{opacity:.9}
+
+  .bom-controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:6px 0 14px}
+  .toggle{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink-mid);cursor:pointer;user-select:none}
+  .toggle input{accent-color:var(--brass);width:15px;height:15px}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--ink-dim);margin-left:auto}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:middle}
+
+  .subhead{display:flex;align-items:center;gap:10px;margin:20px 0 6px}
+  .subhead .ic{width:7px;height:7px;border-radius:2px;background:var(--brass)}
+  .subhead h3{margin:0;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--brass-bright)}
+  .subhead .st{margin-left:auto;font-family:'Space Mono',monospace;font-size:12px;color:var(--ink-dim)}
+
+  table.bom{width:100%;border-collapse:collapse;font-size:13px}
+  table.bom th{text-align:left;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-dim);font-weight:600;padding:8px 8px;border-bottom:1px solid var(--line)}
+  table.bom td{padding:11px 8px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+  .it-name{font-weight:600;color:var(--ink);font-size:13px}
+  .it-spec{color:var(--ink-dim);font-size:11.5px;margin-top:2px}
+  .it-flag{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:6px;margin-top:6px}
+  .flag-risk{background:rgba(240,104,111,.12);color:#f2999e;border:1px solid rgba(240,104,111,.3)}
+  .flag-tip{background:rgba(98,160,238,.1);color:#8fbcf3;border:1px solid rgba(98,160,238,.28)}
+  .flag-opt{background:rgba(167,139,220,.1);color:#bba6e6;border:1px solid rgba(167,139,220,.28)}
+  .ck{width:18px;height:18px;accent-color:var(--ok);cursor:pointer;margin-top:1px}
+  td.c-ck{width:34px}td.c-qty{width:62px}td.c-price{width:150px}td.c-buy{width:140px}
+
+  .cellnum{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+  .cellnum input{width:62px;background:var(--space-2);border:1px solid var(--line);color:var(--ink);border-radius:7px;padding:5px 7px;font-family:'Space Mono',monospace;font-size:12.5px}
+  .cellnum input.q{width:46px}
+  .cellnum .eq{font-family:'Space Mono',monospace;font-weight:700;color:var(--ink);white-space:nowrap}
+  .cellnum .x{color:var(--ink-dim);font-size:12px}
+  input:focus,textarea:focus{outline:none;border-color:var(--brass)}
+  .buycell{display:flex;flex-direction:column;gap:4px}
+  .buyrow{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .lnka{font-size:11.5px;white-space:nowrap}
+  .lnkedit,.rm{background:none;border:1px solid var(--line);color:var(--ink-dim);border-radius:6px;width:24px;height:24px;cursor:pointer;font-size:12px;line-height:1;padding:0}
+  .lnkedit:hover{color:var(--brass-bright);border-color:var(--brass-deep)}
+  .rm:hover{color:var(--risk);border-color:var(--risk)}
+  .src{font-size:10px;color:var(--ink-dim)}
+  .lnkbox{display:none;flex-direction:column;gap:5px;margin-top:4px}
+  .lnkbox.open{display:flex}
+  .lnkbox input{background:var(--space-2);border:1px solid var(--line);color:var(--ink);border-radius:7px;padding:6px 8px;font-size:11.5px;font-family:inherit;width:100%}
+  .lnkbox .save{align-self:flex-start;background:var(--brass);color:var(--space);border:none;border-radius:7px;padding:6px 13px;font-weight:600;font-size:11.5px;cursor:pointer;font-family:inherit}
+  .nameinput,.specinput{width:100%;background:var(--space-2);border:1px solid var(--line);color:var(--ink);border-radius:7px;padding:6px 8px;font-family:inherit;font-size:13px;margin-bottom:4px}
+  .specinput{font-size:11.5px;color:var(--ink-mid)}
+  .addbtn{margin:10px 0 2px;background:none;border:1px dashed var(--line);color:var(--ink-mid);border-radius:9px;padding:9px 14px;cursor:pointer;font-family:inherit;font-size:12.5px;width:100%;transition:.15s}
+  .addbtn:hover{border-color:var(--brass);color:var(--brass-bright)}
+
+  .alt{display:grid;grid-template-columns:1fr;gap:14px;margin-top:8px}
+  .altcard{background:var(--panel-2);border:1px solid var(--line-soft);border-radius:12px;padding:16px;position:relative;overflow:hidden}
+  .altcard.pick{border-color:var(--brass);box-shadow:0 0 0 1px rgba(203,167,94,.25)}
+  .altcard .tag{position:absolute;top:0;right:0;font-size:10px;font-weight:700;letter-spacing:.06em;padding:4px 11px;border-bottom-left-radius:10px}
+  .tag-pick{background:var(--brass);color:var(--space)}.tag-hard{background:rgba(240,104,111,.18);color:#f2999e}
+  .altcard h3{margin:0 0 2px;font-size:15px;color:var(--ink)}
+  .altcard .mini{display:flex;gap:16px;flex-wrap:wrap;margin:10px 0}
+  .mini .m{display:flex;flex-direction:column}
+  .mini .mk{font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-dim)}
+  .mini .mv{font-family:'Space Mono',monospace;font-size:14px;font-weight:700;color:var(--brass-bright);margin-top:2px}
+  .pc{display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;margin-top:8px}
+  .pc ul{margin:2px 0;padding-left:16px}.pc li{font-size:12px;margin:3px 0}
+  .pc .ph{font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:600}
+  .pro .ph{color:var(--ok)}.con .ph{color:var(--risk)}
+  .pro li{color:#9fd9b8}.con li{color:#e9a6aa}
+  .altbtns{display:flex;gap:8px;margin-top:12px}
+  .altbtns button{flex:1;background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:9px;font-family:inherit;font-size:12px;cursor:pointer;transition:.15s}
+  .altbtns button:hover{border-color:var(--brass);color:var(--brass-bright)}
+
+  .phase{display:grid;grid-template-columns:38px 1fr;gap:14px;margin:0}
+  .pl{position:relative}
+  .pl::before{content:"";position:absolute;left:18px;top:6px;bottom:-6px;width:2px;background:var(--line)}
+  .phase:last-child .pl::before{display:none}
+  .pnum{width:38px;height:38px;border-radius:50%;background:var(--panel-2);border:2px solid var(--brass);color:var(--brass-bright);display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-weight:700;font-size:14px;z-index:1;position:relative}
+  .pbody{padding-bottom:22px}.pbody h3{margin:6px 0 2px;font-size:15px;color:var(--ink)}
+  .ptime{display:inline-flex;gap:10px;flex-wrap:wrap;margin:6px 0}
+  .pill{font-family:'Space Mono',monospace;font-size:11px;background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:3px 9px;color:var(--ink-mid)}
+  .pbody ul{margin:8px 0 0;padding-left:18px}.pbody li{font-size:12.5px;color:var(--ink-mid);margin:4px 0}
+  .gate{font-size:11.5px;color:var(--warn);margin-top:8px;font-weight:500}
+
+  .draw{background:var(--space-2);border:1px solid var(--line-soft);border-radius:12px;padding:10px;margin:14px 0;overflow-x:auto}
+  .draw svg{display:block;margin:0 auto;max-width:100%;height:auto}
+  .cap{font-size:12px;color:var(--ink-dim);text-align:center;margin:8px 6px 4px}
+  .lblsvg{font-family:'Space Grotesk',sans-serif;font-size:10px;fill:var(--ink-mid)}
+  .lblsvg.b{fill:var(--brass-bright);font-weight:600}
+  .lead-l{stroke:var(--line);stroke-width:1}
+
+  .orbtab{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:6px}
+  .orbtab th{text-align:left;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-dim);padding:7px 8px;border-bottom:1px solid var(--line)}
+  .orbtab td{padding:8px;border-bottom:1px solid var(--line-soft);color:var(--ink-mid)}
+  .orbtab td.p{font-weight:600;color:var(--ink)}
+  .orbtab td.n{font-family:'Space Mono',monospace;text-align:right;color:var(--brass-bright)}
+  .swatch{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;vertical-align:middle}
+
+  .rk{border:1px solid var(--line-soft);border-radius:11px;padding:14px;margin:10px 0;background:var(--panel-2)}
+  .rk-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .rk-top .nm{font-weight:600;color:var(--ink);font-size:13.5px;flex:1 1 auto}
+  .sev{font-size:10px;font-weight:700;letter-spacing:.05em;padding:3px 9px;border-radius:7px}
+  .sev.k{background:rgba(240,104,111,.16);color:#f2999e}
+  .sev.h{background:rgba(243,181,74,.16);color:#f3c87f}
+  .sev.m{background:rgba(98,160,238,.14);color:#8fbcf3}
+  .rk p{margin:8px 0 0;font-size:12.5px}
+  .rk .fix{color:#9fd9b8;font-size:12.5px;margin-top:6px}.rk .fix b{color:var(--ok)}
+  .check{display:flex;gap:11px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line-soft)}
+  .check:last-child{border-bottom:none}
+  .check input{width:17px;height:17px;accent-color:var(--ok);margin-top:2px;cursor:pointer}
+  .check label{font-size:13px;color:var(--ink-mid);cursor:pointer}
+  .check .ph{display:block;font-size:10px;color:var(--brass);letter-spacing:.06em;text-transform:uppercase;margin-bottom:1px}
+
+  .reflist{list-style:none;padding:0;margin:6px 0 0}
+  .reflist li{padding:11px 0;border-bottom:1px solid var(--line-soft)}
+  .reflist li:last-child{border-bottom:none}
+  .reflist .rt{font-weight:600;color:var(--ink);font-size:13.5px}
+  .reflist .rd{font-size:12px;color:var(--ink-dim);margin:2px 0 4px}
+
+  footer{margin-top:26px;text-align:center;color:var(--ink-dim);font-size:11.5px;line-height:1.7}
+
+  @media (max-width:640px){
+    h1{font-size:19px}
+    .budget-chip{order:3;width:100%;justify-content:space-between}
+    .card{padding:15px}.pc{grid-template-columns:1fr}
+    table.bom thead{display:none}
+    table.bom,table.bom tbody,table.bom tr,table.bom td{display:block;width:100%}
+    table.bom tr{border:1px solid var(--line-soft);border-radius:11px;padding:8px 10px 8px 40px;margin:10px 0;background:var(--panel-2);position:relative}
+    table.bom td{border:none;padding:4px 0}
+    td.c-ck{position:absolute;left:10px;top:10px;width:auto}
+    td.c-qty,td.c-price,td.c-buy{width:auto}
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <div class="mark" aria-hidden="true">
+      <svg width="50" height="50" viewBox="0 0 100 100">
+        <g class="spin" style="transform-origin:50px 50px;animation:rot 60s linear infinite">
+          <ellipse cx="50" cy="50" rx="44" ry="17" fill="none" stroke="#283353" stroke-width="1.2"/>
+          <ellipse cx="50" cy="50" rx="33" ry="12.5" fill="none" stroke="#33405f" stroke-width="1.2"/>
+          <ellipse cx="50" cy="50" rx="22" ry="8" fill="none" stroke="#3d4c70" stroke-width="1.2"/>
+          <circle cx="94" cy="50" r="2.6" fill="#62a0ee"/>
+          <circle cx="50" cy="37.5" r="2.2" fill="#a78bdc"/>
+          <circle cx="28" cy="50" r="2" fill="#f0686f"/>
+        </g>
+        <circle cx="50" cy="50" r="9" fill="#cba75e"/>
+        <circle cx="50" cy="50" r="9" fill="none" stroke="#e7c982" stroke-width="1"/>
+      </svg>
+    </div>
+    <div class="title-block">
+      <div class="eyebrow">Engineering Build Plan</div>
+      <h1>8-Planet Motorized Orrery</h1>
+      <div class="sub">3D-printed geared planetarium &middot; client deliverable scope &amp; sourcing</div>
+      <div class="opt-ind">BOM &amp; steps showing <b id="optTag">A &middot; Faithful build</b> &mdash; switch with the selector</div>
+    </div>
+    <div class="budget-chip">
+      <div class="b"><span class="lbl">Baseline</span><span class="val v-total" id="vTotal">$0</span></div>
+      <div class="b"><span class="lbl">Acquired</span><span class="val v-have" id="vHave">$0</span></div>
+      <div class="b"><span class="lbl">Still to buy</span><span class="val v-left" id="vLeft">$0</span></div>
+    </div>
+  </div>
+  <div class="top-inner" style="padding-top:0;padding-bottom:6px">
+    <nav class="tabs" id="tabs">
+      <button class="tab active" data-t="overview">Overview</button>
+      <button class="tab" data-t="alt">Easier Alternatives</button>
+      <button class="tab" data-t="bom">BOM &amp; Budget</button>
+      <button class="tab" data-t="plan">Build Plan</button>
+      <button class="tab" data-t="gear">Gear Train &amp; Drive</button>
+      <button class="tab" data-t="draw">Drawings</button>
+      <button class="tab" data-t="risk">Risks &amp; Test</button>
+      <button class="tab" data-t="ref">Research</button>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap">
+
+<section class="view active" id="overview">
+  <div class="card">
+    <h2>The honest verdict</h2>
+    <p class="lead">Your client linked Widget Wiz 3D's award-winning Instructable. It is a genuinely beautiful machine &mdash; and a serious undertaking. Here's the straight assessment before anyone spends a dollar.</p>
+    <p>This is a <b>single-motor, fully-geared</b> orrery: one 12&nbsp;V DC gearmotor drives a tower of <b>100+ 3D-printed parts</b> &mdash; dozens of compound gears stacked across four frames, turning a set of <b>nested telescoping brass tubes</b> that each carry one planet's arm. The electronics are trivial (motor, a center-off toggle to reverse direction, a wall adapter). <b>The entire difficulty is mechanical.</b></p>
+    <div class="callout risk">
+      <div class="t">Two things people drastically underestimate</div>
+      <p><b>1. Print time &amp; print quality.</b> ~1.5&ndash;2&nbsp;kg of filament and roughly <b>80&ndash;150 printer-hours</b>. Every gear tooth has to mesh &mdash; a poorly-tuned printer turns this into a non-starter.</p>
+      <p><b>2. Assembly patience.</b> Tubes nest concentrically and must rotate freely while their gears stay keyed. Expect <b>40&ndash;70 hours of hands-on work</b>, plus glue-cure waiting, spread over weeks.</p>
+    </div>
+    <div class="callout">
+      <div class="t">You don't have the most important files yet</div>
+      <p>The PDF has the <i>instructions</i>, not the <b>STL print files</b> or the <b>gear-ratio spreadsheet</b>. Those are separate downloads on the Instructables page (free, needs an account). Step zero &mdash; link's in <b>Research</b>.</p>
+    </div>
+    <div class="callout warn">
+      <div class="t">This dashboard now covers all four build options</div>
+      <p>The <b>BOM &amp; Budget</b> and <b>Build Plan</b> tabs have an A / B / C / D selector at the top &mdash; each option shows its own parts list and its own steps. Every BOM price and link is editable, and you can add your own items.</p>
+    </div>
+
+    <h3>Domain weighting</h3>
+    <div class="badges">
+      <span class="badge heavy"><b>Mechanical</b> &middot; Heavy</span>
+      <span class="badge med"><b>Electromechanical</b> &middot; Light&ndash;Med</span>
+      <span class="badge light"><b>Electrical</b> &middot; Light</span>
+      <span class="badge none"><b>Firmware</b> &middot; None*</span>
+      <span class="badge none"><b>Thermal / RF / Optical</b> &middot; None</span>
+    </div>
+    <p class="muted">*The faithful build has no microcontroller. The simplified single-motor alternative (Option B) adds light firmware via an ESP32.</p>
+
+    <h3>Key specs &mdash; faithful build (Option A)</h3>
+    <div class="spec-grid">
+      <div class="spec"><div class="k">Printed parts</div><div class="v">100+</div></div>
+      <div class="spec"><div class="k">Filament</div><div class="v">~1.5&ndash;2 kg</div></div>
+      <div class="spec"><div class="k">Print time</div><div class="v">80&ndash;150 h</div></div>
+      <div class="spec"><div class="k">Hands-on build</div><div class="v">40&ndash;70 h</div></div>
+      <div class="spec"><div class="k">Materials cost</div><div class="v small">CA$280&ndash;380*</div></div>
+      <div class="spec"><div class="k">Elapsed (day job)</div><div class="v small">6&ndash;10 wks</div></div>
+      <div class="spec"><div class="k">Motor</div><div class="v small">12V DC, ~5&ndash;10 RPM</div></div>
+      <div class="spec"><div class="k">Print bed min</div><div class="v small">200&times;200 mm</div></div>
+    </div>
+    <p class="muted">*Assumes you own a tuned 3D printer. Outsourcing prints adds CA$400&ndash;900+. Full breakdown in BOM &amp; Budget.</p>
+
+    <hr class="soft">
+    <h3>My recommendation in one line</h3>
+    <p>Want the <b>geared spectacle</b> and have a dialled-in printer + patience? Build the original (A). Mostly want a <b>guaranteed-working motorized showpiece</b> with no fabrication risk? A <b>metal kit</b> (C) is faster and more reliable. Want "motorized &amp; 3D-printed but <i>achievable</i>"? Build the <b>simplified single-motor</b> version (B). All compared in <b>Easier Alternatives</b> &mdash; each with its own BOM and steps.</p>
+  </div>
+</section>
+
+<section class="view" id="alt">
+  <div class="card">
+    <h2>Four ways to give the client an orrery</h2>
+    <p class="lead">You asked for easier paths. Here are four real options &mdash; each with its own BOM and build steps (jump straight to them with the buttons). Costs are approximate, in CAD.</p>
+    <div class="alt">
+
+      <div class="altcard">
+        <span class="tag tag-hard">HARDEST &middot; FAITHFUL</span>
+        <h3>A &middot; The original Widget Wiz build</h3>
+        <p style="font-size:12.5px;color:var(--ink-mid);margin:4px 0">Print and assemble the exact Instructable: 8 planets, the Moon, Earth calendar ring, Jupiter ring, ~100+ parts, one motor.</p>
+        <div class="mini"><div class="m"><span class="mk">Cost</span><span class="mv">$280&ndash;380</span></div><div class="m"><span class="mk">Hands-on</span><span class="mv">40&ndash;70 h</span></div><div class="m"><span class="mk">Skill</span><span class="mv">Advanced</span></div><div class="m"><span class="mk">Printer</span><span class="mv">Required</span></div></div>
+        <div class="pc"><div class="pro"><div class="ph">Strengths</div><ul><li>Most impressive result</li><li>Accurate relative orbits</li><li>Proven, documented design</li></ul></div><div class="con"><div class="ph">Costs</div><ul><li>Huge print + assembly time</li><li>Needs a tuned printer</li><li>Unforgiving gear meshing</li></ul></div></div>
+        <div class="altbtns"><button onclick="goOpt('A','bom')">View BOM &rarr;</button><button onclick="goOpt('A','plan')">View steps &rarr;</button></div>
+      </div>
+
+      <div class="altcard pick">
+        <span class="tag tag-pick">RECOMMENDED &middot; ACHIEVABLE</span>
+        <h3>B &middot; Simplified single-motor 3D orrery</h3>
+        <p style="font-size:12.5px;color:var(--ink-mid);margin:4px 0">Modern designs drive every planet from one stepper using interlocking ring tabs; an ESP32 computes real positions. Far fewer parts.</p>
+        <div class="mini"><div class="m"><span class="mk">Cost</span><span class="mv">$70&ndash;170</span></div><div class="m"><span class="mk">Hands-on</span><span class="mv">15&ndash;30 h</span></div><div class="m"><span class="mk">Skill</span><span class="mv">Intermediate</span></div><div class="m"><span class="mk">Printer</span><span class="mv">Required</span></div></div>
+        <div class="pc"><div class="pro"><div class="ph">Strengths</div><ul><li>Dramatically fewer parts</li><li>Astronomically accurate</li><li>Modern, clean mechanism</li></ul></div><div class="con"><div class="ph">Costs</div><ul><li>Adds light electronics/code</li><li>Newer, less hand-holding</li></ul></div></div>
+        <div class="altbtns"><button onclick="goOpt('B','bom')">View BOM &rarr;</button><button onclick="goOpt('B','plan')">View steps &rarr;</button></div>
+      </div>
+
+      <div class="altcard">
+        <span class="tag tag-pick" style="background:var(--sky);color:var(--space)">LOWEST RISK &middot; BUY</span>
+        <h3>C &middot; Motorized metal kit (TECHING / EngineDIY)</h3>
+        <p style="font-size:12.5px;color:var(--ink-mid);margin:4px 0">A pre-engineered 8-planet motorized metal orrery, 300&ndash;600 anodized parts, 12&nbsp;V, sometimes with an LED sun. No printing &mdash; just assembly.</p>
+        <div class="mini"><div class="m"><span class="mk">Cost</span><span class="mv">$180&ndash;340</span></div><div class="m"><span class="mk">Assembly</span><span class="mv">3&ndash;20 h</span></div><div class="m"><span class="mk">Skill</span><span class="mv">Beginner+</span></div><div class="m"><span class="mk">Printer</span><span class="mv">Not needed</span></div></div>
+        <div class="pc"><div class="pro"><div class="ph">Strengths</div><ul><li>Guaranteed to work</li><li>Premium metal finish</li><li>No fabrication risk</li></ul></div><div class="con"><div class="ph">Costs</div><ul><li>Not custom / not "your" build</li><li>Fixed design, no remixing</li></ul></div></div>
+        <div class="altbtns"><button onclick="goOpt('C','bom')">View BOM &rarr;</button><button onclick="goOpt('C','plan')">View steps &rarr;</button></div>
+      </div>
+
+      <div class="altcard">
+        <span class="tag" style="background:var(--panel);color:var(--ink-dim)">SIMPLEST</span>
+        <h3>D &middot; Manual crank / wind-up desktop orrery</h3>
+        <p style="font-size:12.5px;color:var(--ink-mid);margin:4px 0">Basswood or cardstock geared kits (crank-turned or wind-up), or an inexpensive push-to-spin metal ornament. Decorative rather than precise.</p>
+        <div class="mini"><div class="m"><span class="mk">Cost</span><span class="mv">$25&ndash;70</span></div><div class="m"><span class="mk">Assembly</span><span class="mv">2&ndash;6 h</span></div><div class="m"><span class="mk">Skill</span><span class="mv">Beginner</span></div><div class="m"><span class="mk">Printer</span><span class="mv">Not needed</span></div></div>
+        <div class="pc"><div class="pro"><div class="ph">Strengths</div><ul><li>Cheapest &amp; fastest</li><li>Canadian sellers in stock</li><li>Great for kids / classrooms</li></ul></div><div class="con"><div class="ph">Costs</div><ul><li>Usually not motorized</li><li>Orbits not to scale</li></ul></div></div>
+        <div class="altbtns"><button onclick="goOpt('D','bom')">View BOM &rarr;</button><button onclick="goOpt('D','plan')">View steps &rarr;</button></div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<section class="view" id="bom">
+  <div class="card">
+    <h2>Bill of materials</h2>
+    <p class="lead">Pick a build option &mdash; the parts list and the header budget both follow it. Tick a box as you acquire each part. <b>Every price and link is editable</b>, and you can add your own items.</p>
+    <div class="optbar" id="optBarBom"></div>
+    <div class="callout warn">
+      <div class="t">How to use this list</div>
+      <p><b>Edit a price:</b> type a new unit cost or quantity right in the row &mdash; the budget recalculates instantly. <b>Swap a link:</b> click the &#9998;, paste your own URL and a label, Save. <b>Add a part:</b> use "+ Add item" under any group. Specialty links point to a specific product; commodity links open a curated Amazon.ca search so you see today's best price. You're in Ontario, so links favour Amazon.ca, with AliExpress / Canadian-store notes where they're cheaper.</p>
+    </div>
+    <div class="bom-controls">
+      <label class="toggle"><input type="checkbox" id="showOpt"> Show optional / nice-to-have items</label>
+      <span class="legend"><span><span class="dot" style="background:var(--ok)"></span>checked = acquired</span><span><span class="dot" style="background:var(--risk)"></span>fit risk &mdash; verify</span></span>
+    </div>
+    <div id="bomBody"></div>
+    <div id="bomNote"></div>
+    <div class="callout"><div class="t">On prices &amp; links</div><p>Figures are CAD estimates as of early 2026 and move with stock and exchange rates. Override anything out of date &mdash; your edits drive the budget totals. Verify at checkout before committing.</p></div>
+  </div>
+</section>
+
+<section class="view" id="plan">
+  <div class="card">
+    <h2>Build plan &amp; timeline</h2>
+    <p class="lead">Sequenced in real build order, riskiest assumption first. Switch options below &mdash; each path has its own steps and timeline.</p>
+    <div class="optbar" id="optBarPlan"></div>
+    <div id="planBody"></div>
+  </div>
+</section>
+<section class="view" id="gear">
+  <div class="card">
+    <h2>How one motor moves eight planets</h2>
+    <p class="muted">Describes the faithful original build (Option A) &mdash; its single-input gear cascade is the heart of that design.</p>
+    <p class="lead">A single input speed, geared down differently for each planet, reproduces the <i>relative</i> orbital periods. The motor's absolute speed just sets how fast Mercury runs &mdash; everything else follows by ratio.</p>
+
+    <div class="draw">
+      <svg viewBox="0 0 460 300" role="img" aria-label="Gear train signal flow from motor to eight planets">
+        <rect x="20" y="135" width="58" height="30" rx="5" fill="#192136" stroke="#cba75e"/>
+        <text x="49" y="154" text-anchor="middle" class="lblsvg b">MOTOR</text>
+        <text x="49" y="180" text-anchor="middle" class="lblsvg">12V &middot; ~7 RPM</text>
+        <circle cx="100" cy="150" r="13" fill="none" stroke="#9a7c3e" stroke-width="2"/>
+        <text x="100" y="125" text-anchor="middle" class="lblsvg">drive gear</text>
+        <line x1="78" y1="150" x2="87" y2="150" stroke="#cba75e" stroke-width="2"/>
+        <rect x="128" y="120" width="74" height="60" rx="7" fill="#141b2d" stroke="#cba75e"/>
+        <text x="165" y="146" text-anchor="middle" class="lblsvg b">DRIVER</text>
+        <text x="165" y="160" text-anchor="middle" class="lblsvg b">STACK</text>
+        <text x="165" y="100" text-anchor="middle" class="lblsvg">one shaft &middot; 4 gears</text>
+        <line x1="113" y1="150" x2="128" y2="150" stroke="#cba75e" stroke-width="2"/>
+        <g stroke="#33405f" stroke-width="1.4" fill="none">
+          <path d="M202 150 C 235 150, 235 26, 268 26"/><path d="M202 150 C 235 150, 235 60, 268 60"/>
+          <path d="M202 150 C 235 150, 235 94, 268 94"/><path d="M202 150 C 240 150, 240 128, 268 128"/>
+          <path d="M202 150 C 240 150, 240 162, 268 162"/><path d="M202 150 C 235 150, 235 196, 268 196"/>
+          <path d="M202 150 C 235 150, 235 230, 268 230"/><path d="M202 150 C 235 150, 235 264, 268 264"/>
+        </g>
+        <g class="lblsvg" font-size="10">
+          <circle cx="276" cy="26" r="5" fill="#b5b0a8"/><text x="288" y="29">Mercury &mdash; fastest</text>
+          <circle cx="276" cy="60" r="5" fill="#d8a05a"/><text x="288" y="63">Venus</text>
+          <circle cx="276" cy="94" r="5" fill="#5b86c9"/><text x="288" y="97">Earth + Moon + ring</text>
+          <circle cx="276" cy="128" r="5" fill="#d2603a"/><text x="288" y="131">Mars</text>
+          <circle cx="276" cy="162" r="5" fill="#9a9a9a"/><text x="288" y="165">Jupiter</text>
+          <circle cx="276" cy="196" r="5" fill="#3a3a3a" stroke="#555"/><text x="288" y="199">Saturn (+ ring)</text>
+          <circle cx="276" cy="230" r="5" fill="#c9b27a"/><text x="288" y="233">Uranus</text>
+          <circle cx="276" cy="264" r="5" fill="#e8e8e8"/><text x="288" y="267">Neptune &mdash; slowest</text>
+        </g>
+        <text x="335" y="288" text-anchor="middle" class="lblsvg" font-style="italic">each branch = a different gear-down ratio</text>
+      </svg>
+      <div class="cap">Single-input gear cascade. Compound (two-in-one) gears between frames create each planet's reduction.</div>
+    </div>
+
+    <h3>The wiring is the easy part</h3>
+    <div class="draw">
+      <svg viewBox="0 0 460 150" role="img" aria-label="Wiring: power supply through center-off toggle to DC motor">
+        <rect x="18" y="55" width="92" height="40" rx="6" fill="#192136" stroke="#62a0ee"/>
+        <text x="64" y="72" text-anchor="middle" class="lblsvg">12V DC</text><text x="64" y="86" text-anchor="middle" class="lblsvg">supply</text>
+        <line x1="110" y1="65" x2="175" y2="65" stroke="#62a0ee" stroke-width="2"/>
+        <line x1="110" y1="85" x2="175" y2="85" stroke="#7c87a2" stroke-width="2"/>
+        <rect x="175" y="45" width="100" height="60" rx="6" fill="#141b2d" stroke="#cba75e"/>
+        <text x="225" y="70" text-anchor="middle" class="lblsvg b">DPDT</text><text x="225" y="84" text-anchor="middle" class="lblsvg">centre-off</text>
+        <text x="225" y="34" text-anchor="middle" class="lblsvg">&uarr;fwd &middot; &ndash;off &middot; &darr;rev</text>
+        <line x1="275" y1="65" x2="340" y2="65" stroke="#cba75e" stroke-width="2"/>
+        <line x1="275" y1="85" x2="340" y2="85" stroke="#7c87a2" stroke-width="2"/>
+        <circle cx="375" cy="75" r="32" fill="#192136" stroke="#cba75e"/>
+        <text x="375" y="72" text-anchor="middle" class="lblsvg b">DC</text><text x="375" y="85" text-anchor="middle" class="lblsvg">motor</text>
+        <text x="230" y="130" text-anchor="middle" class="lblsvg" font-style="italic">the toggle just swaps polarity to reverse direction</text>
+      </svg>
+      <div class="cap">No microcontroller in the faithful build. Centre cuts power; up/down run the planets each way.</div>
+    </div>
+
+    <h3>Orbital periods the gearing reproduces</h3>
+    <table class="orbtab">
+      <thead><tr><th>Body</th><th>Orbit period</th><th style="text-align:right">In years</th></tr></thead>
+      <tbody>
+        <tr><td class="p"><span class="swatch" style="background:#b5b0a8"></span>Mercury</td><td>87.97 days</td><td class="n">0.24</td></tr>
+        <tr><td class="p"><span class="swatch" style="background:#d8a05a"></span>Venus</td><td>224.7 days</td><td class="n">0.61</td></tr>
+        <tr><td class="p"><span class="swatch" style="background:#5b86c9"></span>Earth</td><td>365.26 days</td><td class="n">1.00</td></tr>
+        <tr><td class="p"><span class="swatch" style="background:#cfcfcf"></span>Moon (about Earth)</td><td>27.32 days</td><td class="n">13.37&times;/yr</td></tr>
+        <tr><td class="p"><span class="swatch" style="background:#d2603a"></span>Mars</td><td>686.98 days</td><td class="n">1.88</td></tr>
+        <tr><td class="p"><span class="swatch" style="background:#9a9a9a"></span>Jupiter</td><td>4,332.82 days</td><td class="n">11.86</td></tr>
+        <tr><td class="p"><span class="swatch" style="background:#3a3a3a"></span>Saturn</td><td>10,755.7 days</td><td class="n">29.45</td></tr>
+        <tr><td class="p"><span class="swatch" style="background:#c9b27a"></span>Uranus</td><td>30,687 days</td><td class="n">84.01</td></tr>
+        <tr><td class="p"><span class="swatch" style="background:#e8e8e8"></span>Neptune</td><td>60,190 days</td><td class="n">164.79</td></tr>
+      </tbody>
+    </table>
+    <p class="muted" style="margin-top:10px">The designer's Excel sheet computes the tooth counts for these ratios &mdash; change a cell, get a new ratio. It's bundled with the STL download. The build is the 8 <i>planets</i> (Pluto isn't a moving body).</p>
+  </div>
+</section>
+
+<section class="view" id="draw">
+  <div class="card">
+    <h2>Drawings</h2>
+    <p class="muted">Faithful original build (Option A). Schematic, not to scale.</p>
+    <p class="lead">Brass = tubes &amp; gears, slate = printed frames, amber = key callouts.</p>
+
+    <h3>Assembled elevation</h3>
+    <div class="draw">
+      <svg viewBox="0 0 420 470" role="img" aria-label="Assembled orrery elevation">
+        <ellipse cx="120" cy="448" rx="20" ry="6" fill="#1b2335" stroke="#283353"/>
+        <ellipse cx="300" cy="448" rx="20" ry="6" fill="#1b2335" stroke="#283353"/>
+        <line x1="120" y1="444" x2="120" y2="150" stroke="#33405f" stroke-width="3"/>
+        <line x1="300" y1="444" x2="300" y2="150" stroke="#33405f" stroke-width="3"/>
+        <line x1="160" y1="446" x2="160" y2="150" stroke="#283353" stroke-width="2"/>
+        <line x1="260" y1="446" x2="260" y2="150" stroke="#283353" stroke-width="2"/>
+        <g fill="#192136" stroke="#3a4a6e">
+          <rect x="108" y="392" width="204" height="14" rx="3"/><rect x="108" y="320" width="204" height="14" rx="3"/>
+          <rect x="108" y="240" width="204" height="14" rx="3"/><rect x="108" y="158" width="204" height="14" rx="3"/>
+        </g>
+        <g stroke="#9a7c3e" fill="none" stroke-width="1.6" opacity=".9">
+          <circle cx="190" cy="365" r="16"/><circle cx="225" cy="362" r="11"/>
+          <circle cx="195" cy="285" r="14"/><circle cx="230" cy="288" r="10"/>
+          <circle cx="200" cy="205" r="12"/><circle cx="232" cy="206" r="9"/>
+        </g>
+        <rect x="205" y="92" width="10" height="320" fill="#cba75e" opacity=".9"/>
+        <rect x="208" y="92" width="4" height="320" fill="#e7c982"/>
+        <circle cx="210" cy="84" r="20" fill="#cba75e"/>
+        <circle cx="210" cy="84" r="20" fill="none" stroke="#e7c982" stroke-width="1.5"/>
+        <ellipse cx="210" cy="120" rx="70" ry="13" fill="none" stroke="#5b86c9" stroke-width="2"/>
+        <g stroke-width="2">
+          <line x1="210" y1="150" x2="95" y2="150" stroke="#9a9a9a"/><circle cx="88" cy="150" r="9" fill="#9a9a9a"/>
+          <line x1="210" y1="135" x2="330" y2="128" stroke="#3a3a3a"/><circle cx="338" cy="127" r="8" fill="#3a3a3a" stroke="#555"/>
+          <line x1="210" y1="165" x2="120" y2="178" stroke="#c9b27a"/><circle cx="113" cy="179" r="6" fill="#c9b27a"/>
+          <line x1="210" y1="158" x2="300" y2="172" stroke="#e8e8e8"/><circle cx="307" cy="173" r="6" fill="#e8e8e8"/>
+          <line x1="210" y1="120" x2="150" y2="112" stroke="#d2603a"/><circle cx="144" cy="111" r="6" fill="#d2603a"/>
+        </g>
+        <rect x="60" y="360" width="40" height="26" rx="4" fill="#192136" stroke="#cba75e"/>
+        <text x="80" y="377" text-anchor="middle" class="lblsvg b">M</text>
+        <line class="lead-l" x1="338" y1="127" x2="372" y2="100"/><text x="374" y="98" class="lblsvg b">planets on<tspan x="374" dy="12">1/8&Prime; arms</tspan></text>
+        <line class="lead-l" x1="230" y1="84" x2="300" y2="60"/><text x="302" y="58" class="lblsvg b">Sun (top)</text>
+        <line class="lead-l" x1="280" y1="120" x2="320" y2="150"/><text x="322" y="153" class="lblsvg">Earth calendar ring</text>
+        <line class="lead-l" x1="215" y1="250" x2="370" y2="250"/><text x="372" y="246" class="lblsvg b">nested brass<tspan x="372" dy="12">tube stack</tspan></text>
+        <line class="lead-l" x1="312" y1="399" x2="372" y2="399"/><text x="374" y="396" class="lblsvg">4 stacked<tspan x="374" dy="12">printed frames</tspan></text>
+        <line class="lead-l" x1="100" y1="373" x2="45" y2="400"/><text x="8" y="404" class="lblsvg b">12V gearmotor</text>
+        <line class="lead-l" x1="120" y1="430" x2="60" y2="438"/><text x="6" y="441" class="lblsvg">7&times; threaded-rod legs + feet</text>
+      </svg>
+      <div class="cap">Four frames on threaded-rod legs; a tower of nested brass tubes lifts each planet's arm; Sun on top.</div>
+    </div>
+
+    <h3>Gear stack &mdash; the heart of it</h3>
+    <div class="draw">
+      <svg viewBox="0 0 420 300" role="img" aria-label="Driver and driven gear stack cross-section">
+        <rect x="86" y="40" width="8" height="210" fill="#9a7c3e"/>
+        <g fill="none" stroke="#cba75e" stroke-width="2">
+          <ellipse cx="90" cy="70" rx="46" ry="9"/><ellipse cx="90" cy="110" rx="38" ry="8"/>
+          <ellipse cx="90" cy="150" rx="30" ry="7"/><ellipse cx="90" cy="190" rx="22" ry="6"/>
+        </g>
+        <text x="90" y="270" text-anchor="middle" class="lblsvg b">DRIVER STACK</text>
+        <text x="90" y="284" text-anchor="middle" class="lblsvg">one shaft &middot; glued &middot; turns as a unit</text>
+        <g fill="#cba75e" opacity=".9">
+          <rect x="250" y="40" width="6" height="210"/><rect x="262" y="60" width="6" height="190"/>
+          <rect x="274" y="80" width="6" height="170"/><rect x="286" y="100" width="6" height="150"/>
+        </g>
+        <g fill="none" stroke="#e7c982" stroke-width="2">
+          <ellipse cx="253" cy="70" rx="20" ry="6"/><ellipse cx="265" cy="110" rx="24" ry="6"/>
+          <ellipse cx="277" cy="150" rx="28" ry="7"/><ellipse cx="289" cy="190" rx="32" ry="7"/>
+        </g>
+        <text x="300" y="270" text-anchor="middle" class="lblsvg b">DRIVEN GEARS</text>
+        <text x="300" y="284" text-anchor="middle" class="lblsvg">each keyed to its own brass tube</text>
+        <g stroke="#3a4a6e" stroke-width="3"><line x1="120" y1="90" x2="240" y2="90"/><line x1="120" y1="170" x2="240" y2="170"/></g>
+        <text x="180" y="84" text-anchor="middle" class="lblsvg">printed frame</text>
+        <path d="M140 70 L 230 70" stroke="#56d38a" stroke-width="1.4" fill="none" stroke-dasharray="3 3"/>
+        <text x="185" y="62" text-anchor="middle" class="lblsvg" fill="#86d9aa">teeth mesh here</text>
+        <circle cx="60" cy="220" r="12" fill="none" stroke="#cba75e" stroke-width="2"/>
+        <text x="40" y="245" class="lblsvg">motor drive gear &rarr; Mercury driver</text>
+      </svg>
+      <div class="cap">Left: glued driver-gear stack on the 1/4&Prime; shaft. Right: driven gears keyed to concentric tubes. Frames hold spacing so teeth mesh.</div>
+    </div>
+
+    <h3>Planet arm detail</h3>
+    <div class="draw">
+      <svg viewBox="0 0 360 180" role="img" aria-label="Planet clamp arm with support rod and sphere">
+        <rect x="40" y="20" width="9" height="140" fill="#cba75e"/>
+        <text x="44" y="175" text-anchor="middle" class="lblsvg">brass tube</text>
+        <path d="M49 95 q -8 -10 6 -16 l 70 -6 q 10 0 10 8 q 0 8 -10 8 l -60 6 q 12 6 -2 14 z" fill="#1f2942" stroke="#3a4a6e"/>
+        <text x="120" y="78" class="lblsvg b">printed clamp arm</text>
+        <path d="M165 92 q 30 0 30 -30 l 0 -30" fill="none" stroke="#101521" stroke-width="3"/>
+        <text x="205" y="70" class="lblsvg">1/8&Prime; rod, bent &amp; painted black</text>
+        <circle cx="195" cy="28" r="16" fill="#5b86c9" stroke="#7ba0d8"/>
+        <text x="225" y="26" class="lblsvg b">planet</text>
+        <line class="lead-l" x1="100" y1="95" x2="70" y2="135"/>
+      </svg>
+      <div class="cap">Clamp arms snap over their tube; a bent support rod carries the printed planet. Open the clamp gently &mdash; it can snap.</div>
+    </div>
+  </div>
+</section>
+<section class="view" id="risk">
+  <div class="card">
+    <h2>Risk register</h2>
+    <p class="muted">Faithful original build (Option A) &mdash; the highest-risk path. The buy-a-kit and crank options carry far less of this.</p>
+    <p class="lead">What goes wrong on this build, ranked. The first three are the ones that actually sink projects.</p>
+
+    <div class="rk"><div class="rk-top"><span class="nm">Gear teeth don't mesh / cumulative print inaccuracy</span><span class="sev k">PROJECT-KILLER</span></div>
+      <p>Likelihood <b>High</b> &middot; Impact <b>High</b> &middot; Affects the entire gear tower. Dozens of meshing pairs; one bad batch of teeth and the train binds or skips.</p>
+      <div class="fix"><b>Mitigate:</b> print and test a gear <i>pair</i> in Phase 0 before committing. Tune flow/temperature, scrape the bed-side teeth, keep spares. Don't pass the Phase-0 gate until a pair runs clean.</div></div>
+
+    <div class="rk"><div class="rk-top"><span class="nm">Print time / failed prints blow the schedule</span><span class="sev k">PROJECT-KILLER</span></div>
+      <p>Likelihood <b>High</b> &middot; Impact <b>High</b> &middot; 80&ndash;150 printer-hours across 100+ parts; a single failed long print can cost days. Spindles sag if printed too fast/hot alone.</p>
+      <div class="fix"><b>Mitigate:</b> batch small parts so layers cool, run part-cooling, print spares of fragile parts, start printing the day parts are ordered so it overlaps shipping.</div></div>
+
+    <div class="rk"><div class="rk-top"><span class="nm">Tubes slip on their gears (lost timing)</span><span class="sev h">HIGH</span></div>
+      <p>Likelihood <b>Medium</b> &middot; Impact <b>High</b> &middot; If a gear spins on its tube, that planet stops tracking. Epoxy alone often isn't enough.</p>
+      <div class="fix"><b>Mitigate:</b> solder the anti-slip bead key on every tube, notch the mating part to seat it, hand-test each joint for zero slip before assembly.</div></div>
+
+    <div class="rk"><div class="rk-top"><span class="nm">Motor shaft / drive-gear bore mismatch</span><span class="sev m">MEDIUM</span></div>
+      <p>Likelihood <b>Medium</b> &middot; Impact <b>Medium</b> &middot; A substitute motor may have a different shaft than the printed drive gear expects.</p>
+      <div class="fix"><b>Mitigate:</b> check the motor's shaft spec against the gear bore before ordering; be ready to ream or print an adapter. A grub-screw hub is a clean fallback.</div></div>
+
+    <div class="rk"><div class="rk-top"><span class="nm">Off-axis hole drilling &rarr; wobbling gears</span><span class="sev m">MEDIUM</span></div>
+      <p>Likelihood <b>Medium</b> &middot; Impact <b>Medium</b> &middot; Hand-drilling the 1/4&Prime; holes crooked makes gears wobble and mesh poorly.</p>
+      <div class="fix"><b>Mitigate:</b> use a drill press or guide block; go slow, keep the bit square. Test-fit before gluing.</div></div>
+
+    <div class="rk"><div class="rk-top"><span class="nm">Long support rods sag / planets too heavy</span><span class="sev m">LOW&ndash;MED</span></div>
+      <p>Likelihood <b>Low</b> &middot; Impact <b>Low</b> &middot; Heavy planets bow the long 1/8&Prime; arms.</p>
+      <div class="fix"><b>Mitigate:</b> print planets light (20&ndash;30% infill); keep arm bends clean.</div></div>
+
+    <hr class="soft">
+    <h2>Bring-up checklist</h2>
+    <p class="lead">Tick these in order &mdash; each is a gate before the next stage.</p>
+    <div>
+      <div class="check"><input type="checkbox" id="c1"><label for="c1"><span class="ph">Phase 0</span>A printed gear pair meshes smoothly under hand power</label></div>
+      <div class="check"><input type="checkbox" id="c2"><label for="c2"><span class="ph">Phase 1&ndash;2</span>All parts printed; every hole drilled true; tubes slide cleanly</label></div>
+      <div class="check"><input type="checkbox" id="c3"><label for="c3"><span class="ph">Phase 3</span>Every gear keyed to its tube &mdash; zero slip when twisted</label></div>
+      <div class="check"><input type="checkbox" id="c4"><label for="c4"><span class="ph">Phase 4</span>Driver stack turns as one unit; Earth ring flat and true</label></div>
+      <div class="check"><input type="checkbox" id="c5"><label for="c5"><span class="ph">Phase 5</span>Hand-turning the input rotates every planet, no binding</label></div>
+      <div class="check"><input type="checkbox" id="c6"><label for="c6"><span class="ph">Phase 6</span>Motor + toggle run planets both directions; centre = off</label></div>
+      <div class="check"><input type="checkbox" id="c7"><label for="c7"><span class="ph">Phase 7</span>Continuous run-in: quiet, no skipping, slow planets creep</label></div>
+    </div>
+
+    <hr class="soft">
+    <h2>Decision log</h2>
+    <div class="callout"><div class="t">DC motor + toggle vs. stepper + microcontroller</div><p>Option A keeps the original's simple DC-motor + centre-off toggle (cheapest, no code). The microcontroller route belongs to Option B, where computed positioning replaces the gear cascade.</p></div>
+    <div class="callout"><div class="t">Faithful vs. simplified vs. buy</div><p>Option A maximizes the geared "wow," B cuts parts/time at the cost of light electronics, C removes all fabrication risk. Pick on what the client values &mdash; spectacle, achievability, or certainty.</p></div>
+    <div class="callout"><div class="t">Two brass-tube sets, not one</div><p>The 12&Prime; assortment may be short for the tall central/Sun tube; budgeting two sets up front avoids a mid-build stall waiting on a re-order.</p></div>
+  </div>
+</section>
+
+<section class="view" id="ref">
+  <div class="card">
+    <h2>Research &amp; sources</h2>
+    <p class="lead">Everything referenced, grouped by how you'd use it. Start with the first &mdash; it has the files you still need.</p>
+
+    <h3>The original build (get the files here)</h3>
+    <ul class="reflist">
+      <li><div class="rt"><a href="https://www.instructables.com/8-Planet-Motorized-Orrery-3D-Printed/" target="_blank" rel="noopener">Widget Wiz 3D &mdash; 8 Planet Motorized Orrery (Instructables)</a></div><div class="rd">The source design. STL files, the gear-ratio Excel sheet, the cut chart, and wiring schematic download here (free account). You only have the PDF so far &mdash; grab these before Phase 0.</div></li>
+    </ul>
+
+    <h3>Simplified single-motor 3D builds (Option B)</h3>
+    <ul class="reflist">
+      <li><div class="rt"><a href="https://hackaday.com/2026/05/01/3d-printed-orrery-runs-on-a-single-motor/" target="_blank" rel="noopener">3D-Printed Orrery Runs On A Single Motor (Hackaday)</a></div><div class="rd">illusionmanager's design: one stepper + interlocking ring tabs, ESP32 computes positions, reed-switch homing. The model to copy for "motorized &amp; printed but far fewer parts."</div></li>
+      <li><div class="rt"><a href="https://hackaday.com/tag/orrery/" target="_blank" rel="noopener">Hackaday &mdash; orrery tag</a></div><div class="rd">A running feed of clever low-part-count orrery mechanisms, including moon-only and touch variants.</div></li>
+      <li><div class="rt"><a href="https://www.printables.com/search/models?q=orrery" target="_blank" rel="noopener">Printables &mdash; orrery models</a></div><div class="rd">Free printable orreries from simple desktop versions to full geared ones; filter by difficulty.</div></li>
+      <li><div class="rt"><a href="https://www.thingiverse.com/search?q=orrery&type=things" target="_blank" rel="noopener">Thingiverse &mdash; orrery models</a></div><div class="rd">Includes the "Dragonator" orrery the original author name-checks, plus easier remixes.</div></li>
+    </ul>
+
+    <h3>Buy a motorized metal kit (Option C)</h3>
+    <ul class="reflist">
+      <li><div class="rt"><a href="https://www.amazon.ca/Metal-Solar-System-Model-Works/dp/B0FND3GNG3" target="_blank" rel="noopener">Motorized Metal Solar System Kit, 600+ parts, LED sun (Amazon.ca)</a></div><div class="rd">In-Canada listing, motorized, LED sun. Quick shipping; cross-check its price against the direct sellers below.</div></li>
+      <li><div class="rt"><a href="https://www.enginediy.com/products/orrery-3d-metal-planets-model-diy-assembly-kits-educational-toys-build-your-own-solar-system-teching-400-pcs-metal-running-solar-system-model-kit-presale" target="_blank" rel="noopener">TECHING 400-pc metal orrery (EngineDIY)</a></div><div class="rd">Direct from the maker; multiple part-count versions (350 / 400 / 600 pc).</div></li>
+      <li><div class="rt"><a href="https://www.stirlingkit.com/products/teching-diy-electric-eight-planet-obiting-orrery-solar-system-working-model-kits-dm405" target="_blank" rel="noopener">TECHING DM405 electric orrery (StirlingKit)</a></div><div class="rd">Another reseller &mdash; triangulate the real going price and shipping to Canada.</div></li>
+    </ul>
+
+    <h3>Simplest crank / wind-up kits &mdash; Canadian (Option D)</h3>
+    <ul class="reflist">
+      <li><div class="rt"><a href="https://funique.ca/en/shop/diy-mechanical-orrery/" target="_blank" rel="noopener">DIY Mechanical Orrery &mdash; basswood, crank-driven (Funique.ca)</a></div><div class="rd">Canadian seller. Eight planets, crank turns the gears and lights the sun. Patient build, ages 14+, no printer.</div></li>
+      <li><div class="rt"><a href="https://funique.ca/en/shop/mechanical-solar-system-orrery/" target="_blank" rel="noopener">Mechanical Solar System Orrery &mdash; wind-up, no batteries (Funique.ca)</a></div><div class="rd">Printed-graphics planets, wind-up motor, expansion slot "for Planet Nine." Classroom-friendly.</div></li>
+    </ul>
+
+    <h3>Key part sources used in the BOM</h3>
+    <ul class="reflist">
+      <li><div class="rt"><a href="https://ksmetals.com/products/brtasstsm" target="_blank" rel="noopener">K&amp;S Precision Metals &mdash; brass telescoping tube assortment (direct)</a></div><div class="rd">The nesting brass tubes for the concentric shafts; buy direct or via Amazon.ca.</div></li>
+      <li><div class="rt"><a href="https://boltdepot.com" target="_blank" rel="noopener">Bolt Depot</a></div><div class="rd">Buy exact #4-40 / #8-32 / #10-24 screws, nuts, and nylon locknuts by the piece; ships to Canada.</div></li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  Planning aid &mdash; not production CAD or a substitute for each build's own drawings.<br>
+  Faithful build assumes a tuned 3D printer on hand. Prices are estimates; confirm at point of sale.
+</footer>
+
+</div>
+
+<style>@keyframes rot{to{transform:rotate(360deg)}}</style>
+<script>
+/* ---------------- DATA: four build options, each with its own BOM + plan ---------------- */
+const OPTIONS = {
+  A:{ short:'Faithful build', selDesc:'Print the original \u00b7 hardest',
+    bom:[
+      {key:'print',title:'3D Printing',items:[
+        {name:'PLA filament \u2014 multi-colour set',spec:'8+ colours (each planet/arm a colour). ~1.5\u20132 kg total. SUNLU / eSUN / Overture.',qty:1,unit:75,must:true,link:'https://www.amazon.ca/s?k=PLA+filament+multicolor+bundle+1.75mm',linkLabel:'Amazon.ca',src:'cross-ref by colour'},
+        {name:'Spare PLA (failed-print buffer)',spec:'1 kg in your most-used colour.',qty:1,unit:28,must:false,link:'https://www.amazon.ca/s?k=PLA+filament+1kg+1.75mm',linkLabel:'Amazon.ca',src:''}
+      ]},
+      {key:'elec',title:'Drive & Electrical',items:[
+        {name:'12 V DC worm gearmotor, 5\u201310 RPM',spec:'BRINGSMART / Greartisan JGY-370 class. Slow, high-torque, reversible.',qty:1,unit:22,must:true,link:'https://www.amazon.ca/s?k=12V+10RPM+worm+gear+motor+JGY-370',linkLabel:'Amazon.ca',src:'AliExpress ~$12',flag:{t:'risk',text:'Verify shaft \u00d8 fits the printed drive-gear bore \u2014 may need to ream'}},
+        {name:'DPDT centre-off toggle switch',spec:'ON-OFF-ON. Reverses motor polarity (centre = off).',qty:1,unit:11,must:true,link:'https://www.amazon.ca/s?k=DPDT+center+off+toggle+switch+ON-OFF-ON',linkLabel:'Amazon.ca',src:''},
+        {name:'12 V DC power supply + DC jack',spec:'1\u20132 A wall adapter, 2.1 mm barrel, plus a panel DC jack.',qty:1,unit:15,must:true,link:'https://www.amazon.ca/s?k=12V+2A+power+supply+barrel+jack',linkLabel:'Amazon.ca',src:''},
+        {name:'Hookup wire + connectors',spec:'22 AWG stranded + crimp/quick connectors.',qty:1,unit:12,must:true,link:'https://www.amazon.ca/s?k=22+awg+hookup+wire+kit',linkLabel:'Amazon.ca',src:''}
+      ]},
+      {key:'shaft',title:'Concentric Shafts & Supports',items:[
+        {name:'K&S brass telescoping tube assortment #3400',spec:'12 tubes, 1/16\u2033\u219213/32\u2033 OD, nest in 1/16\u2033 steps. Buy 2 (long central/Sun tube + spares).',qty:2,unit:30,must:true,link:'https://www.amazon.ca/s?k=K%26S+brass+telescopic+tube+assortment+3400',linkLabel:'Amazon.ca',src:'or ksmetals.com',flag:{t:'risk',text:'Longest tubes may need 36\u2033 lengths \u2014 check the cut chart'}},
+        {name:'1/4\u2033 brass/steel rod \u2014 driver shaft',spec:'12\u2033. Carries the glued Mercury\u2192Mars driver-gear stack.',qty:1,unit:7,must:true,link:'https://www.amazon.ca/s?k=1%2F4+inch+brass+rod+12+inch',linkLabel:'Amazon.ca',src:''},
+        {name:'1/8\u2033 rod \u2014 planet support arms',spec:'36\u2033. Cut & bent per chart, painted satin black. Steel welding rod works.',qty:2,unit:5,must:true,link:'https://www.amazon.ca/s?k=1%2F8+inch+steel+rod+36+inch',linkLabel:'Amazon.ca',src:''}
+      ]},
+      {key:'fast',title:'Fasteners & Hardware',items:[
+        {name:'#10-24 threaded rod, 36\u2033',spec:'7 legs \u00d7 8 5/8\u2033 \u2248 60\u2033+. Cheaper at Home Depot / Princess Auto.',qty:2,unit:8,must:true,link:'https://www.homedepot.ca/search?q=10-24%20threaded%20rod',linkLabel:'Home Depot',src:'or Amazon.ca'},
+        {name:'#10-24 nuts, nylon locknuts, #10 washers',spec:'Frame feet & rod ends.',qty:1,unit:14,must:true,link:'https://www.amazon.ca/s?k=10-24+nylon+locknut+washer+assortment',linkLabel:'Amazon.ca',src:'Bolt Depot ships to CA'},
+        {name:'#4-40 machine screws 1\u00bc\u2033 + nylon locknuts',spec:'Frames, Earth ring, arms \u2014 30+. Buy extra.',qty:1,unit:16,must:true,link:'https://www.amazon.ca/s?k=4-40+machine+screws+1-1%2F4+nylon+locknut',linkLabel:'Amazon.ca',src:''},
+        {name:'#8-32 machine screws (\u00be,1\u00bc,2,2\u00be\u2033) + locknuts',spec:'Centre foot & motor mount, assorted lengths + washers.',qty:1,unit:16,must:true,link:'https://www.amazon.ca/s?k=8-32+machine+screw+assortment+nylon+locknut',linkLabel:'Amazon.ca',src:''},
+        {name:'M3 \u00d7 12 mm screws + lock washers',spec:'6\u00d7 to mount the gearmotor to its printed base.',qty:1,unit:9,must:true,link:'https://www.amazon.ca/s?k=M3+12mm+machine+screw+lock+washer',linkLabel:'Amazon.ca',src:''},
+        {name:'SAE machine-screw assortment kit',spec:'One box covering 4-40 / 6-32 / 8-32 \u2014 buy instead of the rows above.',qty:1,unit:26,must:false,link:'https://www.amazon.ca/s?k=SAE+machine+screw+assortment+kit+nuts',linkLabel:'Amazon.ca',src:''}
+      ]},
+      {key:'glue',title:'Adhesives & Finishing',items:[
+        {name:'Amazing Goop (or E6000)',spec:'Gluing gears/spacers into solid stacks.',qty:1,unit:11,must:true,link:'https://www.amazon.ca/s?k=amazing+goop+adhesive',linkLabel:'Amazon.ca',src:''},
+        {name:'2-part epoxy (5-min)',spec:'Keying tubes, Sun-tube-to-frame, Moon BB.',qty:1,unit:10,must:true,link:'https://www.amazon.ca/s?k=5+minute+epoxy',linkLabel:'Amazon.ca',src:''},
+        {name:'Hot-glue sticks',spec:'Switch enclosure & light tacking (gun assumed owned).',qty:1,unit:8,must:true,link:'https://www.amazon.ca/s?k=hot+glue+sticks',linkLabel:'Amazon.ca',src:''},
+        {name:'Satin-black spray paint',spec:'Planet support rods (and frame accents).',qty:1,unit:9,must:true,link:'https://www.amazon.ca/s?k=satin+black+spray+paint',linkLabel:'Amazon.ca',src:''}
+      ]},
+      {key:'misc',title:'Miscellaneous & Consumables',items:[
+        {name:'6 mm airsoft BBs \u2014 the Moon',spec:'You need exactly one; a bag is cheapest.',qty:1,unit:9,must:true,link:'https://www.amazon.ca/s?k=6mm+airsoft+bbs',linkLabel:'Amazon.ca',src:''},
+        {name:'Calendar dial + Jupiter ring print & laminate',spec:'Larger than letter \u2014 print & laminate at Staples, then trim.',qty:1,unit:8,must:true,link:'https://www.staples.ca/pages/copy-print',linkLabel:'Staples print',src:'',flag:{t:'tip',text:'File is in the Instructable downloads'}},
+        {name:'Drill-bit set (1/8\u2033\u219213/32\u2033 by 32nds)',spec:'To size printed holes to the tubes/shafts.',qty:1,unit:25,must:false,link:'https://www.amazon.ca/s?k=fractional+drill+bit+set+1%2F16+to+1%2F2',linkLabel:'Amazon.ca',src:'skip if owned'}
+      ]}
+    ],
+    bomNote:`<hr class="soft"><h3>Tools you'll need (not in the budget &mdash; assumed owned)</h3>
+      <p class="muted">Phillips &amp; flat screwdrivers (medium + small), small adjustable wrench, the fractional drill bits, utility knife, soldering iron + solder, wire strippers, Dremel (for notching tube keyways), hot-glue gun, pliers, digital calipers. The Dremel and soldering iron are the two that really matter &mdash; keying the brass tubes needs both.</p>
+      <div class="callout"><div class="t">Budget reality check</div><p>Baseline must-have materials land around <b>CA$300</b> with a printer on hand; realistic all-in with spares + two tube sets + a drill set is <b>CA$280&ndash;380</b>. <b>Outsourcing prints</b> adds roughly <b>CA$400&ndash;900+</b> &mdash; at which point Option C becomes the better value.</p></div>`,
+    plan:[
+      {n:0,title:'Acquire files, order long-lead parts, test the printer',pills:['Hands-on 2\u20133 h','Elapsed 1\u20137 days','Spend ~$340'],tasks:['Download the <b>STL files + gear-ratio spreadsheet</b> from the Instructable (you only have the PDF so far).','Place every order today \u2014 brass tubes and the gearmotor are the long-lead items.','Print <b>one test gear pair</b> and confirm the teeth mesh cleanly. Make-or-break check.'],gate:'Gate: a printed gear pair meshes smoothly before you commit 100+ prints.'},
+      {n:1,title:'Print all parts',pills:['Hands-on 6\u201310 h','Printer 80\u2013150 h','Elapsed 1\u20133 wks'],tasks:['Gears/frames ~50% infill; <b>gear spindles 100%</b>; planets 20\u201330%.','Watch orientation \u2014 some frames have integrated spacers (face up); some gears are compound.','Use part cooling, print spindles in batches, print a few <b>spares</b> of small parts.'],gate:'Gate: full part inventory printed, no warped frames or short-printed teeth.'},
+      {n:2,title:'Clean up & size every printed hole',pills:['Hands-on 6\u201312 h'],tasks:['Scrape the bed-side of gear teeth (elephant-foot) so they mesh.','Run the correct drill straight through each hole \u2014 driver-side & secondary gear holes are <b>1/4\u2033</b>.','Off-axis drilling = wobbling gears later. Go slow and square.'],gate:'Gate: tubes slide through their holes with a clean, non-sloppy fit.'},
+      {n:3,title:'Cut & key the brass tubes',pills:['Hands-on 4\u20138 h'],tasks:['Cut all tubes to the <b>cut chart</b> lengths.','Solder a small bead on each tube as an anti-slip <b>key</b>; notch the mating gear/frame to seat it. Epoxy as backup.','Sun tube: bead at the very end (seats 1/8\u2033 into the bottom frame).'],gate:'Gate: each gear locks to its tube \u2014 zero slip when twisted by hand.'},
+      {n:4,title:'Build the gear stacks (driver + driven)',pills:['Hands-on 6\u201310 h','+ cure time'],tasks:['Glue the <b>driver stack</b> (Mars\u2192Mercury gears + spacers) onto the 1/4\u2033 shaft as one solid unit.','Assemble driven gears onto their nested tubes; cure fully.','Build the Earth ring (two segments, half-teeth mating) and the Earth/Moon arm with its gear train + BB Moon.'],gate:'Gate: driver stack spins as one piece; Earth ring is flat & true.'},
+      {n:5,title:'Stack the frames & mesh the tower',pills:['Hands-on 8\u201314 h'],tasks:['Build up frame-by-frame on the threaded-rod legs with the correct <b>spacer heights</b> per level.','Drop in each planet\u2019s gears, insert spindles (twist as you seat in glue), confirm meshing before adding the next frame.','Fiddliest stage \u2014 work methodically Mercury\u2192Neptune.'],gate:'Gate: turning the input by hand rotates every planet without binding.'},
+      {n:6,title:'Motor, switch, arms, planets & dial',pills:['Hands-on 4\u20138 h'],tasks:['Mount the gearmotor + drive gear between frames 1\u20132, meshing the Mercury driver. Wire motor \u2192 centre-off toggle \u2192 12 V supply.','Install planet clamp arms (Neptune\u2192Mercury), the Earth ring & Earth arm.','Cut/bend/paint the 1/8\u2033 rods, mount planets, add the laminated calendar dial & Jupiter ring.'],gate:'Gate: power on \u2014 toggle drives planets both directions, centre = off.'},
+      {n:7,title:'Tune, de-bind & finish',pills:['Hands-on 4\u201310 h'],tasks:['Hunt down any tight mesh or rubbing; ease holes, re-seat spindles, lubricate lightly if needed.','Verify the slow planets (Saturn/Uranus/Neptune) actually creep.','Final clean-up, arm alignment, continuous run-in test.'],gate:'Done: runs quietly and continuously in both directions.'}
+    ],
+    planTotals:[{k:'Total hands-on',v:'40\u201370 h'},{k:'Elapsed (full-time)',v:'2\u20134 wks'},{k:'Elapsed (day job)',v:'6\u201310 wks'},{k:'Critical path',v:'Print time'}],
+    planNote:''
+  },
+
+  B:{ short:'Single-motor 3D', selDesc:'Fewer parts \u00b7 + electronics',
+    bom:[
+      {key:'files',title:'Design Files',items:[
+        {name:'Model files + firmware (free download)',spec:'Single-motor design \u2014 STLs + ESP32 sketch from the chosen community build.',qty:1,unit:0,must:true,link:'https://www.printables.com/search/models?q=orrery%20single%20motor',linkLabel:'Printables',src:'Hackaday write-up: hackaday.com',flag:{t:'tip',text:'Grab the STLs + firmware first'}}
+      ]},
+      {key:'print',title:'3D Printing',items:[
+        {name:'PLA filament \u2014 multi-colour set',spec:'Far fewer/smaller parts than A. ~0.5\u20131 kg total.',qty:1,unit:45,must:true,link:'https://www.amazon.ca/s?k=PLA+filament+multicolor+1.75mm',linkLabel:'Amazon.ca',src:''},
+        {name:'Spare PLA',spec:'1 kg buffer.',qty:1,unit:28,must:false,link:'https://www.amazon.ca/s?k=PLA+filament+1kg+1.75mm',linkLabel:'Amazon.ca',src:''}
+      ]},
+      {key:'motion',title:'Motion',items:[
+        {name:'Stepper motor \u2014 NEMA 17',spec:'Single motor drives the whole ring stack.',qty:1,unit:16,must:true,link:'https://www.amazon.ca/s?k=NEMA+17+stepper+motor',linkLabel:'Amazon.ca',src:'or 28BYJ-48 geared ~$8'},
+        {name:'Stepper driver (A4988 / DRV8825)',spec:'Drives the stepper from the ESP32.',qty:1,unit:6,must:true,link:'https://www.amazon.ca/s?k=A4988+DRV8825+stepper+driver',linkLabel:'Amazon.ca',src:'ULN2003 board if 28BYJ-48'},
+        {name:'Ball bearings (608 / smaller)',spec:'For the rotating ring stages.',qty:1,unit:10,must:true,link:'https://www.amazon.ca/s?k=608+ball+bearings',linkLabel:'Amazon.ca',src:'pack'},
+        {name:'Neodymium magnets + reed/hall sensor',spec:'Homes the start position on power-up.',qty:1,unit:8,must:true,link:'https://www.amazon.ca/s?k=neodymium+magnets+reed+switch',linkLabel:'Amazon.ca',src:'',flag:{t:'tip',text:'position homing'}}
+      ]},
+      {key:'control',title:'Control & Power',items:[
+        {name:'ESP32 dev board',spec:'Computes true planet angles; optional WiFi time-sync.',qty:1,unit:12,must:true,link:'https://www.amazon.ca/s?k=ESP32+dev+board',linkLabel:'Amazon.ca',src:'or Arduino Nano ~$8'},
+        {name:'Power supply (12 V or 5 V to suit motor)',spec:'2 A. Match to the stepper you chose.',qty:1,unit:12,must:true,link:'https://www.amazon.ca/s?k=12V+5V+2A+power+supply',linkLabel:'Amazon.ca',src:''},
+        {name:'Jumper wires / proto board',spec:'Wire the ESP32 \u2192 driver \u2192 motor.',qty:1,unit:9,must:true,link:'https://www.amazon.ca/s?k=dupont+jumper+wires+breadboard',linkLabel:'Amazon.ca',src:''}
+      ]},
+      {key:'fast',title:'Fasteners',items:[
+        {name:'M3 screw + heat-set insert kit',spec:'Clean threaded mounts in printed parts.',qty:1,unit:13,must:true,link:'https://www.amazon.ca/s?k=M3+heat+set+insert+screw+kit',linkLabel:'Amazon.ca',src:''},
+        {name:'Heat-set insert soldering tip',spec:'Only if you don\u2019t already have one.',qty:1,unit:10,must:false,link:'https://www.amazon.ca/s?k=heat+set+insert+soldering+tip',linkLabel:'Amazon.ca',src:'skip if owned'}
+      ]}
+    ],
+    bomNote:`<div class="callout"><div class="t">Notes</div><p>You'll also need a soldering iron (heat-set inserts + wiring) and basic hand tools. The ESP32 firmware comes from the chosen community design &mdash; flash and bench-test it before assembly. Every part here is commodity electronics, so prices are stable; swap in cheaper sellers freely.</p></div>`,
+    plan:[
+      {n:0,title:'Get files & electronics; bench-test the motor',pills:['Hands-on 2\u20133 h','Elapsed 1\u20137 days','Spend ~$130'],tasks:['Download the STLs + firmware (Printables / the Hackaday build).','Order ESP32, stepper + driver, bearings, magnets, sensor.','Flash a stepper test sketch \u2014 confirm it steps and the homing sensor reads.'],gate:'Gate: motor steps under firmware and the homing sensor triggers.'},
+      {n:1,title:'Print parts',pills:['Hands-on 3\u20135 h','Printer 20\u201340 h','Elapsed 4\u201310 days'],tasks:['Print the ring stages, frame and planets \u2014 far fewer parts than A.','Check the ring tabs interlock and rings nest.'],gate:'Gate: rings nest and rotate freely by hand.'},
+      {n:2,title:'Electronics bring-up',pills:['Hands-on 3\u20135 h'],tasks:['Wire ESP32 \u2192 driver \u2192 stepper on a breadboard.','Load the project firmware; set the date / position math.','Verify homing + a full slow sweep of the mechanism.'],gate:'Gate: firmware homes and drives the stepper through a full cycle.'},
+      {n:3,title:'Mechanical assembly',pills:['Hands-on 4\u20138 h'],tasks:['Press in bearings, stack the ring mechanism, mount the stepper.','Attach planets to their rings.'],gate:'Gate: the motor drives every planet ring without slip or bind.'},
+      {n:4,title:'Calibrate & integrate',pills:['Hands-on 2\u20134 h'],tasks:['Set home/zero positions; enter the current date so planets start true.','Tune speed.'],gate:'Gate: planets track correct relative motion from a known date.'},
+      {n:5,title:'Finish',pills:['Hands-on 2\u20134 h'],tasks:['Tidy and secure wiring, enclose the ESP32, optional WiFi time-sync.','Base finish.'],gate:'Done: runs continuously, starts at correct positions on power-up.'}
+    ],
+    planTotals:[{k:'Total hands-on',v:'15\u201330 h'},{k:'Printer time',v:'20\u201340 h'},{k:'Elapsed',v:'1\u20133 wks'},{k:'Skill',v:'Intermediate'}],
+    planNote:'Critical path is print time plus getting the firmware and homing dialled in.'
+  },
+
+  C:{ short:'Buy a metal kit', selDesc:'No fabrication \u00b7 reliable',
+    bom:[
+      {key:'kit',title:'The Kit',items:[
+        {name:'TECHING / EngineDIY motorized metal orrery kit',spec:'8 planets, 350\u2013600 anodized parts, 12 V, sometimes an LED sun.',qty:1,unit:220,must:true,link:'https://www.amazon.ca/Metal-Solar-System-Model-Works/dp/B0FND3GNG3',linkLabel:'Amazon.ca',src:'cross-ref EngineDIY / StirlingKit',flag:{t:'tip',text:'Confirm motor + 12V adapter are included'}}
+      ]},
+      {key:'extras',title:'Optional Extras',items:[
+        {name:'12 V power adapter',spec:'Only if the kit doesn\u2019t include one.',qty:1,unit:12,must:false,link:'https://www.amazon.ca/s?k=12V+power+adapter',linkLabel:'Amazon.ca',src:''},
+        {name:'Display dome / base',spec:'Keeps dust off the finished piece.',qty:1,unit:30,must:false,link:'https://www.amazon.ca/s?k=display+dome+case',linkLabel:'Amazon.ca',src:''},
+        {name:'Thread-locker + light grease',spec:'Smoother gears, screws that stay put.',qty:1,unit:8,must:false,link:'https://www.amazon.ca/s?k=threadlocker+blue+grease',linkLabel:'Amazon.ca',src:'',flag:{t:'tip',text:'optional but worth it'}},
+        {name:'Precision screwdriver set',spec:'Only if you don\u2019t own a fine set.',qty:1,unit:15,must:false,link:'https://www.amazon.ca/s?k=precision+screwdriver+set',linkLabel:'Amazon.ca',src:'skip if owned'}
+      ]}
+    ],
+    bomNote:`<div class="callout"><div class="t">Notes</div><p>The kit includes its own parts, motor, and manual &mdash; the items marked optional are just enhancements. Price varies by seller and part count (350 vs 600 pcs); cross-check the three sources in <b>Research</b> before buying. This is the lowest-risk route: no printing, no fabrication.</p></div>`,
+    plan:[
+      {n:0,title:'Buy the kit & check the manifest',pills:['Hands-on ~1 h','Elapsed: shipping','Spend ~$220'],tasks:['Order from a Canadian-shipping seller (Amazon.ca / EngineDIY).','On arrival, count parts against the manifest before starting.','Confirm the motor and power adapter are in the box.'],gate:'Gate: all parts present and accounted for.'},
+      {n:1,title:'Prep & read the manual',pills:['Hands-on ~1 h'],tasks:['Sort parts into trays; read the 3D exploded manual end-to-end.','Set up good lighting and the right screwdrivers.'],gate:'Gate: you understand the full assembly sequence before turning a screw.'},
+      {n:2,title:'Build the base & gear train',pills:['Hands-on 2\u20136 h'],tasks:['Assemble the frame and central gear stack per the manual.','Keep screws lightly snug until alignment is confirmed.'],gate:'Gate: the gear train turns smoothly by hand before the motor goes in.'},
+      {n:3,title:'Planets, motor & LED sun',pills:['Hands-on 2\u20138 h'],tasks:['Install planet arms/gears in order; fit the motor.','Wire the LED sun if the kit has one.'],gate:'Gate: motor engages and all arms move.'},
+      {n:4,title:'Power, test & lock',pills:['Hands-on 1\u20133 h'],tasks:['Connect 12 V; run both directions; ease any tight spot.','Apply thread-locker to anything that backs out; final run-in.'],gate:'Done: smooth continuous run, nothing loosening.'}
+    ],
+    planTotals:[{k:'Total hands-on',v:'3\u201320 h'},{k:'Elapsed',v:'Days\u20131 wk'},{k:'Printer',v:'Not needed'},{k:'Skill',v:'Beginner+'}],
+    planNote:'No fabrication risk \u2014 this is assembly only. The long pole is shipping.'
+  },
+
+  D:{ short:'Crank / wind-up', selDesc:'Cheapest \u00b7 beginner',
+    bom:[
+      {key:'kit',title:'The Kit',items:[
+        {name:'Funique.ca DIY mechanical orrery (basswood, crank)',spec:'8 planets, crank-driven, lights the sun. Ages 14+.',qty:1,unit:45,must:true,link:'https://funique.ca/en/shop/diy-mechanical-orrery/',linkLabel:'Funique.ca',src:'or wind-up cardstock ~$30',flag:{t:'tip',text:'Canadian seller \u2014 ships domestically'}}
+      ]},
+      {key:'extras',title:'Optional Extras',items:[
+        {name:'Wood glue + fine sandpaper',spec:'For a clean basswood finish.',qty:1,unit:8,must:false,link:'https://www.amazon.ca/s?k=wood+glue+fine+sandpaper',linkLabel:'Amazon.ca',src:''},
+        {name:'Acrylic paint set',spec:'Customize the planets.',qty:1,unit:12,must:false,link:'https://www.amazon.ca/s?k=acrylic+paint+set',linkLabel:'Amazon.ca',src:''},
+        {name:'Wood display base',spec:'Stand for the finished piece.',qty:1,unit:20,must:false,link:'https://www.amazon.ca/s?k=wood+display+base',linkLabel:'Amazon.ca',src:''}
+      ]}
+    ],
+    bomNote:`<div class="callout"><div class="t">Notes</div><p>These kits are largely self-contained &mdash; glue and paint are optional finishing touches. A great classroom or kid build; orbits are illustrative, not to scale. The wind-up version needs no batteries.</p></div>`,
+    plan:[
+      {n:0,title:'Buy the kit',pills:['Hands-on ~0.25 h','Elapsed: shipping','Spend ~$45'],tasks:['Order from Funique.ca (ships in Canada).','Check the parts are complete on arrival.'],gate:'Gate: kit in hand, parts complete.'},
+      {n:1,title:'Cut out & sort',pills:['Hands-on 0.5\u20131 h'],tasks:['Punch/cut the basswood or cardstock parts; deburr/sand edges.','Sort by step.'],gate:'Gate: all parts free and clean.'},
+      {n:2,title:'Assemble the gear layers',pills:['Hands-on 1.5\u20133 h'],tasks:['Build the gear stack per instructions.','Test the crank turns all gears before committing glue.'],gate:'Gate: crank turns every planet freely.'},
+      {n:3,title:'Planets, dial & finish',pills:['Hands-on 1\u20132 h'],tasks:['Attach planets/graphics + calendar; optional paint.','Mount on a base; final crank test.'],gate:'Done: turning the crank drives a clean planetary display.'}
+    ],
+    planTotals:[{k:'Total hands-on',v:'2\u20136 h'},{k:'Elapsed',v:'Days'},{k:'Printer',v:'Not needed'},{k:'Skill',v:'Beginner'}],
+    planNote:'Beginner-friendly; the whole thing is an afternoon or two.'
+  }
+};
+
+/* ---------------- LOGIC ---------------- */
+let cur='A', UID=0;
+function fmt(n){return '$'+Math.round(n).toLocaleString('en-CA');}
+function nextUid(){return ++UID;}
+function eachItem(fn){OPTIONS[cur].bom.forEach(function(sub){sub.items.forEach(function(it){fn(it,sub);});});}
+function getItem(uid){var r=null;eachItem(function(it){if(it.uid===uid)r=it;});return r;}
+
+function renderSelectors(){
+  ['optBarBom','optBarPlan'].forEach(function(id){
+    var bar=document.getElementById(id); if(!bar)return;
+    bar.innerHTML='<span class="ttl">Build option</span>'+Object.keys(OPTIONS).map(function(k){
+      var o=OPTIONS[k];
+      return '<button class="optbtn'+(k===cur?' active':'')+'" data-opt="'+k+'"><span class="ok">'+k+' \u00b7 '+o.short+'</span><span class="od">'+o.selDesc+'</span></button>';
+    }).join('');
+  });
+}
+
+function rowHTML(it){
+  var flag = it.flag ? '<span class="it-flag flag-'+it.flag.t+'">'+it.flag.text+'</span>' : '';
+  var nameCell = it.custom
+    ? '<input class="nameinput" data-uid="'+it.uid+'" data-field="name" placeholder="Item name"><input class="specinput" data-uid="'+it.uid+'" data-field="spec" placeholder="Spec / notes (optional)">'
+    : '<div class="it-name">'+it.name+'</div>'+(it.spec?'<div class="it-spec">'+it.spec+'</div>':'')+flag;
+  var rm = it.custom ? '<button class="rm" data-rm="'+it.uid+'" title="Remove item">\u00d7</button>' : '';
+  var src = it.src ? '<span class="src">'+it.src+'</span>' : '';
+  return '<tr data-uid="'+it.uid+'">'
+    + '<td class="c-ck"><input class="ck" type="checkbox" data-uid="'+it.uid+'" data-field="checked"></td>'
+    + '<td>'+nameCell+'</td>'
+    + '<td class="c-qty"><div class="cellnum"><input class="q" type="number" min="0" step="1" data-uid="'+it.uid+'" data-field="qty"></div></td>'
+    + '<td class="c-price"><div class="cellnum"><span class="x">$</span><input type="number" min="0" step="1" data-uid="'+it.uid+'" data-field="unit"><span class="x">=</span><span class="eq" data-uid="'+it.uid+'">$0</span></div></td>'
+    + '<td class="c-buy"><div class="buycell"><div class="buyrow"><a class="lnka" data-uid="'+it.uid+'" target="_blank" rel="noopener">Link</a><button class="lnkedit" data-edit="'+it.uid+'" title="Edit link">\u270e</button>'+rm+'</div>'+src
+    + '<div class="lnkbox" data-box="'+it.uid+'"><input data-uid="'+it.uid+'" data-field="label" placeholder="Link label (e.g. Amazon.ca)"><input data-uid="'+it.uid+'" data-field="url" placeholder="Paste URL (https://...)"><button class="save" data-save="'+it.uid+'">Save link</button></div>'
+    + '</div></td></tr>';
+}
+
+function renderBOM(){
+  var o=OPTIONS[cur];
+  var showOptC=document.getElementById('showOpt').checked;
+  document.getElementById('bomBody').innerHTML=o.bom.map(function(sub){
+    var rows=sub.items.filter(function(it){return showOptC||it.must;}).map(rowHTML).join('');
+    return '<div class="subhead"><span class="ic"></span><h3>'+sub.title+'</h3><span class="st" data-sk="'+sub.key+'">$0</span></div>'
+      +'<table class="bom"><thead><tr><th></th><th>Item</th><th>Qty</th><th>Unit / line</th><th>Buy</th></tr></thead><tbody>'+rows+'</tbody></table>'
+      +'<button class="addbtn" data-add="'+sub.key+'">+ Add item to '+sub.title+'</button>';
+  }).join('');
+  document.getElementById('bomNote').innerHTML=o.bomNote||'';
+  syncInputs(); recompute();
+}
+
+function syncInputs(){
+  eachItem(function(it){
+    document.querySelectorAll('[data-uid="'+it.uid+'"]').forEach(function(el){
+      var f=el.dataset.field;
+      if(f==='checked') el.checked=!!it.checked;
+      else if(f==='qty') el.value=it.qty;
+      else if(f==='unit') el.value=it.unit;
+      else if(f==='name') el.value=it.name||'';
+      else if(f==='spec') el.value=it.spec||'';
+      else if(f==='url') el.value=it.link||'';
+      else if(f==='label') el.value=it.linkLabel||'';
+      if(el.classList.contains('eq')) el.textContent=fmt((+it.unit||0)*(+it.qty||0));
+      if(el.classList.contains('lnka')){
+        if(it.link){el.setAttribute('href',it.link);el.textContent=it.linkLabel||'Link';el.style.display='';}
+        else {el.removeAttribute('href');el.style.display='none';}
+      }
+    });
+  });
+}
+
+function updEq(uid){
+  var it=getItem(uid); if(!it)return;
+  document.querySelectorAll('.eq[data-uid="'+uid+'"]').forEach(function(el){el.textContent=fmt((+it.unit||0)*(+it.qty||0));});
+}
+
+function recompute(){
+  var o=OPTIONS[cur], showOptC=document.getElementById('showOpt').checked;
+  var base=0,have=0,left=0;
+  o.bom.forEach(function(sub){
+    var st=0,sa=0;
+    sub.items.forEach(function(it){
+      if(!showOptC && !it.must) return;
+      var line=(+it.unit||0)*(+it.qty||0);
+      st+=line; if(it.checked) sa+=line;
+      if(it.must){ base+=line; if(it.checked) have+=line; else left+=line; }
+      else { if(it.checked) have+=line; }
+    });
+    var el=document.querySelector('#bomBody .st[data-sk="'+sub.key+'"]');
+    if(el) el.textContent=fmt(sa)+' / '+fmt(st);
+  });
+  document.getElementById('vTotal').textContent=fmt(base);
+  document.getElementById('vHave').textContent=fmt(have);
+  document.getElementById('vLeft').textContent=fmt(left);
+}
+
+function renderPlan(){
+  var o=OPTIONS[cur];
+  var phases=o.plan.map(function(p){
+    var pills=p.pills.map(function(x){return '<span class="pill">'+x+'</span>';}).join('');
+    var tasks=p.tasks.map(function(t){return '<li>'+t+'</li>';}).join('');
+    var gate=p.gate?'<div class="gate">\u25c6 '+p.gate+'</div>':'';
+    return '<div class="phase pl"><div class="pnum">'+p.n+'</div><div class="pbody"><h3>'+p.title+'</h3><div class="ptime">'+pills+'</div><ul>'+tasks+'</ul>'+gate+'</div></div>';
+  }).join('');
+  var totals='<hr class="soft"><div class="spec-grid">'+o.planTotals.map(function(s){return '<div class="spec"><div class="k">'+s.k+'</div><div class="v small">'+s.v+'</div></div>';}).join('')+'</div>';
+  var note=o.planNote?'<p class="muted" style="margin-top:14px">'+o.planNote+'</p>':'';
+  document.getElementById('planBody').innerHTML='<div>'+phases+'</div>'+totals+note;
+}
+
+function selectOption(k){
+  if(!OPTIONS[k])return; cur=k;
+  renderSelectors(); renderBOM(); renderPlan();
+  document.getElementById('optTag').textContent=k+' \u00b7 '+OPTIONS[k].short;
+}
+
+function switchTab(t){
+  document.querySelectorAll('.tab').forEach(function(b){b.classList.toggle('active',b.dataset.t===t);});
+  document.querySelectorAll('.view').forEach(function(v){v.classList.toggle('active',v.id===t);});
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function goOpt(k,t){ selectOption(k); switchTab(t); }
+
+function addItem(subKey){
+  var sub=OPTIONS[cur].bom.filter(function(s){return s.key===subKey;})[0]; if(!sub)return;
+  sub.items.push({uid:nextUid(),name:'',spec:'',qty:1,unit:0,must:true,custom:true,checked:false,link:'',linkLabel:'Link',src:''});
+  renderBOM();
+  var inp=document.querySelector('.nameinput[data-uid="'+UID+'"]'); if(inp) inp.focus();
+}
+function removeItem(uid){
+  OPTIONS[cur].bom.forEach(function(sub){ sub.items=sub.items.filter(function(it){return it.uid!==uid;}); });
+  renderBOM();
+}
+
+function onBomInput(e){
+  var el=e.target.closest('[data-field]'); if(!el)return;
+  var uid=parseInt(el.dataset.uid,10), f=el.dataset.field, it=getItem(uid); if(!it)return;
+  if(f==='checked') it.checked=el.checked;
+  else if(f==='qty'){ it.qty=el.value===''?0:Math.max(0,+el.value); updEq(uid); }
+  else if(f==='unit'){ it.unit=el.value===''?0:Math.max(0,+el.value); updEq(uid); }
+  else if(f==='name') it.name=el.value;
+  else if(f==='spec') it.spec=el.value;
+  else if(f==='url') it.link=el.value.trim();
+  else if(f==='label') it.linkLabel=el.value;
+  recompute();
+}
+
+function onDocClick(e){
+  var o=e.target.closest('[data-opt]'); if(o){selectOption(o.dataset.opt);return;}
+  var a=e.target.closest('[data-add]'); if(a){addItem(a.dataset.add);return;}
+  var r=e.target.closest('[data-rm]'); if(r){removeItem(parseInt(r.dataset.rm,10));return;}
+  var ed=e.target.closest('[data-edit]'); if(ed){var b=document.querySelector('[data-box="'+ed.dataset.edit+'"]'); if(b)b.classList.toggle('open'); return;}
+  var sv=e.target.closest('[data-save]'); if(sv){renderBOM();return;}
+}
+
+/* init */
+Object.keys(OPTIONS).forEach(function(k){OPTIONS[k].bom.forEach(function(s){s.items.forEach(function(it){it.uid=nextUid(); if(it.checked===undefined)it.checked=false;});});});
+document.getElementById('showOpt').addEventListener('change',renderBOM);
+document.addEventListener('click',onDocClick);
+var bb=document.getElementById('bomBody');
+bb.addEventListener('input',onBomInput);
+bb.addEventListener('change',onBomInput);
+document.getElementById('tabs').addEventListener('click',function(e){var b=e.target.closest('.tab'); if(b)switchTab(b.dataset.t);});
+renderSelectors(); renderBOM(); renderPlan();
+document.getElementById('optTag').textContent=cur+' \u00b7 '+OPTIONS[cur].short;
+</script>
+</body>
+</html>

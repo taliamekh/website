@@ -204,8 +204,15 @@
   }
 
   @media (max-width: 720px) {
-    nav { padding: 0 20px; }
-    .nav-links a { padding: 6px 10px; font-size: 11px; }
+    nav { padding: 0 14px; gap: 8px; }
+    /* 5 nav items won't fit a phone row → swipeable menu, nav stays one line. */
+    .nav-links {
+      flex: 1 1 auto; min-width: 0;
+      flex-wrap: nowrap; justify-content: flex-start;
+      overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+    }
+    .nav-links::-webkit-scrollbar { display: none; }
+    .nav-links a { flex: 0 0 auto; white-space: nowrap; padding: 6px 11px; font-size: 11px; }
     #home { padding: 100px 20px 60px; }
     h1.hero-name { font-size: clamp(48px, 12vw, 80px); }
     .hero-stats { gap: 28px; }
@@ -222,6 +229,7 @@
     <li><a href="index.html" class="active">Home</a></li>
     <li><a href="projects.html">Projects</a></li>
     <li><a href="notes/">Student Resources</a></li>
+    <li><a href="portal.html">Client Portal</a></li>
     <li><a href="contact.html" class="contact-cta">Contact</a></li>
   </ul>
 </nav>

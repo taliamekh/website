@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Client Portal — Talia Mekhayche</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&family=Sora:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ─── AURORA ROYAL THEME (matches home + projects + contact) ─── */
+  :root {
+    --bg: #170a1c;
+    --deep: #21102a;
+    --panel: #2e1640;
+    --panel-hi: #3d2055;
+    --border: #4a2a68;
+    --border2: #6f44a0;
+    --accent: #c084fc;
+    --accent-2: #fbbf24;
+    --pink: #e879f9;
+    --text: #ecdef7;
+    --text-muted: #b09bc8;
+    --text-dim: #7a6588;
+    --white: #fffaf3;
+    --grid-1: rgba(192, 132, 252, 0.045);
+    --grid-2: rgba(251, 191, 36, 0.025);
+    --grid-3: rgba(192, 132, 252, 0.055);
+    --tag-font: 'Roboto Mono', monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Outfit', sans-serif; font-weight: 300;
+    line-height: 1.7;
+    height: 100vh; overflow: hidden;            /* whole page in one view */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background-image:
+      linear-gradient(var(--grid-1) 1px, transparent 2px),
+      linear-gradient(90deg, var(--grid-2) 1px, transparent 2px),
+      linear-gradient(var(--grid-3) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-2) 1px, transparent 2px);
+    background-size: 80px 80px, 80px 80px, 16px 16px, 16px 16px;
+    pointer-events: none; z-index: 0;
+  }
+
+  /* ─── PLANET (WebGL canvas, full-bleed behind content) ─── */
+  #planet-gl {
+    position: fixed; inset: 0;
+    width: 100vw; height: 100vh;
+    z-index: 1; pointer-events: none;
+    /* soft fade so the planet's cut + outer edges melt into space */
+    -webkit-mask-image: radial-gradient(74% 82% at 16% 50%, #000 58%, transparent 100%);
+            mask-image: radial-gradient(74% 82% at 16% 50%, #000 58%, transparent 100%);
+  }
+  /* CSS fallback planet, shown only if WebGL is unavailable */
+  #planet-fallback {
+    position: fixed; z-index: 1; pointer-events: none;
+    left: -16vmin; top: 50%; transform: translateY(-50%);
+    width: 86vmin; height: 86vmin; border-radius: 50%;
+    background:
+      radial-gradient(circle at 68% 42%, #bfe2ff 0%, #5aa0f0 14%, #2563eb 34%, #14307e 60%, #060a22 86%),
+      #060a22;
+    box-shadow: inset -30px -20px 90px 10px rgba(3,7,30,.95);
+    -webkit-mask-image: radial-gradient(120% 120% at 60% 50%, #000 60%, transparent 100%);
+            mask-image: radial-gradient(120% 120% at 60% 50%, #000 60%, transparent 100%);
+  }
+
+  /* small planet name label */
+  .planet-name {
+    position: fixed; z-index: 3;
+    left: 44px; bottom: 34px;
+    font-family: var(--tag-font);
+    font-size: 12px; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--text-muted);
+    display: flex; align-items: center; gap: 9px;
+    text-shadow: 0 2px 14px rgba(0,0,0,0.6);
+  }
+  .planet-name::before { content: ''; width: 22px; height: 1px; background: var(--border2); }
+  .planet-credit {
+    position: fixed; z-index: 3;
+    left: 44px; bottom: 16px;
+    font-family: var(--tag-font);
+    font-size: 9.5px; letter-spacing: 0.08em;
+    color: var(--text-dim);
+    text-shadow: 0 1px 10px rgba(0,0,0,0.7);
+  }
+
+  /* ─── NAV ─── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: color-mix(in srgb, var(--bg) 72%, transparent);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 48px; height: 64px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .nav-logo {
+    font-family: 'Sora', sans-serif; font-weight: 700;
+    font-size: 22px; letter-spacing: -0.01em;
+    color: var(--white); text-decoration: none;
+  }
+  .nav-logo span { color: var(--accent); }
+  .nav-links { display: flex; gap: 4px; list-style: none; }
+  .nav-links a {
+    padding: 7px 15px;
+    font-family: var(--tag-font); font-size: 12px;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    text-decoration: none; color: var(--text-muted); border-radius: 4px;
+    transition: color 0.2s, background 0.2s;
+  }
+  .nav-links a:hover { color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
+  .nav-links a.active { color: var(--accent); }
+  .nav-links a.contact-cta {
+    margin-left: 6px; padding: 7px 16px;
+    color: #3d1f47;
+    background: linear-gradient(100deg, #fce7f3 0%, #fbcfe8 50%, #f9a8d4 100%);
+    font-weight: 700; border-radius: 999px;
+    box-shadow: 0 2px 10px rgba(249, 168, 212, 0.30);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .nav-links a.contact-cta:hover {
+    color: #3d1f47;
+    background: linear-gradient(100deg, #fce7f3 0%, #fbcfe8 50%, #f9a8d4 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(249, 168, 212, 0.50);
+  }
+
+  /* ─── MAIN — content sits on the right half ─── */
+  main {
+    position: relative; z-index: 2;
+    height: 100vh; padding: 64px 0 0;
+    display: flex; align-items: center; justify-content: flex-end;   /* anchor content to the RIGHT */
+  }
+  .portal-side {
+    width: min(440px, 90vw);
+    margin-right: clamp(36px, 5vw, 110px);   /* fixed gap from the right edge; planet fills the space to its left */
+    text-align: left;
+  }
+
+  h1 {
+    font-family: 'Sora', sans-serif; font-weight: 700;
+    font-size: clamp(44px, 6vw, 72px);
+    line-height: 1.0; letter-spacing: -0.02em;
+    color: var(--white); margin-bottom: 18px;
+    text-shadow: 0 2px 22px rgba(0,0,0,0.45);
+  }
+  h1 .accent { color: var(--accent); }
+
+  .lede {
+    font-size: 16px; color: var(--text);
+    max-width: 420px; margin-bottom: 30px;
+    line-height: 1.7;
+    text-shadow: 0 1px 14px rgba(0,0,0,0.45);
+  }
+  .lede strong { color: var(--accent); font-weight: 500; }
+
+  /* ─── ACCESS KEY CARD ─── */
+  .access-card {
+    background: color-mix(in srgb, var(--panel) 88%, transparent);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px 22px 22px;
+    width: 100%; max-width: 420px;
+    box-shadow: 0 18px 50px rgba(0,0,0,0.40);
+  }
+  .access-card.shake { animation: shake 0.45s cubic-bezier(.36,.07,.19,.97); }
+  @keyframes shake {
+    10%, 90% { transform: translateX(-1px); }
+    20%, 80% { transform: translateX(2px); }
+    30%, 50%, 70% { transform: translateX(-5px); }
+    40%, 60% { transform: translateX(5px); }
+  }
+  .access-label {
+    display: block; font-family: var(--tag-font);
+    font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--text-muted); margin-bottom: 10px; font-weight: 500;
+  }
+  .key-field { position: relative; display: flex; align-items: center; }
+  .key-field input {
+    width: 100%; padding: 13px 52px 13px 15px;
+    background: var(--deep); border: 1px solid var(--border);
+    border-radius: 11px; color: var(--white);
+    font-family: var(--tag-font); font-size: 14px; letter-spacing: 0.06em;
+    outline: none; transition: border-color 0.18s, box-shadow 0.18s;
+  }
+  .key-field input::placeholder { color: var(--text-dim); letter-spacing: 0.04em; }
+  .key-field input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent);
+  }
+  .reveal-btn {
+    position: absolute; right: 6px; width: 40px; height: 40px;
+    display: grid; place-items: center;
+    background: none; border: 0; cursor: pointer;
+    color: var(--text-dim); border-radius: 8px;
+    transition: color 0.18s, background 0.18s;
+  }
+  .reveal-btn:hover { color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
+  .reveal-btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+
+  .enter-btn {
+    margin-top: 16px; width: 100%;
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    padding: 14px 24px;
+    font-family: var(--tag-font); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
+    font-weight: 700; color: #3d1f47;
+    border: 0; cursor: pointer; border-radius: 999px;
+    background: linear-gradient(100deg, #fce7f3 0%, #fbcfe8 50%, #f9a8d4 100%);
+    box-shadow: 0 8px 26px rgba(249, 168, 212, 0.32);
+    transition: transform 0.22s cubic-bezier(0.22,1,0.36,1), box-shadow 0.22s;
+  }
+  .enter-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 34px rgba(249, 168, 212, 0.48); }
+  .enter-btn:disabled { opacity: 0.7; cursor: default; transform: none; }
+  .enter-btn .arrow { display: inline-block; transition: transform 0.22s cubic-bezier(0.22,1,0.36,1); }
+  .enter-btn:hover .arrow { transform: translateX(4px); }
+
+  .status {
+    min-height: 20px; margin-top: 14px;
+    font-family: var(--tag-font); font-size: 12px; letter-spacing: 0.04em;
+    text-align: center; transition: color 0.2s;
+  }
+  .status.error { color: #fca5a5; }
+  .status.ok { color: #86efac; }
+  .status.busy { color: var(--text-muted); }
+
+  /* ─── REMEMBER ME / WELCOME BACK ─── */
+  .remember-row {
+    display: flex; align-items: center; gap: 9px;
+    margin-top: 14px;
+    font-family: var(--tag-font); font-size: 11px;
+    letter-spacing: 0.04em; color: var(--text-muted);
+    cursor: pointer; user-select: none;
+  }
+  .remember-row input {
+    width: 15px; height: 15px; flex: 0 0 auto; margin: 0;
+    accent-color: var(--accent); cursor: pointer;
+  }
+  .welcome-label {
+    font-family: 'Sora', sans-serif; font-weight: 600;
+    font-size: 19px; color: var(--white); margin-bottom: 4px;
+  }
+  .welcome-sub {
+    font-family: var(--tag-font); font-size: 11px; letter-spacing: 0.04em;
+    color: var(--text-muted); margin-bottom: 18px;
+  }
+  .forget-link {
+    display: block; width: 100%; margin-top: 12px;
+    background: none; border: 0; cursor: pointer;
+    font-family: var(--tag-font); font-size: 11px; letter-spacing: 0.04em;
+    color: var(--text-dim); text-align: center;
+    transition: color 0.2s;
+  }
+  .forget-link:hover { color: var(--accent); text-decoration: underline; }
+
+  .portal-foot-note {
+    margin-top: 20px; font-family: var(--tag-font);
+    font-size: 11px; letter-spacing: 0.06em; color: var(--text-dim);
+    text-shadow: 0 1px 12px rgba(0,0,0,0.5);
+  }
+  .portal-foot-note a { color: var(--accent); text-decoration: none; }
+  .portal-foot-note a:hover { text-decoration: underline; }
+
+  .copyright {
+    position: fixed; z-index: 3; right: 28px; bottom: 22px;
+    font-family: var(--tag-font); font-size: 10.5px; letter-spacing: 0.08em;
+    color: var(--text-dim);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .access-card.shake { animation: none; }
+  }
+
+  /* ─── MOBILE — stack: planet up top, form below ─── */
+  @media (max-width: 820px) {
+    nav { padding: 0 14px; gap: 8px; }
+    .nav-links {
+      flex: 1 1 auto; min-width: 0;
+      flex-wrap: nowrap; justify-content: flex-start;
+      overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+    }
+    .nav-links::-webkit-scrollbar { display: none; }
+    .nav-links a { flex: 0 0 auto; white-space: nowrap; padding: 6px 11px; font-size: 11px; }
+
+    #planet-gl {
+      -webkit-mask-image: radial-gradient(120% 70% at 50% 26%, #000 52%, transparent 100%);
+              mask-image: radial-gradient(120% 70% at 50% 26%, #000 52%, transparent 100%);
+    }
+    main { align-items: flex-end; justify-content: center; padding: 64px 0 5vh; }
+    .portal-side { width: min(440px, 88vw); margin: 0; text-align: center; }
+    .lede { margin-left: auto; margin-right: auto; }
+    .access-card { margin: 0 auto; }
+    .planet-name { left: 50%; transform: translateX(-50%); bottom: auto; top: 78px; }
+    .planet-name::before { display: none; }
+    .planet-credit { left: 50%; transform: translateX(-50%); bottom: auto; top: 96px; }
+    .copyright { left: 0; right: 0; text-align: center; }
+  }
+  @media (max-height: 600px) and (min-width: 821px) {
+    .lede { display: none; }       /* keep it to one screen on short laptops */
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">T.<span>M</span></a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="projects.html">Projects</a></li>
+    <li><a href="notes/">Student Resources</a></li>
+    <li><a href="portal.html" class="active">Client Portal</a></li>
+    <li><a href="contact.html" class="contact-cta">Contact</a></li>
+  </ul>
+</nav>
+
+<!-- HD 189733 b — real-time 3D render -->
+<canvas id="planet-gl" aria-hidden="true"></canvas>
+<div id="planet-fallback" aria-hidden="true" hidden></div>
+<div class="planet-name">HD 189733 b</div>
+
+<main>
+  <section class="portal-side">
+    <h1>Client <span class="accent">Portal</span></h1>
+    <p class="lede">
+      A private space for the projects I'm helping clients build. Enter your <strong>access key</strong> to open your project plan.
+    </p>
+
+    <form class="access-card" id="portal-form" autocomplete="off" novalidate>
+      <div id="key-entry">
+        <label class="access-label" for="key">Access key</label>
+        <div class="key-field">
+          <input id="key" name="key" type="password" inputmode="text"
+                 autocomplete="off" autocapitalize="off" spellcheck="false"
+                 placeholder="your-client-key" aria-describedby="status" autofocus>
+          <button type="button" class="reveal-btn" id="reveal" aria-label="Show access key" aria-pressed="false">
+            <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <label class="remember-row">
+          <input type="checkbox" id="remember" checked>
+          Remember me on this device
+        </label>
+        <button type="submit" class="enter-btn" id="enter">
+          Enter Portal <span class="arrow">→</span>
+        </button>
+        <div class="status" id="status" role="status" aria-live="polite"></div>
+      </div>
+
+      <div id="remembered" hidden>
+        <div class="welcome-label">Welcome back</div>
+        <div class="welcome-sub">Your key is saved on this device.</div>
+        <button type="button" class="enter-btn" id="continue-btn">
+          Open My Portal <span class="arrow">→</span>
+        </button>
+        <button type="button" class="forget-link" id="forget-btn">Use a different key · forget this device</button>
+      </div>
+    </form>
+
+    <div class="portal-foot-note">
+      Don't have a key? <a href="contact.html">Get in touch</a> to start a project.
+    </div>
+  </section>
+</main>
+
+<div class="copyright">© 2026 Talia Mekhayche</div>
+
+<!-- ─── 3D PLANET (Three.js) ─── -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function () {
+  const canvas = document.getElementById('planet-gl');
+  const fallback = document.getElementById('planet-fallback');
+
+  function showFallback() {
+    if (canvas) canvas.style.display = 'none';
+    if (fallback) fallback.hidden = false;
+  }
+
+  if (!window.THREE) { showFallback(); return; }
+
+  let renderer;
+  try {
+    renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, preserveDrawingBuffer: true });
+  } catch (e) { showFallback(); return; }
+  if (!renderer || !renderer.getContext()) { showFallback(); return; }
+
+  renderer.setClearColor(0x000000, 0);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 100);
+  camera.position.set(0, 0, 3.4);
+
+  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Light fixed in VIEW space so the lit limb always faces the form (right), like the reference.
+  const LIGHT_DIR = new THREE.Vector3(0.82, 0.26, 0.55).normalize();
+
+  const NOISE = `
+    vec3 mod289(vec3 x){return x - floor(x*(1.0/289.0))*289.0;}
+    vec4 mod289(vec4 x){return x - floor(x*(1.0/289.0))*289.0;}
+    vec4 permute(vec4 x){return mod289(((x*34.0)+1.0)*x);}
+    vec4 taylorInvSqrt(vec4 r){return 1.79284291400159 - 0.85373472095314 * r;}
+    float snoise(vec3 v){
+      const vec2 C = vec2(1.0/6.0, 1.0/3.0);
+      const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
+      vec3 i  = floor(v + dot(v, C.yyy));
+      vec3 x0 = v - i + dot(i, C.xxx);
+      vec3 g = step(x0.yzx, x0.xyz);
+      vec3 l = 1.0 - g;
+      vec3 i1 = min(g.xyz, l.zxy);
+      vec3 i2 = max(g.xyz, l.zxy);
+      vec3 x1 = x0 - i1 + C.xxx;
+      vec3 x2 = x0 - i2 + C.yyy;
+      vec3 x3 = x0 - D.yyy;
+      i = mod289(i);
+      vec4 p = permute(permute(permute(
+                i.z + vec4(0.0, i1.z, i2.z, 1.0))
+              + i.y + vec4(0.0, i1.y, i2.y, 1.0))
+              + i.x + vec4(0.0, i1.x, i2.x, 1.0));
+      float n_ = 0.142857142857;
+      vec3 ns = n_ * D.wyz - D.xzx;
+      vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+      vec4 x_ = floor(j * ns.z);
+      vec4 y_ = floor(j - 7.0 * x_);
+      vec4 x = x_ * ns.x + ns.yyyy;
+      vec4 y = y_ * ns.x + ns.yyyy;
+      vec4 h = 1.0 - abs(x) - abs(y);
+      vec4 b0 = vec4(x.xy, y.xy);
+      vec4 b1 = vec4(x.zw, y.zw);
+      vec4 s0 = floor(b0)*2.0 + 1.0;
+      vec4 s1 = floor(b1)*2.0 + 1.0;
+      vec4 sh = -step(h, vec4(0.0));
+      vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy;
+      vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww;
+      vec3 p0 = vec3(a0.xy, h.x);
+      vec3 p1 = vec3(a0.zw, h.y);
+      vec3 p2 = vec3(a1.xy, h.z);
+      vec3 p3 = vec3(a1.zw, h.w);
+      vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2,p2), dot(p3,p3)));
+      p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;
+      vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+      m = m * m;
+      return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
+    }
+    float fbm(vec3 p){ float a=0.5, s=0.0; for(int i=0;i<6;i++){ s+=a*snoise(p); p*=2.02; a*=0.5; } return s; }
+  `;
+
+  const surfaceVert = `
+    varying vec3 vObj; varying vec3 vN; varying vec3 vV;
+    void main(){
+      vObj = position;
+      vec4 mv = modelViewMatrix * vec4(position, 1.0);
+      vN = normalize(normalMatrix * normal);
+      vV = normalize(-mv.xyz);
+      gl_Position = projectionMatrix * mv;
+    }
+  `;
+
+  // ── Bright cobalt gas-giant body ──
+  const surfaceFrag = `
+    precision highp float;
+    varying vec3 vObj; varying vec3 vN; varying vec3 vV;
+    uniform vec3 uLight;
+    ${NOISE}
+    void main(){
+      vec3 P = vObj;
+      vec3 sp = vec3(P.x, P.y * 2.8, P.z);            // compress latitude → horizontal bands
+      float warp  = fbm(sp * 1.6);
+      float bands = fbm(sp * 2.6 + warp * 0.9);
+      float fine  = fbm(sp * 7.5 + warp * 1.3);
+      float t = clamp(bands * 0.5 + 0.5 + fine * 0.14, 0.0, 1.0);
+      vec3 navy   = vec3(0.06, 0.15, 0.40);
+      vec3 cobalt = vec3(0.14, 0.36, 0.80);
+      vec3 azure  = vec3(0.40, 0.66, 1.00);
+      vec3 white  = vec3(0.92, 0.96, 1.00);
+      vec3 base = mix(navy, cobalt, smoothstep(0.16, 0.50, t));
+      base = mix(base, azure, smoothstep(0.50, 0.72, t));
+      base = mix(base, white, smoothstep(0.78, 0.95, t));
+      vec3 N = normalize(vN); vec3 V = normalize(vV); vec3 L = normalize(uLight);
+      float diff = max(dot(N, L), 0.0);
+      float limb = pow(max(dot(N, V), 0.0), 0.42);
+      vec3 col = base * (0.36 + diff * 1.00) * mix(0.68, 1.0, limb);   // lifted ambient + limb floor = brighter
+      gl_FragColor = vec4(col, 1.0);
+    }
+  `;
+
+  // ── Live, drifting cloud shell (animated via uTime) ──
+  const cloudFrag = `
+    precision highp float;
+    varying vec3 vObj; varying vec3 vN; varying vec3 vV;
+    uniform vec3 uLight; uniform float uTime;
+    ${NOISE}
+    void main(){
+      vec3 P = vObj;
+      vec3 q = vec3(P.x, P.y * 2.3, P.z);
+      float fl = uTime * 0.13;                                      // faster, clearly-moving drift
+      float warp = fbm(q * 1.7 + vec3(fl, fl * 0.25, fl * 0.6));    // clouds churn…
+      float c = fbm(q * 3.4 + warp * 1.35 + vec3(fl * 1.8, 0.0, fl * 0.5));  // …and roll across
+      float density = smoothstep(0.46, 0.84, c * 0.5 + 0.5);       // fewer clouds → the blue surface shows through
+      if (density < 0.01) discard;
+      vec3 N = normalize(vN); vec3 V = normalize(vV); vec3 L = normalize(uLight);
+      float diff = max(dot(N, L), 0.0);
+      vec3 cloudCol = vec3(0.96, 0.98, 1.0) * (0.6 + 0.7 * diff);   // white, shadowed on the night side
+      float edge = smoothstep(0.0, 0.18, max(dot(N, V), 0.0));      // soft limb fade
+      gl_FragColor = vec4(cloudCol, density * edge * 0.6);          // semi-transparent — not a solid blanket
+    }
+  `;
+
+  const uniforms = { uLight: { value: LIGHT_DIR }, uTime: { value: 0 } };
+
+  const group = new THREE.Group();
+  scene.add(group);
+
+  const planet = new THREE.Mesh(
+    new THREE.SphereGeometry(1, 128, 128),
+    new THREE.ShaderMaterial({ vertexShader: surfaceVert, fragmentShader: surfaceFrag, uniforms })
+  );
+  group.add(planet);
+
+  const clouds = new THREE.Mesh(
+    new THREE.SphereGeometry(1, 96, 96),
+    new THREE.ShaderMaterial({ vertexShader: surfaceVert, fragmentShader: cloudFrag, uniforms, transparent: true, depthWrite: false })
+  );
+  clouds.scale.setScalar(1.03);    // sits clearly ABOVE the surface = the outermost layer
+  clouds.renderOrder = 2;          // …and always draws last
+  group.add(clouds);
+
+  // Responsive placement: planet bleeds off the LEFT, ~half visible.
+  function place() {
+    const w = window.innerWidth, h = window.innerHeight;
+    if (w <= 820) {
+      group.scale.setScalar(0.62);
+      group.position.set(0.0, 0.62, 0);        // up top on mobile
+    } else {
+      // Keep ~70% of the planet on screen (the rest bleeds off the left) at EVERY size, so big
+      // screens never reveal the full disk. Scales with the screen; never crosses the form.
+      const halfH = Math.tan(camera.fov * Math.PI / 360) * camera.position.z;  // world half-height at z=0
+      const halfW = halfH * (w / h);
+      const formW   = Math.min(440, w * 0.9);
+      const marginR = Math.min(Math.max(w * 0.05, 36), 110);
+      const gapPx   = Math.min(Math.max(w * 0.04, 32), 90);
+      const formLeftPx = w - marginR - formW;
+      // Size by screen HEIGHT so the full curvature always reads as a sphere (never zoomed-in),
+      // and let the gap to the form grow on wide screens. Still clamped so it never crosses the form.
+      const rightPx = Math.min(0.84 * h, formLeftPx - gapPx);
+      const radiusPx = rightPx / 1.4;                         // show ~70% → 30% of the diameter is off the left edge
+      const centerPx = rightPx - radiusPx;
+      group.scale.setScalar((radiusPx / (w / 2)) * halfW);
+      group.position.set((centerPx / (w / 2) - 1) * halfW, 0, 0);
+    }
+  }
+
+  function resize() {
+    const w = window.innerWidth, h = window.innerHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    place();
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  window.__planet = { renderer, scene, camera, group, planet, clouds, uniforms, frames: 0 };
+
+  const SPEED = 0.05; // rad/s
+  let last = null;
+  function animate(now) {
+    requestAnimationFrame(animate);
+    if (last === null) last = now;
+    const dt = Math.min((now - last) / 1000, 0.05); last = now;
+    if (!reduceMotion) {
+      planet.rotation.y += SPEED * dt;
+      clouds.rotation.y += SPEED * 1.6 * dt;   // clouds drift noticeably faster than the surface
+      uniforms.uTime.value += dt;              // …and evolve over time = "live"
+    }
+    renderer.render(scene, camera);
+    window.__planet.frames++;
+  }
+  requestAnimationFrame(animate);
+})();
+</script>
+
+<!-- ─── CLIENT PORTAL — static key routing ─── -->
+<script>
+  /* ─────────────────────────────────────────────────────────────────────────
+     The key a client types is normalised (trim + lowercase), hashed with
+     SHA-256, and looked up below. A match navigates to that client's plan page.
+     Plaintext keys are NEVER stored here — only their hashes.
+
+     TO ADD A CLIENT — see portal/README.md, or:
+       node portal/make-key.js "your-client-key"   → prints the hash to add below.
+
+     Active clients — the real password is NOT written here, only its SHA-256 hash:
+       orrery build dashboard  → portal/clients/orrery-build-3b8f2d.html
+
+     Sample/demo keys (safe to share, for testing):
+       demo-client-2026        → portal/clients/meridian-robotics-7f3a9c.html
+       northwind-aurora-2026   → portal/clients/northwind-systems-9d2b41.html
+     ──────────────────────────────────────────────────────────────────────── */
+  const PORTALS = {
+    'd2d3ba301d1368b06433532095853c6e3ea60d6e5f7de2e6239e15d00612bf54': 'portal/clients/orrery-build-3b8f2d.html',
+    '300b4e64aa61e9bc5a2221681e46c931d92ae8482e44cc6a412a6fe6aa0a6e0a': 'portal/clients/meridian-robotics-7f3a9c.html',
+    '805cf4d638d4eb29da2117a867473a01ec665a929f99d4277d3caf4c044ebc76': 'portal/clients/northwind-systems-9d2b41.html'
+  };
+
+  const form   = document.getElementById('portal-form');
+  const input  = document.getElementById('key');
+  const status = document.getElementById('status');
+  const card   = form;
+  const enter  = document.getElementById('enter');
+  const reveal = document.getElementById('reveal');
+
+  const EYE = '<svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+  const EYE_OFF = '<svg viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+  reveal.addEventListener('click', () => {
+    const reveal_now = input.type === 'password';   // about to reveal the key
+    input.type = reveal_now ? 'text' : 'password';
+    reveal.innerHTML = reveal_now ? EYE_OFF : EYE;   // revealed → slashed eye (click to hide), hidden → eye
+    reveal.setAttribute('aria-pressed', String(reveal_now));
+    reveal.setAttribute('aria-label', reveal_now ? 'Hide access key' : 'Show access key');
+    input.focus();
+  });
+
+  // ── Remember me on this device (per-device, via localStorage) ──
+  const rememberCb  = document.getElementById('remember');
+  const keyEntry    = document.getElementById('key-entry');
+  const remembered  = document.getElementById('remembered');
+  const continueBtn = document.getElementById('continue-btn');
+  const forgetBtn   = document.getElementById('forget-btn');
+  const REMEMBER_STORE = 'tm_portal_key';
+  const readRemembered  = () => { try { return localStorage.getItem(REMEMBER_STORE); } catch (e) { return null; } };
+  const clearRemembered = () => { try { localStorage.removeItem(REMEMBER_STORE); } catch (e) {} };
+
+  // If a still-valid key was saved on this device, greet the client instead of asking again.
+  (function () {
+    const saved = readRemembered();
+    if (saved && PORTALS[saved]) { keyEntry.hidden = true; remembered.hidden = false; }
+    else if (saved) { clearRemembered(); }   // key was revoked → drop the stale save
+  })();
+
+  continueBtn.addEventListener('click', () => {
+    const saved = readRemembered();
+    const dest = saved && PORTALS[saved];
+    if (dest) { window.location.href = dest; }
+    else { clearRemembered(); remembered.hidden = true; keyEntry.hidden = false; input.focus(); }
+  });
+  forgetBtn.addEventListener('click', () => {
+    clearRemembered(); remembered.hidden = true; keyEntry.hidden = false; input.focus();
+  });
+
+  async function sha256hex(str) {
+    const bytes = new TextEncoder().encode(str);
+    const buf = await crypto.subtle.digest('SHA-256', bytes);
+    return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  function setStatus(msg, kind) {
+    status.textContent = msg;
+    status.className = 'status' + (kind ? ' ' + kind : '');
+  }
+
+  function fail(msg) {
+    setStatus(msg, 'error');
+    card.classList.remove('shake');
+    void card.offsetWidth;
+    card.classList.add('shake');
+    input.focus(); input.select();
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const key = input.value.trim().toLowerCase();
+    if (!key) { fail('Enter your access key.'); return; }
+    if (!(window.crypto && crypto.subtle)) {
+      fail('Secure crypto is unavailable here — open this page over https.');
+      return;
+    }
+    enter.disabled = true;
+    setStatus('Checking key…', 'busy');
+    let hash;
+    try { hash = await sha256hex(key); }
+    catch (err) { enter.disabled = false; fail('Could not verify the key. Please try again.'); return; }
+    const dest = PORTALS[hash];
+    if (dest) {
+      if (rememberCb && rememberCb.checked) {
+        try { localStorage.setItem(REMEMBER_STORE, hash); } catch (e) {}   // saved per-device
+      }
+      setStatus('Access granted — opening your portal…', 'ok');
+      setTimeout(() => { window.location.href = dest; }, 650);
+    } else {
+      enter.disabled = false;
+      fail("That key didn't match an active portal. Double-check with Talia.");
+    }
+  });
+</script>
+
+</body>
+</html>
