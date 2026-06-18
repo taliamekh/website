@@ -105,13 +105,12 @@ const TREE = {
 
   /* ── FIRST-TIME USER FLOW (visitor unknown to Spocket) ── */
   start: {
-    msg: "Looks like your first visit! I'm Spocket — I help Talia's students navigate their course notes. The password card is right there if you have one, otherwise I can point you in the right direction.",
+    msg: "Hi, I'm Spocket — Talia's study assistant for these course notes. What brings you here?",
     eyes: "curious",
     options: [
       { label: "I'm a student", next: "student_claim" },
-      { label: "I need a tutor", next: "tutor_me" },
-      { label: "I'm recruiting / need access", next: "recruiter" },
-      { label: "Tell me about yourself", next: "about_spocket" },
+      { label: "I need access", next: "recruiter" },
+      { label: "Looking for a tutor", next: "tutor_me" },
       { label: "Just browsing", next: "casual_bye" },
     ],
   },
