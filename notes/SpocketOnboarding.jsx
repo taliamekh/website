@@ -4299,17 +4299,48 @@ function App() {
 
         {/* Speech bubble — portaled to body to escape robot container's transform context */}
         {!cornerUnlockedChat && showUI && showMainRobot && (() => {
-          const bubbleTop = bubbleTopPos;
-          /* Bubble always to the right of robot */
-          const bubbleLeft = robotX + dynamicRobotW + Math.round(14 * dynamicScale);
-          const bubbleW = Math.min(520, vpW - bubbleLeft - 16);
+          /* Keep the speech bubble clear of the centered lock card. The card only
+             exists pre-unlock (#lock-card); once it's gone the bubble reverts to
+             its original spot to the right of the robot. */
+          const gap = 20;
+          let bubbleLeft = robotX + dynamicRobotW + Math.round(14 * dynamicScale);
+          let bubbleStyle = { top: bubbleTopPos };
+          let bubbleW;
+          let cardRect = null;
+          try {
+            const lockEl = document.getElementById("lock-card");
+            if (lockEl) {
+              const r = lockEl.getBoundingClientRect();
+              if (r.width > 8 && r.height > 8) cardRect = r;
+            }
+          } catch (e) {}
+          if (cardRect) {
+            const roomBesideCard = cardRect.left - gap - bubbleLeft;
+            if (roomBesideCard >= 200) {
+              /* Enough left-gutter room: sit beside the robot, capped at the card edge. */
+              bubbleW = Math.min(420, roomBesideCard);
+            } else {
+              /* Gutter too tight: float in the band ABOVE the card, bottom-anchored
+                 just above its top edge so it can never overlap, whatever the height. */
+              bubbleLeft = Math.max(12, robotX);
+              bubbleW = Math.min(460, vpW - bubbleLeft - 16);
+              /* Anchor against the LIVE viewport height (not the possibly-stale vpH
+                 state) so it stays consistent with the live cardRect measurement. */
+              bubbleStyle = { bottom: Math.round(window.innerHeight - cardRect.top + 24) };
+            }
+          } else {
+            /* No card (post-unlock / parked): original behavior. */
+            bubbleW = Math.min(520, vpW - bubbleLeft - 16);
+          }
+          bubbleW = Math.max(180, bubbleW);
           return ReactDOM.createPortal(
           <div
+            data-tm-spocket-bubble="1"
             style={{
               position: "fixed",
-              top: bubbleTop,
+              ...bubbleStyle,
               left: bubbleLeft,
-              width: Math.max(180, bubbleW),
+              width: bubbleW,
               zIndex: 500,
               animation: "fadeInUp 0.3s ease",
               pointerEvents: "auto",
@@ -4323,7 +4354,7 @@ function App() {
               tiny={cryExit}
               onSkip={typing && !cryExit ? skipTyping : null}
               tail="left"
-              maxWidth={Math.max(180, bubbleW)}
+              maxWidth={bubbleW}
             />
             {followUp && (
               <div style={{ marginTop: 10, animation: "fadeInUp 0.3s ease" }}>
