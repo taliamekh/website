@@ -25,7 +25,7 @@ function tmSpocketFindSourceMatchesFrame(frameContentWindow, source) {
 const SPOCKET_TYPING_MS = 20;
 const SPOCKET_MOUTH_MS = 80;
 const SPOCKET_AI_WORD_MS = 8;
-const SPOCKET_AI_INTRO_RAW = "I have the notes loaded! **Ask me anything** about the course content and I will find the answer for you. I can only reference what is in these notes — if something is not covered, I will let you know.";
+const SPOCKET_AI_INTRO_RAW = "I have the notes loaded! **Ask me anything** about the course content and I will find the answer for you. I can only reference what is in these notes. If something is not covered, I will let you know.";
 const LS_SPOCKET_DISPLAY_NAME = "spocket_student_display_name_v1";
 const LS_SPOCKET_SPACE_TIP = "spocket_space_skip_tip_dismissed_v1";
 const LS_SPOCKET_NAME_SKIP = "spocket_name_prompt_skip_v1";
@@ -78,7 +78,7 @@ function spocketBubbleRichNodes(raw, visiblePlainLen) {
 }
 
 const SPOCKET_FIND_INTRO_RAW =
-  "Ask me anything about the course content! Type a question or topic and **I will highlight the relevant sections in the study guide and formula sheet, then explain what I found.** A pink bar will appear at the top with arrows to jump between highlights and switch workspaces — tap Done on that bar when you are finished.";
+  "Ask me anything about the course content! Type a question or topic and **I will highlight the relevant sections in the study guide and formula sheet, then explain what I found.** A pink bar will appear at the top with arrows to jump between highlights and switch workspaces. Tap Done on that bar when you are finished.";
 
 /* ═══════════════════════════════════════════
    DIALOGUE TREE
@@ -86,11 +86,11 @@ const SPOCKET_FIND_INTRO_RAW =
 
 /* Random welcome-back messages for returning users */
 const WELCOME_BACKS = [
-  "You've got this — consistent study sessions beat last-minute cramming every time.",
+  "You've got this. Consistent study sessions beat last-minute cramming every time.",
   "Tip: after reading a section, close the notes and try to recall the key ideas from memory.",
   "Struggling with a concept? Try explaining it out loud as if you are teaching someone else.",
   "Short on time? Prioritize the topics you are least confident in first.",
-  "Taking breaks actually helps — 25 minutes of focus, 5 minutes off keeps the brain sharp.",
+  "Taking breaks actually helps. 25 minutes of focus, 5 minutes off keeps the brain sharp.",
   "If something isn't clicking, try a different angle: diagrams, examples, or just asking me.",
   "Reviewing your notes within 24 hours of a lecture locks in retention significantly.",
 ];
@@ -105,7 +105,7 @@ const TREE = {
 
   /* ── FIRST-TIME USER FLOW (visitor unknown to Spocket) ── */
   start: {
-    msg: "Hi, I'm Spocket — Talia's study assistant for these course notes. What brings you here?",
+    msg: "Hi, I'm Spocket, Talia's study assistant for these course notes. What brings you here?",
     eyes: "curious",
     options: [
       { label: "I'm a student", next: "student_claim" },
@@ -115,13 +115,13 @@ const TREE = {
     ],
   },
   unlock_name_entry: {
-    msg: "So — **what's your name?** Now that we are getting a little familiar, I'd like something to call you. **Same as always: it stays only in this browser on your device** — not uploaded to a class server from here.",
+    msg: "So, **what's your name?** Now that we are getting a little familiar, I'd like something to call you. **Same as always: it stays only in this browser on your device**, not uploaded to a class server from here.",
     eyes: "curious",
     captureName: true,
     options: [{ label: "Skip for now", next: "_unlock_name_dismiss" }],
   },
   unlock_name_saved_ack: {
-    msg: "Got it — I'll call you **{name}** here. Use the corner menu if you need workspace help or Find in notes.",
+    msg: "Got it! I'll call you **{name}** here. Use the corner menu if you need workspace help or Find in notes.",
     eyes: "happy",
     options: [
       { label: "What shortcut keys are there?", next: "shortcut_keys_intro" },
@@ -129,7 +129,7 @@ const TREE = {
     ],
   },
   student_claim: {
-    msg: "Great — the password card is right there, type it in whenever you are ready. If you need a temp code, I can help with that.",
+    msg: "Great! The password card is right there, type it in whenever you are ready. If you need a temp code, I can help with that.",
     eyes: "happy",
     options: [
       { label: "I need to request access", next: "no_password" },
@@ -138,7 +138,7 @@ const TREE = {
     ],
   },
   casual_bye: {
-    msg: "No worries — feel free to look around the portfolio! The projects and resume are on the main page.",
+    msg: "No worries! Feel free to look around the portfolio! The projects and resume are on the main page.",
     eyes: "happy",
     returnCard: true,
     options: [{ label: "Thanks!", next: "_exit" }],
@@ -165,7 +165,7 @@ const TREE = {
     ],
   },
   sq_ai_real: {
-    msg: "I am a mix! My dialogue, onboarding, and workspace tools are a **hand-authored state machine** (React state + scripted nodes). But my **Ask AI** feature connects to Gemini to answer freeform questions grounded in the actual course notes. The AI only sees what is on this page — it does not make things up from the internet.",
+    msg: "I am a mix! My dialogue, onboarding, and workspace tools are a **hand-authored state machine** (React state + scripted nodes). But my **Ask AI** feature connects to Gemini to answer freeform questions grounded in the actual course notes. The AI only sees what is on this page. It does not make things up from the internet.",
     eyes: "nervous",
     options: [
       { label: "Another question", next: "_info_back" },
@@ -182,7 +182,7 @@ const TREE = {
   },
   /* Post-unlock corner menu — uses shared sq_* nodes via dynamic _info_back/_info_done targets */
   ask_spocket_unlocked: {
-    msg: "Workspace FAQ—same scripted tree as before unlock, plus notes topics and Find in notes. Pick one; I will keep it short.",
+    msg: "Workspace FAQ, same scripted tree as before unlock, plus notes topics and Find in notes. Pick one; I will keep it short.",
     eyes: "curious",
     options: [
       { label: "Why a robot?", next: "sq_why_robot" },
@@ -313,7 +313,7 @@ const TREE = {
 const IDLE_JOKES = [
   "v2 is live! I can actually answer questions now. v3 me is gonna have legs.",
   "Still here! Oiling my treads between questions. v3 might get a jetpack.",
-  "Error 418: I'm a teapot. Just kidding — I'm a study assistant now!",
+  "Error 418: I'm a teapot. Just kidding, I'm a study assistant now!",
   "They gave me a brain in v2. v3 rumor says I get a laser pointer for the whiteboard.",
   "v2 me: answers questions, highlights notes. v3 me: probably takes the exam for you.",
   "I used to just sit here. Now I read the course notes AND sit here. Progress!",
@@ -2488,7 +2488,7 @@ function AiChatPanel({ messages, loading, input, onInputChange, onSubmit, onClos
         lineHeight: 1.4,
         fontFamily: "'JetBrains Mono', monospace",
       }}>
-        Beta · AI answers may be inaccurate — always verify against the actual notes
+        Beta · AI answers may be inaccurate, always verify against the actual notes
       </div>
     </div>
   );
@@ -3107,7 +3107,7 @@ function App() {
         setMouth(false);
         setTyping(false);
         setAiChatLoading(false);
-        setFollowUp("Something went wrong — check your connection and try again.");
+        setFollowUp("Something went wrong. Check your connection and try again.");
       });
   }, [aiChatInput, aiChatLoading, aiNotesContext, aiChatMessages]);
 
@@ -3195,7 +3195,7 @@ function App() {
         timed = true;
       }
       if (timed) {
-        setFollowUp("Search timed out waiting for one workspace — opening the find bar anyway.");
+        setFollowUp("Search timed out waiting for one workspace, opening the find bar anyway.");
         tryFinishFindBar();
       }
     }, FIND_WAIT_MS);
@@ -4109,7 +4109,7 @@ function App() {
             BETA · “What do you want to know?”
           </div>
           <div style={{ fontSize: 10, lineHeight: 1.5, color: "#292524", fontWeight: 600 }}>
-            Search is best-effort — try words you remember. After you search, a pink bar appears at the top with arrows to step through highlights; tap Done there when finished.
+            Search is best-effort. Try words you remember. After you search, a pink bar appears at the top with arrows to step through highlights; tap Done there when finished.
           </div>
         </div>
       )}
@@ -4124,7 +4124,7 @@ function App() {
 
         {/* ── ROBOT CONTAINER — aligned to measured #lock-card; pointer-events none so password form works */}
         {showMainRobot&&(
-          <div style={
+          <div data-tm-spocket-robot="1" style={
             cornerUnlockedChat
               ? {
                   position: "fixed",
@@ -4299,12 +4299,13 @@ function App() {
 
         {/* Speech bubble — portaled to body to escape robot container's transform context */}
         {!cornerUnlockedChat && showUI && showMainRobot && (() => {
-          /* Keep the speech bubble clear of the centered lock card. The card only
-             exists pre-unlock (#lock-card); once it's gone the bubble reverts to
-             its original spot to the right of the robot. */
-          const gap = 20;
+          /* Pre-unlock, float the bubble ABOVE Spocket's antenna (and above the
+             lock card), bottom-anchored to whichever top edge is higher, so it
+             never covers her or the card at any width. Once unlocked the card is
+             gone (#lock-card absent) and the bubble returns to its spot beside her. */
           let bubbleLeft = robotX + dynamicRobotW + Math.round(14 * dynamicScale);
           let bubbleStyle = { top: bubbleTopPos };
+          let bubbleTail = "left";
           let bubbleW;
           let cardRect = null;
           try {
@@ -4315,21 +4316,16 @@ function App() {
             }
           } catch (e) {}
           if (cardRect) {
-            const roomBesideCard = cardRect.left - gap - bubbleLeft;
-            if (roomBesideCard >= 200) {
-              /* Enough left-gutter room: sit beside the robot, capped at the card edge. */
-              bubbleW = Math.min(420, roomBesideCard);
-            } else {
-              /* Gutter too tight: float in the band ABOVE the card, bottom-anchored
-                 just above its top edge so it can never overlap, whatever the height. */
-              bubbleLeft = Math.max(12, robotX);
-              bubbleW = Math.min(460, vpW - bubbleLeft - 16);
-              /* Anchor against the LIVE viewport height (not the possibly-stale vpH
-                 state) so it stays consistent with the live cardRect measurement. */
-              bubbleStyle = { bottom: Math.round(window.innerHeight - cardRect.top + 24) };
-            }
+            /* robotTopPos is the robot container's top = the antenna tip. Anchor the
+               bubble bottom above whichever is higher (smaller y), the antenna or the
+               card top, using the LIVE viewport height so resize stays consistent. */
+            const clearAboveY = Math.min(robotTopPos, cardRect.top);
+            bubbleLeft = Math.max(12, robotX);
+            bubbleW = Math.min(460, vpW - bubbleLeft - 16);
+            bubbleStyle = { bottom: Math.round(window.innerHeight - clearAboveY + 26) };
+            bubbleTail = "down";
           } else {
-            /* No card (post-unlock / parked): original behavior. */
+            /* No card (post-unlock / parked): original spot to the right of the robot. */
             bubbleW = Math.min(520, vpW - bubbleLeft - 16);
           }
           bubbleW = Math.max(180, bubbleW);
@@ -4353,7 +4349,7 @@ function App() {
               isTyping={typing}
               tiny={cryExit}
               onSkip={typing && !cryExit ? skipTyping : null}
-              tail="left"
+              tail={bubbleTail}
               maxWidth={bubbleW}
             />
             {followUp && (
