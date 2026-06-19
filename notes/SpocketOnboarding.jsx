@@ -2582,7 +2582,14 @@ function App() {
   const availH = vpH - NAV_H - 100;
   const dynamicRobotW = 140 * dynamicScale;
   /* Always side-by-side: robot on left, bubble to the right — robot height drives vertical centering */
-  const robotTopPos = NAV_H + Math.max(10, (availH - dynamicRobotH) / 2);
+  /* Her antenna overflows the robot box by ~70*scale; reserve room below the nav
+     so her speech bubble (which sits above the antenna) never hides behind it. */
+  const ANTENNA_OVERFLOW = Math.round(70 * dynamicScale);
+  const BUBBLE_RESERVE = 170;
+  const robotTopPos = Math.max(
+    NAV_H + Math.max(10, (availH - dynamicRobotH) / 2),
+    NAV_H + BUBBLE_RESERVE + ANTENNA_OVERFLOW
+  );
   const bubbleTopPos = robotTopPos;
 
   const tt=useRef(null);const mt=useRef(null);const timers=useRef([]);const fullRef=useRef("");
@@ -3802,7 +3809,9 @@ function App() {
   const showUI = phase === "talking" || cryExit || findDockOpen;
   const cornerUnlockedChat = notesUnlocked && (parkedQaOpen || parkedNotesHelpOpen || findNotesActive || aiChatActive);
   const compactParkedUi = notesUnlocked && parked && !roaming && !studyActive && !cornerUnlockedChat;
-  const showMainRobot = phase !== "idle" && (phase !== "parked" || cornerUnlockedChat);
+  /* Mobile gate: render her small in the corner, silent (no bubble / no options). */
+  const mobileGate = isMobile && !notesUnlocked;
+  const showMainRobot = mobileGate || (phase !== "idle" && (phase !== "parked" || cornerUnlockedChat));
   const findFormulaFrameOk =
     typeof document !== "undefined" && !!(document.getElementById("formula-frame")?.contentWindow);
   const findActiveMatchCount =
@@ -4125,7 +4134,18 @@ function App() {
         {/* ── ROBOT CONTAINER — aligned to measured #lock-card; pointer-events none so password form works */}
         {showMainRobot&&(
           <div data-tm-spocket-robot="1" style={
-            cornerUnlockedChat
+            mobileGate
+              ? {
+                  position: "fixed",
+                  right: 8,
+                  left: "auto",
+                  bottom: 8,
+                  top: "auto",
+                  zIndex: 20,
+                  pointerEvents: "none",
+                  transition: "none",
+                }
+              : cornerUnlockedChat
               ? {
                   position: "fixed",
                   bottom: 72,
@@ -4274,7 +4294,7 @@ function App() {
                 {balloon && (
                   <div style={{ position: "absolute", top: -40, left: "50%", transform: "translateX(-50%)", fontSize: 36 }}>🎈</div>
                 )}
-                <Robot eyes={cryExit ? "crying" : aiChatLoading ? "thinking" : findNotesActive ? "thinking" : nd?.eyes || "happy"} mouthOpen={mouth} scale={dynamicScale} showCookie={showCookie} showIpad={showIpad} facing={facing} />
+                <Robot eyes={cryExit ? "crying" : aiChatLoading ? "thinking" : findNotesActive ? "thinking" : nd?.eyes || "happy"} mouthOpen={mouth} scale={mobileGate ? 0.55 : dynamicScale} showCookie={showCookie} showIpad={showIpad} facing={facing} />
               </div>
             </div>
           </div>
@@ -4298,7 +4318,7 @@ function App() {
         }
 
         {/* Speech bubble — portaled to body to escape robot container's transform context */}
-        {!cornerUnlockedChat && showUI && showMainRobot && (() => {
+        {!cornerUnlockedChat && !mobileGate && showUI && showMainRobot && (() => {
           /* Pre-unlock, float the bubble ABOVE Spocket's antenna (and above the
              lock card), bottom-anchored to whichever top edge is higher, so it
              never covers her or the card at any width. Once unlocked the card is
@@ -4332,7 +4352,7 @@ function App() {
             } catch (e) {}
             const clearAboveY = Math.min(antennaTop, cardRect.top);
             bubbleLeft = Math.max(12, robotX);
-            bubbleW = Math.min(460, vpW - bubbleLeft - 16);
+            bubbleW = Math.min(560, vpW - bubbleLeft - 16);
             bubbleStyle = { bottom: Math.round(window.innerHeight - clearAboveY + 44) };
             bubbleTail = "down";
           } else {
@@ -4374,7 +4394,7 @@ function App() {
         })()}
 
         {/* User response options — completely independent, bottom center of screen */}
-        {showUI&&!cryExit&&!typing&&(nd&&nd.options.length>0||findNotesActive||findDockOpen)&&(
+        {showUI&&!mobileGate&&!cryExit&&!typing&&(nd&&nd.options.length>0||findNotesActive||findDockOpen)&&(
           <div style={{
             position:"fixed",
             bottom: findNotesActive || findDockOpen ? 12 : cornerUnlockedChat ? 8 : isMobile ? "6%" : 40,
