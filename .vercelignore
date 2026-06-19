@@ -19,3 +19,7 @@ expenses/statements-backup
 expenses/spending-tracker/.claude
 expenses/spending-tracker/eslint.config.js
 expenses/spending-tracker/README.md
+
+# serve.json configures the local `npx serve` preview only (disables cleanUrls
+# so /portal.html is served directly, matching Vercel). Not a Vercel config.
+serve.json
