@@ -105,7 +105,7 @@ const TREE = {
 
   /* ── FIRST-TIME USER FLOW (visitor unknown to Spocket) ── */
   start: {
-    msg: "Hi, I'm Spocket, Talia's study assistant for these course notes. What brings you here?",
+    msg: "Hi! I'm Spocket, Talia's study assistant. What brings you here today?",
     eyes: "curious",
     options: [
       { label: "I'm a student", next: "student_claim" },
@@ -505,7 +505,7 @@ function Robot({ eyes = "happy", mouthOpen = false, scale = 1, style = {}, wavin
   return (
     <div style={{transform:`scale(${scale})`,transition:"transform 0.4s",transformOrigin:"bottom center",position:"relative",width:ROBOT_W,height:200,...style}}>
       {/* Antenna — straight green glow in study mode, bent teal otherwise */}
-      <div style={{position:"absolute",top:-4,left:"50%",transform:`translateX(${facing==="side"?"-25%":"-50%"})`,zIndex:5}}>
+      <div data-tm-spocket-antenna="1" style={{position:"absolute",top:-4,left:"50%",transform:`translateX(${facing==="side"?"-25%":"-50%"})`,zIndex:5}}>
         {studyMode ? (
           <svg width="24" height="36" viewBox="0 0 24 36">
             <path d="M12 36 L12 4" fill="none" stroke={silM} strokeWidth="2.5" strokeLinecap="round"/>
@@ -4316,13 +4316,24 @@ function App() {
             }
           } catch (e) {}
           if (cardRect) {
-            /* robotTopPos is the robot container's top = the antenna tip. Anchor the
-               bubble bottom above whichever is higher (smaller y), the antenna or the
-               card top, using the LIVE viewport height so resize stays consistent. */
-            const clearAboveY = Math.min(robotTopPos, cardRect.top);
+            /* Measure Spocket's ACTUAL antenna top. Her antenna SVG is absolutely
+               positioned above the robot box and the robot is scaled from its bottom,
+               so the container's bounding box undercounts how high she reaches. Anchor
+               the bubble's bottom above whichever is higher (smaller y), the antenna or
+               the card top, with room for the downward tail (~13px) plus a margin.
+               Live innerHeight keeps the bottom anchor correct through resize. */
+            let antennaTop = robotTopPos;
+            try {
+              const ant = document.querySelector('[data-tm-spocket-robot] [data-tm-spocket-antenna]');
+              if (ant) {
+                const ar = ant.getBoundingClientRect();
+                if (ar.height > 2) antennaTop = ar.top;
+              }
+            } catch (e) {}
+            const clearAboveY = Math.min(antennaTop, cardRect.top);
             bubbleLeft = Math.max(12, robotX);
             bubbleW = Math.min(460, vpW - bubbleLeft - 16);
-            bubbleStyle = { bottom: Math.round(window.innerHeight - clearAboveY + 26) };
+            bubbleStyle = { bottom: Math.round(window.innerHeight - clearAboveY + 44) };
             bubbleTail = "down";
           } else {
             /* No card (post-unlock / parked): original spot to the right of the robot. */
