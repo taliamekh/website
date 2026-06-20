@@ -6,6 +6,7 @@
 <title>Student Resources — Talia Mekhayche</title>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
+  html { scrollbar-gutter: stable; }
   /* ─── AURORA ROYAL theme — semantic names preserved for downstream selectors,
          values swapped for wine-purple / lavender / gold to match the rest of the site. */
   :root {
@@ -241,10 +242,9 @@
     list-style: none;
   }
 
+  #sr-spocket-nav-toggle-host:empty { display: none; }
   .nav-links a {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
+    display: block;
     padding: 7px 15px;
     font-family: 'JetBrains Mono', monospace;
     font-size: 12px;
@@ -254,8 +254,8 @@
     text-decoration: none;
     color: var(--text-muted);
     border-radius: 4px;
-    border: 1px solid transparent;
-    transition: color 0.2s, border-color 0.2s, background 0.2s;
+    border: 0;
+    transition: color 0.2s, background 0.2s;
   }
 
   .nav-links a:hover,
