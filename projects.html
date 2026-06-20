@@ -1152,41 +1152,60 @@ const FUEL_MARK_SVG = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/
       <stop offset="100%" stop-color="#0a3a3a"/>
     </linearGradient>
   </defs>
-  <!-- Soft drop shadow under the pump -->
-  <ellipse cx="50" cy="92" rx="30" ry="3" fill="#0f766e" opacity="0.30"/>
-  <!-- Pump base / footprint -->
-  <rect x="18" y="82" width="48" height="9" rx="2.5" fill="url(#fe-base)" stroke="#134e4a" stroke-width="1.4"/>
-  <!-- Main pump body -->
-  <rect x="22" y="18" width="40" height="65" rx="6" fill="url(#fe-body)" stroke="#134e4a" stroke-width="1.8"/>
-  <!-- Top cap with grip -->
-  <rect x="28" y="13" width="28" height="7" rx="2" fill="#134e4a"/>
-  <rect x="34" y="9" width="16" height="5" rx="1.5" fill="#0f766e" stroke="#134e4a" stroke-width="0.8"/>
-  <!-- Digital display screen -->
-  <rect x="27" y="25" width="30" height="22" rx="2.5" fill="url(#fe-screen)" stroke="#134e4a" stroke-width="1.2"/>
-  <!-- Mini "TRIP $" label -->
-  <text x="42" y="33" text-anchor="middle" fill="#5eead4" font-family="'JetBrains Mono', monospace" font-size="4.2" font-weight="700" letter-spacing="1.4">TRIP TOTAL</text>
-  <!-- Bright LED total -->
-  <text x="42" y="44" text-anchor="middle" fill="#a5f3fc" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="800">$45.20</text>
-  <!-- White brand strip -->
-  <rect x="29" y="52" width="26" height="7" rx="1.4" fill="white" stroke="#134e4a" stroke-width="1"/>
-  <text x="42" y="57.3" text-anchor="middle" fill="#0f766e" font-family="'JetBrains Mono', monospace" font-size="4.5" font-weight="800" letter-spacing="2.4">FUEL</text>
-  <!-- Decorative gauge dots under the brand strip -->
-  <circle cx="33" cy="66" r="1.8" fill="#134e4a"/>
-  <circle cx="42" cy="66" r="1.8" fill="#5eead4" stroke="#134e4a" stroke-width="0.5"/>
-  <circle cx="51" cy="66" r="1.8" fill="#134e4a"/>
-  <!-- Lower control / button strip -->
-  <rect x="29" y="72" width="26" height="7" rx="1.5" fill="#134e4a"/>
-  <line x1="33" y1="75.5" x2="51" y2="75.5" stroke="#5eead4" stroke-width="0.9" opacity="0.7"/>
-  <!-- Pump fitting where the hose exits the side -->
-  <rect x="62" y="56" width="6" height="10" rx="1.5" fill="#134e4a"/>
-  <!-- Hose — curves down and around to the nozzle -->
-  <path d="M68 61 Q86 62 86 76 Q86 86 78 90" fill="none" stroke="#134e4a" stroke-width="3.2" stroke-linecap="round"/>
-  <!-- Nozzle body -->
-  <rect x="74" y="86" width="11" height="6" rx="1.5" fill="#0f766e" stroke="#134e4a" stroke-width="1"/>
-  <!-- Nozzle spout pointing left -->
-  <rect x="68" y="87.5" width="7" height="3" rx="0.8" fill="#134e4a"/>
-  <!-- Tiny fuel drop -->
-  <path d="M65 92 Q63.5 95 65 96.5 Q66.5 95 65 92 Z" fill="#5eead4" stroke="#134e4a" stroke-width="0.6"/>
+  <style>
+    .fe-wheel { transform-box: fill-box; transform-origin: center; animation: fe-spin .5s linear infinite; }
+    .fe-car { animation: fe-bob .6s ease-in-out infinite; }
+    .fe-road { animation: fe-road .45s linear infinite; }
+    .fe-speed line { animation: fe-zoom .7s ease-in infinite; }
+    @keyframes fe-spin { to { transform: rotate(360deg); } }
+    @keyframes fe-bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-1.3px); } }
+    @keyframes fe-road { to { stroke-dashoffset: -32; } }
+    @keyframes fe-zoom { 0% { opacity:0; transform: translateX(8px); } 25% { opacity:.85; } 100% { opacity:0; transform: translateX(-12px); } }
+    @media (prefers-reduced-motion: reduce) { .fe-wheel,.fe-car,.fe-road,.fe-speed line { animation: none; } }
+  </style>
+  <!-- soft shadow under the car -->
+  <ellipse cx="50" cy="91" rx="36" ry="3.4" fill="#0f766e" opacity="0.30"/>
+  <!-- speed streaks behind the car (driving motion) -->
+  <g class="fe-speed" stroke="#5eead4" stroke-width="2.6" stroke-linecap="round">
+    <line x1="2" y1="50" x2="15" y2="50"/>
+    <line x1="2" y1="62" x2="17" y2="62" style="animation-delay:.16s"/>
+    <line x1="2" y1="74" x2="14" y2="74" style="animation-delay:.32s"/>
+  </g>
+  <!-- moving road -->
+  <line class="fe-road" x1="6" y1="89" x2="94" y2="89" stroke="#0f766e" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="9 7"/>
+  <!-- the car (bobs while the wheels spin) -->
+  <g class="fe-car">
+    <!-- body + cabin silhouette -->
+    <path d="M14 76 C14 70 18 68 24 68 L31 68 C34 57 41 53 50 53 C59 53 66 57 69 68 L80 69 C86.5 69.5 88 73 88 76 L88 77 Q88 78 85 78 L17 78 Q14 78 14 76 Z" fill="url(#fe-body)" stroke="#134e4a" stroke-width="1.8" stroke-linejoin="round"/>
+    <!-- glass (rear + windshield) -->
+    <path d="M37 66 C39 59 43.5 56.5 48 56.5 L48 66 Z" fill="url(#fe-screen)"/>
+    <path d="M52 56.5 C56.5 56.5 61 59 63 66 L52 66 Z" fill="url(#fe-screen)"/>
+    <!-- door seam + handle -->
+    <line x1="50" y1="66" x2="50" y2="74" stroke="#134e4a" stroke-width="1" opacity="0.6"/>
+    <rect x="43" y="69" width="5" height="1.8" rx="0.9" fill="#134e4a" opacity="0.8"/>
+    <!-- headlight -->
+    <circle cx="86" cy="72" r="2.3" fill="#a5f3fc"/>
+    <!-- front wheel -->
+    <g class="fe-wheel">
+      <circle cx="34" cy="80" r="9.5" fill="#0a3a3a" stroke="#134e4a" stroke-width="1.6"/>
+      <circle cx="34" cy="80" r="4.3" fill="#5eead4" stroke="#134e4a" stroke-width="1"/>
+      <g stroke="#0a3a3a" stroke-width="1.5" stroke-linecap="round">
+        <line x1="34" y1="72" x2="34" y2="88"/><line x1="26" y1="80" x2="42" y2="80"/>
+        <line x1="28.5" y1="74.5" x2="39.5" y2="85.5"/><line x1="28.5" y1="85.5" x2="39.5" y2="74.5"/>
+      </g>
+      <circle cx="34" cy="80" r="1.6" fill="#134e4a"/>
+    </g>
+    <!-- rear wheel -->
+    <g class="fe-wheel">
+      <circle cx="67" cy="80" r="9.5" fill="#0a3a3a" stroke="#134e4a" stroke-width="1.6"/>
+      <circle cx="67" cy="80" r="4.3" fill="#5eead4" stroke="#134e4a" stroke-width="1"/>
+      <g stroke="#0a3a3a" stroke-width="1.5" stroke-linecap="round">
+        <line x1="67" y1="72" x2="67" y2="88"/><line x1="59" y1="80" x2="75" y2="80"/>
+        <line x1="61.5" y1="74.5" x2="72.5" y2="85.5"/><line x1="61.5" y1="85.5" x2="72.5" y2="74.5"/>
+      </g>
+      <circle cx="67" cy="80" r="1.6" fill="#134e4a"/>
+    </g>
+  </g>
 </svg>`;
 
 /* Sift mark — pastel-pink cookbook with a SIFT label band, a cupcake on the
