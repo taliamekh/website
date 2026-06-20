@@ -2,6 +2,8 @@
 
 This file holds conventions that should persist across Claude Code sessions.
 
+**Per-task file map:** see [`docs/EDIT-PLAYBOOK.md`](docs/EDIT-PLAYBOOK.md) — it maps common tasks (add a project/client/note, work on Spocket, update the menu/home/style, deploy, preview, subtree sync) to exact files + search anchors + gotchas. Consult it before scanning the codebase.
+
 ## Branch naming — verify before pushing
 
 Before pushing a branch to remote (or merging it into `main`), audit the branch name and confirm it accurately describes the work that landed on it. The name should be a short slug capturing the topic — e.g. `portfolio-aurora-redesign`, `spocket-ai-integration`, `notes-light-theme`.

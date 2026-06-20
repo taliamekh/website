@@ -23,3 +23,6 @@ expenses/spending-tracker/README.md
 # serve.json configures the local `npx serve` preview only (disables cleanUrls
 # so /portal.html is served directly, matching Vercel). Not a Vercel config.
 serve.json
+
+# Internal maintenance docs (EDIT-PLAYBOOK.md etc.) — keep out of the public deploy.
+docs
