@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Calculate the fuel cost of any road trip. Pick your car or enter custom efficiency. Adjusts for driving conditions, splits cost between passengers.">
+<meta name="theme-color" content="#0A0A0B">
+<title>Gas Trip Cost Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="anonymous">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-left">
+    <a href="../projects.html" class="back-pill nav-back" aria-label="Back to portfolio">
+      <span aria-hidden="true">←</span>
+      <span>Portfolio</span>
+    </a>
+    <div class="brand">
+      <span class="brand-icon" aria-hidden="true">⛽</span>
+      <div class="brand-text">
+        <span class="brand-name">Trip Fuel Cost</span>
+        <span class="brand-tag">Plan any road trip in any country</span>
+      </div>
+    </div>
+  </div>
+  <div class="topbar-actions">
+    <div class="location-pill" id="locationPill">
+      <span class="location-dot" aria-hidden="true"></span>
+      <span id="locationText">Detecting…</span>
+      <button type="button" class="link-btn" id="refreshLocationBtn" title="Refresh location">↻</button>
+    </div>
+    <button type="button" class="icon-btn" id="themeToggle" aria-label="Toggle dark mode" title="Toggle theme">
+      <span id="themeIcon">🌙</span>
+    </button>
+  </div>
+</header>
+
+<main class="layout">
+
+  <!-- LEFT COLUMN: Inputs -->
+  <section class="inputs">
+
+    <!-- Unit system + Country -->
+    <div class="card unit-card">
+      <div class="row wrap">
+        <div class="field grow">
+          <span class="field-label">Country</span>
+          <div id="countryCombo" class="combo"></div>
+        </div>
+        <div class="field grow" id="provinceWrap" hidden>
+          <span class="field-label">Province / state</span>
+          <div id="provinceCombo" class="combo"></div>
+        </div>
+      </div>
+      <div class="seg" role="tablist" aria-label="Unit system">
+        <button type="button" class="seg-btn" data-unit="metric-l100km" role="tab">L/100km</button>
+        <button type="button" class="seg-btn" data-unit="metric-kmpl" role="tab">km/L</button>
+        <button type="button" class="seg-btn" data-unit="imperial-us" role="tab">MPG (US)</button>
+        <button type="button" class="seg-btn" data-unit="imperial-uk" role="tab">MPG (UK)</button>
+      </div>
+    </div>
+
+    <!-- Distance -->
+    <div class="card">
+      <h2 class="section-title">
+        <span class="section-icon" aria-hidden="true">🛣️</span>
+        Trip distance
+      </h2>
+      <div class="row">
+        <label class="field grow">
+          <span class="field-label" id="distanceLabel">Distance (km)</span>
+          <input type="number" id="distanceInput" class="input num" inputmode="decimal" min="0" step="any" placeholder="e.g. 450">
+        </label>
+        <label class="check tall">
+          <input type="checkbox" id="roundTripChk">
+          <span>Round trip</span>
+        </label>
+      </div>
+      <p class="hint" id="distanceHint">Type a distance, or pick a route from the map.</p>
+
+      <!-- Route planner (always visible) -->
+      <div class="route-planner">
+        <h3 class="sub-title">Route planner</h3>
+        <div class="waypoints">
+          <div class="waypoint">
+            <span class="wp-marker wp-marker-start" title="Origin">A</span>
+            <div class="field autocomplete-wrap wp-input-wrap">
+              <input type="text" id="distOrigin" class="input" placeholder="From: city or address" autocomplete="off" spellcheck="false">
+              <div class="autocomplete-dropdown" id="distOriginDropdown" hidden></div>
+            </div>
+          </div>
+          <div id="stopsList"></div>
+          <div class="waypoint">
+            <span class="wp-marker wp-marker-end" title="Destination">B</span>
+            <div class="field autocomplete-wrap wp-input-wrap">
+              <input type="text" id="distDest" class="input" placeholder="To: city or address" autocomplete="off" spellcheck="false">
+              <div class="autocomplete-dropdown" id="distDestDropdown" hidden></div>
+            </div>
+          </div>
+        </div>
+        <div class="route-stop-controls">
+          <button type="button" class="chip-btn" id="addStopBtn">
+            <span class="chip-icon">➕</span>Add stop
+          </button>
+          <button type="button" class="chip-btn" id="suggestStopsBtn">
+            <span class="chip-icon">⛽</span>Suggest fuel stops
+          </button>
+          <button type="button" class="chip-btn" id="mapClickModeBtn" aria-pressed="false" title="When enabled, clicking the map sets your start, then your destination, then drops fuel stops">
+            <span class="chip-icon">📍</span><span id="mapClickModeLabel">Map my own route</span>
+          </button>
+          <button type="button" class="chip-btn chip-btn-danger" id="clearRouteBtn" title="Clear the start, destination, and all stops">
+            <span class="chip-icon">✕</span>Clear route
+          </button>
+        </div>
+        <div class="route-actions">
+          <button type="button" class="primary-btn" id="distLookupGo">Calculate routes</button>
+          <a class="chip-btn" id="distMapsBtn" target="_blank" rel="noopener noreferrer" href="https://www.google.com/maps/dir/">
+            <span class="chip-icon">📍</span>Open in Google Maps
+          </a>
+          <button type="button" class="chip-btn" id="saveRouteBtn" title="Save the current origin / stops / destination for one-tap recall later">
+            <span class="chip-icon">💾</span>Save route
+          </button>
+        </div>
+        <div class="saved-routes-row" id="savedRoutesRow" hidden>
+          <span class="field-label">Saved routes</span>
+          <div class="saved-routes-list" id="savedRoutesList"></div>
+        </div>
+        <div class="route-options">
+          <span class="route-options-label">Avoid</span>
+          <label class="avoid-chip"><input type="checkbox" id="avoidHighways"><span><span class="avoid-emoji">🛣️</span>Highways</span></label>
+          <label class="avoid-chip"><input type="checkbox" id="avoidTolls"><span><span class="avoid-emoji">💵</span>Tolls</span></label>
+          <label class="avoid-chip"><input type="checkbox" id="avoidFerries"><span><span class="avoid-emoji">⛴️</span>Ferries</span></label>
+          <label class="avoid-chip" title="Force the route to stay inside one country — useful when a fastest route would dip across a border"><input type="checkbox" id="stayInCountry"><span><span class="avoid-emoji">🛂</span>Border crossings</span></label>
+        </div>
+        <div class="depart-row">
+          <span class="route-options-label">Departing</span>
+          <input type="datetime-local" id="departAt" class="input depart-input" title="When you'll start the trip — adjusts the time estimate for typical rush-hour congestion">
+          <button type="button" class="chip-btn ghost" id="departNowBtn" title="Set to now">Now</button>
+          <span class="hint depart-hint" id="departHint">Static road network only — no live closure data</span>
+        </div>
+        <p class="hint" id="distLookupHint">Type 3+ characters for address suggestions. Powered by OpenStreetMap, free.</p>
+      </div>
+
+      <!-- Map (always visible) -->
+      <div class="map-wrap">
+        <div id="map" class="map-container" role="application" aria-label="Trip route map"></div>
+        <div class="map-toolbar">
+          <span class="map-info" id="mapInfo">Pan & zoom · enter addresses above to plot a route</span>
+          <span class="map-legend">
+            <span class="legend-chip"><span class="legend-dot legend-route"></span>Route</span>
+            <span class="legend-chip"><span class="legend-dot legend-station"></span>Gas stations</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- Route alternatives -->
+      <div class="route-alts" id="routeAlts" hidden></div>
+
+      <p class="note">
+        <strong>Live prices:</strong> click any green station → popup links to Google Maps, Google search &amp; GasBuddy in new tabs. Paste what you see, tap "Use this price" — it auto-saves to the station so the next visit shows <em>your</em> last reported price with timestamp ("$1.685 · 2h ago"). <strong>Why not built-in?</strong> GasBuddy/OPIS render prices via authenticated client-side calls — even with a CORS proxy the server HTML returns placeholder zeros. No free public API exposes per-station prices in North America. (Tankerkönig works for Germany if you're there.)
+      </p>
+
+    </div>
+
+    <!-- Vehicle -->
+    <div class="card">
+      <h2 class="section-title">
+        <span class="section-icon" aria-hidden="true">🚗</span>
+        Vehicle
+      </h2>
+      <div class="seg" role="tablist" aria-label="Vehicle mode">
+        <button type="button" class="seg-btn active" data-mode="pick" role="tab">Pick your car</button>
+        <button type="button" class="seg-btn" data-mode="custom" role="tab">Custom efficiency</button>
+      </div>
+
+      <!-- Pick mode -->
+      <div class="vehicle-pick" id="pickPanel">
+        <div class="saved-cars-row" id="savedCarsRow" hidden>
+          <span class="field-label">Quick select</span>
+          <div class="saved-cars-list" id="savedCarsList"></div>
+        </div>
+        <div class="row wrap">
+          <div class="field grow">
+            <span class="field-label">Year</span>
+            <div id="yearCombo" class="combo"></div>
+          </div>
+          <div class="field grow">
+            <span class="field-label">Make</span>
+            <div id="makeCombo" class="combo"></div>
+          </div>
+        </div>
+        <div class="row wrap">
+          <div class="field grow">
+            <span class="field-label">Model</span>
+            <div id="modelCombo" class="combo"></div>
+          </div>
+          <div class="field grow">
+            <span class="field-label">Trim / Engine</span>
+            <div id="trimCombo" class="combo"></div>
+          </div>
+        </div>
+        <div class="helper-row">
+          <button type="button" class="chip-btn" id="vinLookupBtn">
+            <span class="chip-icon">🔍</span>Look up by VIN
+          </button>
+          <button type="button" class="chip-btn" id="saveCarBtn" disabled title="Save the currently selected car for one-tap selection later">
+            <span class="chip-icon">⭐</span>Save this car
+          </button>
+          <span class="hint" style="margin: 7px 0 0;">Don't know the trim? Decode your VIN.</span>
+        </div>
+        <p class="hint" id="vehicleHint" style="margin-top: 12px;">Source: FuelEconomy.gov · 1984–2026 · 40k+ models</p>
+        <p class="error" id="vehicleError" hidden></p>
+      </div>
+
+      <!-- Custom mode -->
+      <div class="vehicle-custom hidden" id="customPanel">
+        <label class="field">
+          <span class="field-label" id="customEffLabel">Fuel efficiency (L/100km)</span>
+          <input type="number" id="customEffInput" class="input num" inputmode="decimal" min="0" step="0.1" placeholder="e.g. 7.8">
+        </label>
+        <p class="sub-title">Quick presets</p>
+        <div class="presets" id="presetsList"></div>
+      </div>
+    </div>
+
+    <!-- Gas price -->
+    <div class="card">
+      <h2 class="section-title">
+        <span class="section-icon" aria-hidden="true">💲</span>
+        Gas price
+      </h2>
+      <div class="row">
+        <label class="field grow">
+          <span class="field-label" id="priceLabel">Price ($/litre)</span>
+          <div class="input-with-prefix">
+            <span class="prefix" id="currencyPrefix">$</span>
+            <input type="number" id="priceInput" class="input num" inputmode="decimal" min="0" step="0.001" placeholder="0.00">
+          </div>
+        </label>
+      </div>
+      <div class="seg fuel-types" role="tablist" aria-label="Fuel type">
+        <button type="button" class="seg-btn active" data-fuel="regular" role="tab">Regular</button>
+        <button type="button" class="seg-btn" data-fuel="mid" role="tab">Mid-grade</button>
+        <button type="button" class="seg-btn" data-fuel="premium" role="tab">Premium</button>
+        <button type="button" class="seg-btn" data-fuel="diesel" role="tab">Diesel</button>
+      </div>
+      <p class="hint" id="priceHint">—</p>
+      <div class="helper-row">
+        <a class="chip-btn" id="gasFinderBtn" target="_blank" rel="noopener noreferrer" href="https://www.gasbuddy.com/home">
+          <span class="chip-icon">⛽</span>Find live prices nearby
+        </a>
+      </div>
+      <p class="auto-note" id="priceAutoNote">
+        <span class="auto-note-icon" aria-hidden="true">✨</span>
+        <span><strong>Auto-filled</strong> with today's <span id="priceAutoRegion">regional</span> average. Edit the box above if you saw a different price at the pump.</span>
+      </p>
+      <div class="price-chart" id="priceChart" hidden></div>
+      <p class="note" id="gasNote"><strong>Live prices:</strong> "Find live prices nearby" jumps to GasBuddy with your detected city pre-filled. Averages refresh daily from public data (US: EIA, Canada: NRCan).</p>
+    </div>
+
+    <!-- Conditions accordion -->
+    <details class="card accordion">
+      <summary class="section-title accordion-summary">
+        <span class="section-icon" aria-hidden="true">🛠️</span>
+        Adjust for conditions
+        <span class="caret" aria-hidden="true">▾</span>
+      </summary>
+      <div class="accordion-body">
+        <div class="field">
+          <div class="slider-row">
+            <span class="field-label">Highway / city mix</span>
+            <span class="slider-readout num" id="mixReadout">45% city · 55% hwy</span>
+          </div>
+          <input type="range" id="cityMixSlider" min="0" max="100" step="5" value="45" class="slider">
+          <div class="slider-ends">
+            <span>All highway</span>
+            <span>All city</span>
+          </div>
+          <p class="hint">If your car has separate city/highway ratings, this blends them. Otherwise it's used as a hint.</p>
+        </div>
+
+        <div class="field">
+          <span class="field-label">Driving style</span>
+          <div class="seg" role="tablist" aria-label="Driving style">
+            <button type="button" class="seg-btn" data-style="eco" role="tab">Eco<small>+10%</small></button>
+            <button type="button" class="seg-btn active" data-style="normal" role="tab">Normal</button>
+            <button type="button" class="seg-btn" data-style="aggressive" role="tab">Aggressive<small>−20%</small></button>
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="field-label">Conditions</span>
+          <div class="cond-grid">
+            <label class="check"><input type="checkbox" data-cond="ac"><span>A/C running <em>−3%</em></span></label>
+            <label class="check"><input type="checkbox" data-cond="roofRack"><span>Roof rack / cargo box <em>−10%</em></span></label>
+            <label class="check"><input type="checkbox" data-cond="towing"><span>Heavy load / towing <em>−15%</em></span></label>
+            <label class="check"><input type="checkbox" data-cond="mountainous"><span>Mountains / hills <em>−10%</em></span></label>
+            <label class="check"><input type="checkbox" data-cond="cold"><span>Cold weather <em>−5%</em></span></label>
+            <label class="check"><input type="checkbox" data-cond="poorRoads"><span>Poor roads <em>−8%</em></span></label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="check tall"><input type="checkbox" id="ignoreWeatherChk"><span><strong>Ignore live weather impact</strong> <em>resets weather multiplier to 1.0×</em></span></label>
+          <p class="hint" style="margin-top: 6px;">When on, the cost calc no longer adjusts for the route's current/forecasted temperature, precipitation, or wind. The Weather card still displays conditions for reference.</p>
+        </div>
+      </div>
+    </details>
+
+    <!-- Trip extras -->
+    <div class="card">
+      <h2 class="section-title">
+        <span class="section-icon" aria-hidden="true">👥</span>
+        Trip extras
+      </h2>
+      <div class="row wrap">
+        <label class="field grow">
+          <span class="field-label">Passengers (incl. you)</span>
+          <input type="number" id="passengersInput" class="input num" inputmode="numeric" min="1" step="1" value="1">
+        </label>
+        <label class="field grow">
+          <span class="field-label" id="tankLabel">Tank size (litres) <small>auto from vehicle</small></span>
+          <input type="number" id="tankInput" class="input num" inputmode="decimal" min="0" step="any" placeholder="e.g. 46">
+        </label>
+        <label class="field grow">
+          <span class="field-label">Tolls / fees <small>auto from route</small></span>
+          <div class="input-with-prefix">
+            <span class="prefix" id="tollPrefix">$</span>
+            <input type="number" id="tollsInput" class="input num" inputmode="decimal" min="0" step="any" placeholder="0.00">
+          </div>
+        </label>
+      </div>
+      <p class="auto-note" id="tollsAutoNote" hidden></p>
+    </div>
+
+    <!-- Compare vehicle -->
+    <div class="card compare-card" id="compareCard">
+      <div class="compare-toggle">
+        <h2 class="section-title compact">
+          <span class="section-icon" aria-hidden="true">⚖️</span>
+          Compare another vehicle
+        </h2>
+        <button type="button" class="ghost-btn" id="toggleCompareBtn">Add</button>
+      </div>
+      <div class="compare-body" id="compareBody" hidden>
+        <div class="seg" role="tablist" aria-label="Comparison vehicle mode">
+          <button type="button" class="seg-btn active" data-cmp-mode="pick" role="tab">Pick your car</button>
+          <button type="button" class="seg-btn" data-cmp-mode="custom" role="tab">Custom efficiency</button>
+        </div>
+        <div class="vehicle-pick" id="cmpPickPanel">
+          <div class="row wrap">
+            <div class="field grow">
+              <span class="field-label">Year</span>
+              <div id="cmpYearCombo" class="combo"></div>
+            </div>
+            <div class="field grow">
+              <span class="field-label">Make</span>
+              <div id="cmpMakeCombo" class="combo"></div>
+            </div>
+          </div>
+          <div class="row wrap">
+            <div class="field grow">
+              <span class="field-label">Model</span>
+              <div id="cmpModelCombo" class="combo"></div>
+            </div>
+            <div class="field grow">
+              <span class="field-label">Trim</span>
+              <div id="cmpTrimCombo" class="combo"></div>
+            </div>
+          </div>
+        </div>
+        <div class="vehicle-custom hidden" id="cmpCustomPanel">
+          <label class="field">
+            <span class="field-label" id="cmpCustomEffLabel">Fuel efficiency (L/100km)</span>
+            <input type="number" id="cmpCustomEffInput" class="input num" inputmode="decimal" min="0" step="0.1">
+          </label>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- RIGHT COLUMN: Results -->
+  <aside class="results-wrap" aria-live="polite" aria-atomic="false">
+    <div class="card results-card" id="resultsCard">
+      <div class="results-eyebrow">
+        <span class="section-icon" aria-hidden="true">📊</span>
+        <span>Trip summary</span>
+        <span class="eyebrow-spacer"></span>
+        <span class="live-dot" id="liveDot" title="Live updates"></span>
+      </div>
+
+      <!-- HERO TOTAL -->
+      <div class="hero-total" id="heroTotal">
+        <div class="hero-label">Total fuel cost</div>
+        <div class="hero-value">
+          <span class="hero-symbol" id="heroSymbol">$</span><span class="hero-num" id="heroNum">0.00</span>
+        </div>
+        <div class="hero-currency-row">
+          <span class="hero-currency" id="heroCurrency">USD</span>
+          <span class="hero-bullet">·</span>
+          <span class="hero-sub" id="heroSub">Add a distance and vehicle</span>
+        </div>
+      </div>
+
+      <!-- PER-PERSON CALLOUT -->
+      <div class="per-person-bar" id="perPersonBar" hidden>
+        <div class="pp-label">
+          <span class="pp-icon" aria-hidden="true">👥</span>
+          <span>Per person</span>
+          <span class="pp-count">× <span id="ppCount">2</span></span>
+        </div>
+        <div class="pp-value num" id="ppValue">—</div>
+      </div>
+
+      <!-- BREAKDOWN -->
+      <div class="breakdown">
+        <div class="result-row">
+          <span class="result-key">Distance</span>
+          <span class="result-val num" id="resDistance">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-key">Vehicle</span>
+          <span class="result-val" id="resVehicle">—</span>
+        </div>
+        <div class="result-row" id="resAdjustedRow" hidden>
+          <span class="result-key">Adjusted</span>
+          <span class="result-val num" id="resAdjusted">—</span>
+        </div>
+        <div class="result-row" id="resWeatherRow" hidden>
+          <span class="result-key">Weather <small style="font-weight:400;color:var(--text-fade)">at midroute</small></span>
+          <span class="result-val" id="resWeather">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-key">Fuel needed</span>
+          <span class="result-val num" id="resFuel">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-key">Gas price</span>
+          <span class="result-val num" id="resPrice">—</span>
+        </div>
+        <div class="result-row sub">
+          <span class="result-key">Cost per <span id="perDistanceUnit">km</span></span>
+          <span class="result-val num" id="resPerDist">—</span>
+        </div>
+        <div class="result-row sub" id="resFillupsRow" hidden>
+          <span class="result-key">Fill-ups</span>
+          <span class="result-val num" id="resFillups">—</span>
+        </div>
+        <div class="result-row" id="resOneWayRow" hidden>
+          <span class="result-key">One-way</span>
+          <span class="result-val num" id="resOneWay">—</span>
+        </div>
+        <div class="result-row" id="resTollsRow" hidden>
+          <span class="result-key">+ Tolls</span>
+          <span class="result-val num" id="resTolls">—</span>
+        </div>
+        <div class="result-row strong-row" id="resGrandTotalRow" hidden>
+          <span class="result-key">Grand total</span>
+          <span class="result-val num strong" id="resGrandTotal">—</span>
+        </div>
+      </div>
+
+      <div class="comparison" id="comparisonPanel" hidden>
+        <hr class="sep">
+        <h3 class="sub-title">vs. comparison vehicle</h3>
+        <div class="result-row">
+          <span class="result-key" id="cmpVehLabel">Vehicle B</span>
+          <span class="result-val num" id="cmpFuel">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-key">Cost</span>
+          <span class="result-val num" id="cmpTotal">—</span>
+        </div>
+        <p class="savings" id="savingsLine">—</p>
+      </div>
+
+      <p class="result-warn" id="resWarn" hidden></p>
+    </div>
+
+    <!-- WEATHER FORECAST FOR THE TRIP -->
+    <div class="card tips-card" id="weatherCard" hidden>
+      <h3 class="tips-title">Weather along your route</h3>
+      <div id="weatherForecastBody"></div>
+    </div>
+
+    <!-- TIPS CARD (shown when no route is plotted, otherwise weather card replaces it) -->
+    <div class="card tips-card" id="tipsCard">
+      <h3 class="tips-title">Quick tips</h3>
+      <ul class="tips-list">
+        <li><span class="tip-dot">1</span><div><strong>Pick your car</strong> from 1984–2026 makes &amp; models</div></li>
+        <li><span class="tip-dot">2</span><div><strong>Add stops</strong> for multi-leg trips</div></li>
+        <li><span class="tip-dot">3</span><div><strong>Adjust conditions</strong> — A/C, towing, terrain</div></li>
+        <li><span class="tip-dot">4</span><div><strong>Compare vehicles</strong> to see which is cheapest</div></li>
+      </ul>
+    </div>
+  </aside>
+</main>
+
+<footer class="footer">
+  <p>Vehicle data: <span class="link">FuelEconomy.gov</span> · VIN decode: <span class="link">NHTSA vPIC</span> · Distance: <span class="link">OpenStreetMap</span> · Location: <span class="link">ipapi.co</span></p>
+</footer>
+
+<!-- VIN modal -->
+<div class="modal" id="vinModal" hidden role="dialog" aria-labelledby="vinModalTitle">
+  <div class="modal-backdrop" data-modal-close></div>
+  <div class="modal-card">
+    <button type="button" class="modal-close" data-modal-close aria-label="Close">×</button>
+    <h3 id="vinModalTitle">
+      <span class="section-icon" aria-hidden="true">🔍</span>
+      Decode VIN
+    </h3>
+    <p class="modal-desc">Enter your 17-character Vehicle Identification Number. We'll fill in year, make &amp; model — pick the trim that matches yours.</p>
+    <div class="field">
+      <span class="field-label">VIN</span>
+      <input type="text" id="vinInput" class="input num" maxlength="17" placeholder="e.g. 1HGCV1F3XLA000000" autocomplete="off" spellcheck="false" style="text-transform: uppercase;">
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="ghost-btn" data-modal-close style="margin-top:0;">Cancel</button>
+      <button type="button" class="primary-btn" id="vinDecodeBtn">Decode</button>
+    </div>
+    <div class="modal-result" id="vinResult" hidden></div>
+  </div>
+</div>
+
+<div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="anonymous"></script>
+<!-- Local: config.js holds your ORS key (gitignored). Production: the Pages
+     deploy workflow generates this file from a repo secret. If missing, the app
+     falls back to OSRM and avoid-features become inert. -->
+<script src="config.js" defer onerror="this.remove()"></script>
+<script src="app.js" defer></script>
+</body>
+</html>

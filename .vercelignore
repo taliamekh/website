@@ -20,6 +20,18 @@ expenses/spending-tracker/.claude
 expenses/spending-tracker/eslint.config.js
 expenses/spending-tracker/README.md
 
+# fuel-economy is a git subtree of taliamekh/Fuel-Economy-Calculator. The
+# frontend (index.html / app.js / styles.css / data/) needs to ship, but the
+# Node tooling, internal research notes, GH Pages workflow, and package
+# metadata do not.
+fuel-economy/scripts
+fuel-economy/package.json
+fuel-economy/.claude
+fuel-economy/.github
+fuel-economy/FUEL_ECONOMY_RESEARCH.md
+fuel-economy/IMPROVEMENTS.md
+fuel-economy/config.example.js
+
 # serve.json configures the local `npx serve` preview only (disables cleanUrls
 # so /portal.html is served directly, matching Vercel). Not a Vercel config.
 serve.json

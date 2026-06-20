@@ -32,6 +32,7 @@ Do not push directly to `main` for unreviewed work. Use a feature branch (named 
 - **`lib/`** — server-side helpers for the Vercel functions (currently the cheerio-based sift parser modules). Not served as functions itself.
 - **`sift/`** — git subtree of [`taliamekh/sift`](https://github.com/taliamekh/sift). See the **Synced projects** section below before editing files here.
 - **`expenses/`** — git subtree of [`taliamekh/expenses`](https://github.com/taliamekh/expenses) (PRIVATE). Contains `spending-tracker/` (Vite + React SPA that ships to `mekh.ca/expenses`) and `statements-backup/` (personal financial PDFs/PNGs, excluded from deploy via `.vercelignore`). Password-gated by `middleware.js`. See the **Synced projects** and **Expenses gate** sections below.
+- **`fuel-economy/`** — git subtree of [`taliamekh/Fuel-Economy-Calculator`](https://github.com/taliamekh/Fuel-Economy-Calculator). Static front-end for the road-trip fuel cost planner. See the **Synced projects** section below before editing files here.
 - **`middleware.js`** — Vercel Edge middleware. Currently used to password-gate `/expenses/*`. Reads `EXPENSES_PASSWORD` and `EXPENSES_AUTH_SECRET` from Vercel env vars.
 - **`spocket.svg`** at the root and the matching `SPOCKET_SVG` constant inside `projects.html` need to stay in sync — they're two copies of the same Spocket character render (one standalone, one inlined so the bento tile can animate her wave on hover).
 
@@ -45,6 +46,7 @@ Projects that have a standalone GitHub repo are pulled into the website as a **g
 |---|---|---|---|
 | `sift/` | `sift-upstream` | [`taliamekh/sift`](https://github.com/taliamekh/sift) | `main` |
 | `expenses/` | `expenses-upstream` | [`taliamekh/expenses`](https://github.com/taliamekh/expenses) (private) | `main` |
+| `fuel-economy/` | `fuel-economy-upstream` | [`taliamekh/Fuel-Economy-Calculator`](https://github.com/taliamekh/Fuel-Economy-Calculator) | `main` |
 
 **Workflow when editing files inside a synced project directory:**
 
@@ -64,6 +66,7 @@ Projects that have a standalone GitHub repo are pulled into the website as a **g
 ```sh
 git remote add sift-upstream https://github.com/taliamekh/sift.git
 git remote add expenses-upstream https://github.com/taliamekh/expenses.git
+git remote add fuel-economy-upstream https://github.com/taliamekh/Fuel-Economy-Calculator.git
 ```
 
 **Adding a new synced project from a GitHub repo:**

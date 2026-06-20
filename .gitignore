@@ -10,3 +10,9 @@ node_modules/
 
 # Vite build output for the expenses sub-app (Vercel rebuilds on every deploy)
 expenses/spending-tracker/dist/
+
+# Local git worktrees created for parallel work — never commit.
+.claude/worktrees/
+
+# Stray nested copy of the site (not part of the deploy).
+website/
