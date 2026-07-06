@@ -38,3 +38,8 @@ serve.json
 
 # Internal maintenance docs (EDIT-PLAYBOOK.md etc.) — keep out of the public deploy.
 docs
+
+# sandbox/ holds the dev tooling + source used to build the Fuel Economy tile car
+# (the traced car SVG, the reference drawing, the wheel/tile preview editors).
+# Version it in git, but keep it out of the public deploy.
+sandbox
