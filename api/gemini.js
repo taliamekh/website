@@ -83,6 +83,25 @@ function extractRelevantSections(fullContext, keywords, maxChars) {
   return result;
 }
 
+/**
+ * Only allow the assistant to be called from our own pages. A same-origin
+ * browser POST always carries an Origin header whose host matches the request
+ * Host, so this blocks other websites from spending our Gemini quota without
+ * affecting the notes chat — production, preview deploys, and local dev are all
+ * same-origin. Falls back to the Referer host when Origin is absent.
+ */
+function isSameOriginRequest(req) {
+  const host = String(req.headers.host || "").toLowerCase();
+  if (!host) return false;
+  const source = req.headers.origin || req.headers.referer || "";
+  if (!source) return false;
+  try {
+    return new URL(source).host.toLowerCase() === host;
+  } catch {
+    return false;
+  }
+}
+
 module.exports = async function handler(req, res) {
   // Allow CORS
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -96,6 +115,11 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
+  // Restrict to our own site so the key can't be used as a free relay.
+  if (!isSameOriginRequest(req)) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     return res.status(500).json({ error: "API key not configured" });
@@ -104,6 +128,17 @@ module.exports = async function handler(req, res) {
   const { messages, context } = req.body || {};
   if (!Array.isArray(messages) || messages.length === 0) {
     return res.status(400).json({ error: "messages array is required" });
+  }
+
+  // Defensive size cap — far above any real notes context, so legitimate chats
+  // are unaffected while multi-megabyte abuse is rejected.
+  const contextSize = typeof context === "string" ? context.length : 0;
+  const messagesSize = messages.reduce(
+    (n, m) => n + (m && typeof m.content === "string" ? m.content.length : 0),
+    0,
+  );
+  if (contextSize + messagesSize > 2_000_000) {
+    return res.status(413).json({ error: "Request too large." });
   }
 
   const recentMessages = messages.slice(-10);

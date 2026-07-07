@@ -56,8 +56,27 @@ function readCookie(cookieHeader, name) {
   return null;
 }
 
+// The redirect target is reflected into HTML and into the Location header, so
+// it must be constrained to an internal /expenses path built from a safe URL
+// character set — no quotes, angle brackets, whitespace or CR/LF. This blocks
+// reflected XSS (breaking out of the value="..." attribute) and header
+// injection. Anything else falls back to the bare /expenses path.
+function sanitizeRedirect(raw) {
+  const s = String(raw == null ? '' : raw);
+  return /^\/expenses(?:[/?#][\w\-./?=&%#]*)?$/.test(s) ? s : '/expenses';
+}
+
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function loginPage({ error = '', redirectTo = '/expenses' } = {}) {
-  const safeRedirect = redirectTo.startsWith('/expenses') ? redirectTo : '/expenses';
+  const safeRedirect = sanitizeRedirect(redirectTo);
   return new Response(`<!doctype html>
 <html lang="en">
 <head>
@@ -131,9 +150,9 @@ function loginPage({ error = '', redirectTo = '/expenses' } = {}) {
     <p class="sub">Enter password to continue.</p>
     <label for="pw">Password</label>
     <input id="pw" type="password" name="password" autocomplete="current-password" autofocus required>
-    <input type="hidden" name="redirect" value="${safeRedirect}">
+    <input type="hidden" name="redirect" value="${escapeHtml(safeRedirect)}">
     <button type="submit">Unlock</button>
-    <div class="error">${error}</div>
+    <div class="error">${escapeHtml(error)}</div>
     <div class="hint">You'll only have to do this once on this device.</div>
   </form>
 </body>
@@ -161,7 +180,7 @@ export default async function middleware(request) {
     const redirectTo = (form.get('redirect') || '/expenses').toString();
     if (typeof submitted === 'string' && timingSafeEqual(submitted, password)) {
       const token = await makeToken(secret);
-      const safeRedirect = redirectTo.startsWith('/expenses') ? redirectTo : '/expenses';
+      const safeRedirect = sanitizeRedirect(redirectTo);
       const headers = new Headers();
       headers.set('location', safeRedirect);
       headers.append(

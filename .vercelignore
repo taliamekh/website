@@ -43,3 +43,17 @@ docs
 # (the traced car SVG, the reference drawing, the wheel/tile preview editors).
 # Version it in git, but keep it out of the public deploy.
 sandbox
+
+# Internal repo files that shouldn't be served at the public web root — project
+# docs / config / meta, not site content, and nothing on the live site links to
+# them. Build-required files (package.json, package-lock.json, vercel.json) are
+# intentionally NOT listed because Vercel needs them at deploy time.
+CLAUDE.md
+README.md
+.env.example
+.gitignore
+
+# legacy/ is the pre-Aurora site snapshot + numbered exploration mockups: read-
+# only history, never linked from the live site. Keep it in git but out of the
+# deploy (this also stops the old client-side notes gate copy from shipping).
+legacy
