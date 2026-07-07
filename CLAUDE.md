@@ -2,7 +2,7 @@
 
 This file holds conventions that should persist across Claude Code sessions.
 
-**Per-task file map:** see [`docs/EDIT-PLAYBOOK.md`](docs/EDIT-PLAYBOOK.md) — it maps common tasks (add a project/client/note, work on Spocket, update the menu/home/style, deploy, preview, subtree sync) to exact files + search anchors + gotchas. Consult it before scanning the codebase.
+**Per-task file map — read this FIRST, every time:** [`docs/EDIT-PLAYBOOK.md`](docs/EDIT-PLAYBOOK.md) maps every common task to exact files + grep anchors + gotchas: add a project/client/note, work on Spocket, the Fuel Economy GT3-RS car, the notes highlight/toolbar engine, menu/home/site style, password gates, serverless/API, security review & hardening, deploy, preview, subtree sync. For ANY add/edit/fix/review/deploy task on this site, open it and grep the anchors **before** searching the codebase — don't scan files for something already mapped there. If a task isn't covered, handle it, then add a route.
 
 ## Branch naming — verify before pushing
 

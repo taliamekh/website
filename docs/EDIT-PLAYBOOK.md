@@ -1,5 +1,10 @@
 # Edit Playbook — mekh.ca
 
+> **Claude — read this file FIRST for any add / edit / fix / review / deploy task on this
+> site, then grep the anchors below. Do NOT scan the whole codebase for a task that's
+> mapped here.** Almost everything routes to specific files + search strings. If a task
+> genuinely isn't covered, do it, then add a route so the next one is one-shot.
+
 Per-task map so common edits are one-shot (no full-site scan). Pairs with `CLAUDE.md`
 (conventions) and the memory notes. **Anchors are search strings** (grep them) — not line
 numbers, which drift.
@@ -8,10 +13,16 @@ numbers, which drift.
 - **Live pages (root):** `index.html` (home), `projects.html`, `contact.html`,
   `portal.html` (client portal gate), `notes/` (Student Resources).
 - **`notes/SpocketOnboarding.jsx`** — Spocket; loaded by `notes/index.html` via in-browser Babel.
+- **`notes/workspace-iframe.js`** — notes toolbar + highlight engine (runs inside the notes iframe).
 - **`api/`** — serverless: `gemini.js` (Spocket AI), `sift-parse.mjs` (Sift parser). Vercel-only.
+- **`lib/sift-parser/`** — the recipe-parser library `api/sift-parse.mjs` calls (fetch + JSON-LD /
+  microdata / heuristic extract). Server helper, not a function itself.
 - **`portal/`** — `clients/<slug>.html` pages, `make-key.js` (dev helper), `index.html` (redirect stub).
+- **`middleware.js`** — Vercel Edge; server-side `/expenses` password gate.
 - **Subtrees:** `sift/`, `expenses/`, `fuel-economy/` — each has its own GitHub repo (see CLAUDE.md "Synced projects").
-- **Infra:** `vercel.json`, `.vercelignore`, `middleware.js` (/expenses gate), `serve.json` (local preview only).
+- **`sandbox/`** — dev tooling for the Fuel Economy tile car (git-only, **not deployed**).
+- **`legacy/`** — pre-Aurora snapshot + exploration mockups. Read-only history, **not deployed**, never link to it.
+- **Infra:** `vercel.json`, `.vercelignore`, `serve.json` (local preview only).
 
 ## Golden rules (don't break)
 1. **Nav identical on all 5 pages.** Any menu change → edit `<ul class="nav-links">` the SAME
@@ -27,7 +38,8 @@ numbers, which drift.
 - Static preview: `preview_start` → "Static — Node serve" (:8000). Check `/`, `/projects.html`, `/portal.html`, `/notes/`.
 - **Screenshots time out on `/notes/`** (625KB Babel + constant animations) → verify by measuring the
   DOM (`getBoundingClientRect`, `elementsFromPoint`), not images.
-- API functions don't run on the static server → need `npx vercel dev` (requires `vercel login`).
+- API functions + middleware don't run on the static server → need `npx vercel dev` (requires `vercel login`).
+  For pure logic (guards, parsers) `node --check` + a tiny node test is the fast local proxy.
 
 ---
 
@@ -59,7 +71,7 @@ numbers, which drift.
   ABOVE the antenna `data-tm-spocket-antenna` and the lock card), `mobileGate` (mobile = small corner,
   no bubble/options), `robotTopPos` (vertical position).
 - **Two copies to sync:** `spocket.svg` ⇄ `SPOCKET_SVG` in `projects.html`.
-- **AI mode:** `api/gemini.js` (needs `vercel dev` / live).
+- **AI mode:** `api/gemini.js` (needs `vercel dev` / live). See route 16 for its same-origin gate.
 - **Where she appears:** the gate in `notes/index.html` (`lock-overlay` / `lock-card`). First-visit vs
   returning is driven by `localStorage["spocket_visited"]`.
 - **Gotchas:** 625KB, in-browser Babel (no build step), screenshots time out → measure DOM. No em dashes in her dialogue.
@@ -70,7 +82,7 @@ numbers, which drift.
 - **Content source:** `notesHtmlUrl` (raw GitHub HTML) for normal notes; **`localFile: '<id>.html'`**
   (a standalone file in `notes/`) for big / image-heavy notes.
 - **Colors:** set `paperPalette` for the course.
-- **Gotcha:** 274KB file — data-only; don't touch the load/highlight pipeline.
+- **Gotcha:** 274KB file — data-only; don't touch the load/highlight pipeline (that's route 15).
 - **Verify:** `/notes/` (unlock), course card opens, highlights work.
 
 ### 5 · Update the menu
@@ -92,7 +104,7 @@ numbers, which drift.
 
 ### 9 · Deploy / go live
 - Topic-named branch → verify in preview → `git checkout main && git merge --ff-only <branch> && git push origin main`.
-  Vercel auto-deploys from `main`. Audit/rename the branch name first (CLAUDE.md).
+  Vercel auto-deploys from `main`. Audit/rename the branch name first (CLAUDE.md). **Get explicit OK before pushing `main`.**
 
 ### 10 · Run / preview locally
 - `preview_start` → "Static — Node serve" (:8000). `serve.json` keeps `/portal.html` working locally
@@ -103,9 +115,56 @@ numbers, which drift.
   Remotes `sift-upstream`, `expenses-upstream`, `fuel-economy-upstream` (re-add on a fresh clone).
 
 ### 12 · Password gates
-- `/expenses` — server-side `middleware.js` (Vercel env `EXPENSES_PASSWORD`, `EXPENSES_AUTH_SECRET`).
-- `/notes` — client-side gate in `notes/index.html` (`lock-overlay`).
+- `/expenses` — server-side `middleware.js` (Vercel env `EXPENSES_PASSWORD`, `EXPENSES_AUTH_SECRET`). Hardening detail: route 16.
+- `/notes` — client-side gate in `notes/index.html` (`lock-overlay`, fallback password `noteslol`).
 - `/portal` — client-side SHA-256 `PORTALS` map (see `portal/README.md`).
 
 ### 13 · Serverless / API
-- `api/gemini.js` (Spocket AI), `api/sift-parse.mjs` (Sift). Run via `vercel dev` or on Vercel only; `maxDuration` in `vercel.json`.
+- `api/gemini.js` (Spocket AI — self-contained). `api/sift-parse.mjs` (Sift) wraps the `lib/sift-parser/` library.
+  Run via `vercel dev` or on Vercel only; `maxDuration` in `vercel.json`. Security posture: route 16.
+
+### 14 · Fuel Economy tile / the GT3 RS car
+- **Tile + animation:** `projects.html` — grep `data-id="fuel-economy"`. The car is the user's own GT3 RS,
+  region-colored 1:1 from her drawing (`sandbox/reference.png`). Anchors: `.fuel-tile-car` (wrapper),
+  `.fuel-car .spin` (wheels — **must keep spinning on hover**), `.fuel-road` / `.streak` (road + speed
+  streaks, hover-only), keyframes `fuel-bob` / `fuel-spin` / `fuel-road` / `fuel-zoom`.
+  `transform-box: view-box` on `.spin` is load-bearing (don't remove — it's the wheel-spin anti-regression).
+- **PROJECTS entry:** `{ id:'fuel-economy', num:'08', … }` in `window.PROJECTS`.
+- **Rebuild / re-trace the car:** `sandbox/` editors — `porsche-tile.html` (tile preview),
+  `porsche-wheel-edit.html` (wheel cut-outs), traced SVGs `sandbox/_approved_final2.svg` / `_final2.svg`.
+  Full pipeline + hub/spin rules: memory `porsche-tile-car`.
+- **Hosted calculator:** the app itself is the `fuel-economy/` subtree, served at `/fuel-economy/`.
+- **Verify:** `/projects.html`, hover the tile → car bobs, wheels spin, road streaks appear.
+
+### 15 · Notes highlight + toolbar engine
+- **Files:** `notes/workspace-iframe.js` (toolbar + highlighter / eraser / undo-redo, runs inside the
+  notes iframe) **and** `injectUnifiedHighlightCore` in `notes/index.html` (grep it; exposes `window.__TM_SR_HL`).
+- **Model:** marks persist by absolute text offset + inline `--tm-hl` colour; custom colours + undo/redo
+  live in BOTH files (keep them in sync). Full detail: memory `notes_highlight_engine`.
+- **Caution:** this IS the load/highlight pipeline Golden rule #3 protects — only edit here when the task
+  is explicitly the highlighter/toolbar, not for adding note content (that's route 4).
+- **Verify:** `/notes/` (unlock) → highlight text, change colour, undo/redo, reload → marks persist.
+
+### 16 · Security review / harden the site
+- **Server-side attack surface (where the real risk is):**
+  - `middleware.js` — `/expenses` gate. HMAC token (`hmacSign` / `makeToken` / `isValidToken`),
+    constant-time compare (`timingSafeEqual`), redirect + XSS hardening (`sanitizeRedirect` + `escapeHtml`).
+    Env: `EXPENSES_PASSWORD`, `EXPENSES_AUTH_SECRET`.
+  - `api/gemini.js` — Spocket AI proxy. Same-origin gate (`isSameOriginRequest`) + request-size cap.
+    Env: `GEMINI_API_KEY` (stays server-side, never sent to the client).
+  - `lib/sift-parser/index.mjs` — recipe fetch. SSRF guard (`assertSafeFetchUrl`) rejects loopback /
+    private / link-local / internal hosts before `fetch`; parser strategies in the sibling `.mjs` files.
+  - `.vercelignore` — what must NEVER ship: `expenses/statements-backup` (financial PDFs), `legacy/`,
+    internal docs (`CLAUDE.md`, `.env.example`, …).
+- **Client-side gates are cosmetic** (the content ships inside the page): notes `lock-overlay`
+  (`noteslol`), portal `PORTALS` SHA-256 map. Don't treat them as real trust boundaries.
+- **Front-end XSS check:** rendering is escaped today — Spocket via React + `escapeHtml`, Sift via
+  `createTextNode` / `escapeText`, `projects.html` `innerHTML` uses only static `PROJECTS` data.
+  If you add a render path that injects remote/user text, escape it.
+- **Can't runtime-test here:** middleware/functions need `vercel dev` or a live deploy; use `node --check`
+  on changed files + a tiny node test that proves guards block attacks AND pass legit inputs.
+- **Verify:** guards reject internal/hostile inputs and accept normal ones; no functionality regression.
+
+### 17 · Edit the contact page
+- **File:** `contact.html` — static content (links / handles), no form or backend. Nav per Golden rule #1;
+  theme tokens duplicated per-page (route 7).
