@@ -5384,42 +5384,64 @@
       'return best;' +
       '}' +
       'function tmStripMarks(){document.querySelectorAll("mark.usr").forEach(function(m){var p=m.parentNode;if(!p)return;while(m.firstChild)p.insertBefore(m.firstChild,m);p.removeChild(m);});}' +
-      'function tmSerializeMarks(){var d=[];document.querySelectorAll("mark.usr").forEach(function(m){var slot=parseInt(m.getAttribute("data-slot")||"0",10);if(isNaN(slot)||slot<0||slot>4)slot=0;d.push({text:m.textContent,slot:slot,alpha:m.style.getPropertyValue("--tm-hl-alpha")||null});});return d;}' +
+      // Toolbar / sidebar / popup chrome whose text must NOT count toward highlight offsets.
+      'var TM_CHROME_SEL="#hl-bar,#hl-min,.tm-ws-host,.tm-ws-chrome,.tm-pop,.tm-popwrap,.tm-color-manage-pop,.tm-hl-manage-pop,.tm-drawing-ctx,#sidebar,.sidebar,.sidebar-backdrop,.sidebar-open-btn,.tm-sr-sidebar,.tm-sr-sidebar-host,.tm-sr-hamburger,.tm-sr-sidebar-toggle,#tm-annotations-fixed,#tooltip";' +
+      // Anchor offsets to the stable content root. The sidebar/toolbar live outside <main> and
+      // get tagged/relocated mid-session (e.g. #sidebar gains .tm-sr-sidebar-host after load); if
+      // they were counted, a highlight saved in one state and restored in another would shift --
+      // landing in the sidebar. Scoping to <main> makes offsets immune to that.
+      'function tmRoot(){return document.querySelector("main,[role=main],.content-area,#main-content,#main")||document.body;}' +
+      'function tmInChrome(n){return !!(n&&n.parentNode&&n.parentNode.closest&&n.parentNode.closest(TM_CHROME_SEL));}' +
+      'function tmInMark(n){return !!(n&&n.parentNode&&n.parentNode.closest&&n.parentNode.closest("mark.usr"));}' +
+      'function tmMarkColor(m){var c=(m.style&&m.style.getPropertyValue)?m.style.getPropertyValue("--tm-hl"):"";c=(c||"").trim();return c||null;}' +
+      'function tmSlotOf(m){var s=parseInt(m.getAttribute("data-slot")||"0",10);return isNaN(s)?0:s;}' +
+      // Serialize each mark by ABSOLUTE body-text offset (+ its real color/alpha) so undo/redo
+      // and reload restore it to the exact spot it was made — never the first matching text.
+      'function tmSerializeMarks(){var out=[],cur=null;var tw=document.createTreeWalker(tmRoot(),NodeFilter.SHOW_TEXT,null),pos=0,n;' +
+      'while(n=tw.nextNode()){var nv=n.nodeValue||"";if(tmInChrome(n))continue;' +
+      'var mk=(n.parentNode&&n.parentNode.closest)?n.parentNode.closest("mark.usr"):null;' +
+      'if(mk!==cur){cur=mk;if(mk){out.push({start:pos,len:0,text:"",color:tmMarkColor(mk),slot:tmSlotOf(mk),alpha:(mk.style.getPropertyValue("--tm-hl-alpha")||"").trim()||null});}}' +
+      'if(mk){var rec=out[out.length-1];rec.len+=nv.length;rec.text+=nv;}pos+=nv.length;}return out;}' +
       'window.saveHL=function(){try{var d=tmSerializeMarks();localStorage.setItem(LS_KEY,JSON.stringify(d));window.parent.postMessage({type:"tm_student_resources_hl",action:"save",payload:JSON.stringify(d)},"*");}catch(e1){}};' +
       'window.clearAll=function(){try{tmStripMarks();localStorage.removeItem(LS_KEY);window.parent.postMessage({type:"tm_student_resources_hl",action:"save",payload:"[]"},"*");}catch(e2){}};' +
-      'function tmWrapOnce(needle,slot,alpha){' +
-      'if(!needle)return false;' +
-      'var tw=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,null);var n;' +
-      'while(n=tw.nextNode()){' +
-      'if(!n.nodeValue)continue;' +
-      'if(n.parentNode&&n.parentNode.closest&&n.parentNode.closest("mark.usr,#hl-bar,.tm-ws-host,.tm-sr-sidebar"))continue;' +
-      'var idx=n.nodeValue.indexOf(needle);' +
-      'if(idx<0)continue;' +
+      // Wrap an absolute text span [start,start+len) in mark(s), splitting across element
+      // boundaries as needed. A non-null color is baked inline as --tm-hl (exact custom color).
+      'function tmWrapRange(start,len,color,alpha,slot){if(!(len>0))return false;var end=start+len;' +
+      'var tw=document.createTreeWalker(tmRoot(),NodeFilter.SHOW_TEXT,null),pos=0,n,slices=[];' +
+      'while(n=tw.nextNode()){var nv=n.nodeValue||"";if(tmInChrome(n))continue;var ns=pos,ne=pos+nv.length;pos=ne;' +
+      'if(ne<=start)continue;if(ns>=end)break;if(tmInMark(n))continue;' +
+      'var s=Math.max(start,ns)-ns,e=Math.min(end,ne)-ns;if(e>s)slices.push({node:n,s:s,e:e});}' +
+      'var did=false;for(var i=0;i<slices.length;i++){var sl=slices[i];var r=document.createRange();' +
+      'try{r.setStart(sl.node,sl.s);r.setEnd(sl.node,sl.e);}catch(e1){continue;}' +
+      'var mk=document.createElement("mark");mk.className="usr";mk.setAttribute("data-slot",String(slot|0));' +
+      'if(color)mk.style.setProperty("--tm-hl",color);if(alpha)mk.style.setProperty("--tm-hl-alpha",String(alpha));' +
+      'try{r.surroundContents(mk);did=true;}catch(e2){}}return did;}' +
+      // Legacy fallback: wrap the first matching text run. Used only for pre-offset saved data.
+      'function tmWrapOnce(needle,slot,color,alpha){if(!needle)return false;' +
+      'var tw=document.createTreeWalker(tmRoot(),NodeFilter.SHOW_TEXT,null),n;' +
+      'while(n=tw.nextNode()){if(!n.nodeValue)continue;if(tmInChrome(n)||tmInMark(n))continue;' +
+      'var idx=n.nodeValue.indexOf(needle);if(idx<0)continue;' +
       'var r=document.createRange();r.setStart(n,idx);r.setEnd(n,idx+needle.length);' +
-      'var mk=document.createElement("mark");mk.className="usr";mk.setAttribute("data-slot",String(slot|0));if(alpha)mk.style.setProperty("--tm-hl-alpha",String(alpha));' +
-      'try{r.surroundContents(mk);return true;}catch(e3){return false;}' +
-      '}' +
-      'return false;' +
-      '}' +
-      'window.restoreHL=function(){' +
-      'try{' +
-      'tmStripMarks();' +
-      'var raw=localStorage.getItem(LS_KEY);' +
-      'if(!raw)return;' +
-      'var d;try{d=JSON.parse(raw);}catch(e4){d=null;}' +
+      'var mk=document.createElement("mark");mk.className="usr";mk.setAttribute("data-slot",String(slot|0));' +
+      'if(color)mk.style.setProperty("--tm-hl",color);if(alpha)mk.style.setProperty("--tm-hl-alpha",String(alpha));' +
+      'try{r.surroundContents(mk);return true;}catch(e3){return false;}}return false;}' +
+      // Rebuild every mark from serialized data: offset-based when present, legacy text otherwise.
+      'function tmRestoreFrom(d){tmStripMarks();try{var R0=tmRoot();if(R0&&R0.normalize)R0.normalize();}catch(eN){}' +
       'if(!Array.isArray(d))return;' +
-      'for(var i=0;i<d.length;i++){' +
-      'var it=d[i];if(!it||it.text==null)continue;' +
-      'var slot=(typeof it.slot==="number")?it.slot:tmNearestSlot(it.bg||"");' +
-      'tmWrapOnce(String(it.text),slot,it.alpha||null);' +
-      '}' +
-      '}catch(e5){}' +
-      '};' +
+      'var arr=d.slice().sort(function(a,b){var as=(a&&typeof a.start==="number")?a.start:0,bs=(b&&typeof b.start==="number")?b.start:0;return as-bs;});' +
+      'for(var i=0;i<arr.length;i++){var it=arr[i];if(!it)continue;' +
+      'var slot=(typeof it.slot==="number")?it.slot:tmNearestSlot(it.bg||it.color||"");' +
+      'var color=it.color||null,alpha=it.alpha||null;' +
+      'if(typeof it.start==="number"&&typeof it.len==="number"&&it.len>0){tmWrapRange(it.start,it.len,color,alpha,slot);}' +
+      'else if(it.text!=null){tmWrapOnce(String(it.text),slot,color||it.bg||null,alpha);}}}' +
+      'window.restoreHL=function(){try{var raw=localStorage.getItem(LS_KEY);var d=null;if(raw){try{d=JSON.parse(raw);}catch(e4){d=null;}}tmRestoreFrom(Array.isArray(d)?d:[]);}catch(e5){}};' +
       '/* Expose helpers used by the toolbar (workspace-iframe.js) */' +
       'window.__TM_SR_HL={' +
       'strip:tmStripMarks,' +
       'serialize:tmSerializeMarks,' +
       'wrapOnce:tmWrapOnce,' +
+      'wrapRange:tmWrapRange,' +
+      'restoreFrom:tmRestoreFrom,' +
       'nearestSlot:tmNearestSlot,' +
       'DEFAULT_SLOTS:DEFAULT_SLOTS,' +
       'LS_KEY:LS_KEY' +

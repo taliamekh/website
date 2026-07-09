@@ -143,13 +143,17 @@
   function snapshotItemsDeep() {
     return JSON.parse(JSON.stringify(items));
   }
-  // Snapshot all highlight marks (text + slot) so we can undo highlight creation/removal.
+  // Snapshot all highlight marks (absolute offset + color + slot) so we can undo/redo highlight
+  // creation/removal. Delegates to the core serializer so undo/redo matches reload exactly.
   function snapshotHlMarks() {
     try {
+      if (window.__TM_SR_HL && typeof window.__TM_SR_HL.serialize === 'function') {
+        return window.__TM_SR_HL.serialize();
+      }
       return Array.prototype.map.call(document.querySelectorAll('mark.usr'), function (m) {
         var slot = parseInt(m.getAttribute('data-slot') || '0', 10);
-        if (isNaN(slot) || slot < 0 || slot > 4) slot = 0;
-        return { text: m.textContent, slot: slot, alpha: m.style.getPropertyValue('--tm-hl-alpha') || null };
+        if (isNaN(slot) || slot < 0) slot = 0;
+        return { text: m.textContent, slot: slot, color: (m.style.getPropertyValue('--tm-hl') || '').trim() || null, alpha: m.style.getPropertyValue('--tm-hl-alpha') || null };
       });
     } catch (e) { return []; }
   }
@@ -157,21 +161,25 @@
   function restoreHlFromSnapshot(snap) {
     if (!Array.isArray(snap)) return;
     try {
-      // Strip existing marks first
-      if (window.__TM_SR_HL && typeof window.__TM_SR_HL.strip === 'function') {
-        window.__TM_SR_HL.strip();
+      if (window.__TM_SR_HL && typeof window.__TM_SR_HL.restoreFrom === 'function') {
+        // Offset-accurate rebuild (matches reload); preserves each mark's real color.
+        window.__TM_SR_HL.restoreFrom(snap);
       } else {
-        document.querySelectorAll('mark.usr').forEach(function (m) {
-          var p = m.parentNode; if (!p) return;
-          while (m.firstChild) p.insertBefore(m.firstChild, m);
-          p.removeChild(m);
-        });
-      }
-      // Re-wrap
-      var wrap = (window.__TM_SR_HL && window.__TM_SR_HL.wrapOnce) || null;
-      for (var i = 0; i < snap.length; i++) {
-        var it = snap[i]; if (!it || it.text == null) continue;
-        if (wrap) wrap(String(it.text), (typeof it.slot === 'number' ? it.slot : 0), it.alpha || null);
+        // Fallback: strip existing marks, then legacy text re-wrap.
+        if (window.__TM_SR_HL && typeof window.__TM_SR_HL.strip === 'function') {
+          window.__TM_SR_HL.strip();
+        } else {
+          document.querySelectorAll('mark.usr').forEach(function (m) {
+            var p = m.parentNode; if (!p) return;
+            while (m.firstChild) p.insertBefore(m.firstChild, m);
+            p.removeChild(m);
+          });
+        }
+        var wrap = (window.__TM_SR_HL && window.__TM_SR_HL.wrapOnce) || null;
+        for (var i = 0; i < snap.length; i++) {
+          var it = snap[i]; if (!it || it.text == null) continue;
+          if (wrap) wrap(String(it.text), (typeof it.slot === 'number' ? it.slot : 0), it.color || null, it.alpha || null);
+        }
       }
       if (typeof window.__TM_SR_HL_REWIRE === 'function') window.__TM_SR_HL_REWIRE();
       if (typeof saveHL === 'function') saveHL();
@@ -3008,24 +3016,30 @@
     if (window.__TM_HL_ML_INSTALLED) return;
     window.__TM_HL_ML_INSTALLED = true;
 
-    function activeSlotIndex() {
-      // Try to match current hlColor to an existing slot; fall back to 0.
-      var cur = (typeof window.hlColor === 'string' && window.hlColor) ? window.hlColor.toLowerCase() : '';
-      if (!cur) return 0;
-      for (var i = 0; i < hlColorSlots.length && i < 5; i++) {
-        if (hlColorSlots[i] && String(hlColorSlots[i]).toLowerCase() === cur) return i;
+    // Resolve the chosen highlighter color to {slot, color}. The 5 canonical defaults stay
+    // theme-reactive (color:null -> driven by the data-slot CSS var); any other (custom) color
+    // carries its real hex so the mark renders exactly instead of snapping to the nearest preset.
+    function activeHlStyle() {
+      var cur = (typeof window.hlColor === 'string' && window.hlColor) ? window.hlColor : '';
+      var low = cur.toLowerCase();
+      if (!low) return { slot: 0, color: null };
+      for (var d = 0; d < DEFAULT_HL_COLORS.length; d++) {
+        if (DEFAULT_HL_COLORS[d].toLowerCase() === low) return { slot: d, color: null };
       }
-      if (window.__TM_SR_HL && typeof window.__TM_SR_HL.nearestSlot === 'function') {
-        return window.__TM_SR_HL.nearestSlot(cur);
+      var slot = 0;
+      for (var i = 0; i < hlColorSlots.length; i++) {
+        if (hlColorSlots[i] && String(hlColorSlots[i]).toLowerCase() === low) { slot = i; break; }
       }
-      return 0;
+      return { slot: slot, color: cur };
     }
 
-    function wrapRangeReliably(range, slotIndex) {
+    function wrapRangeReliably(range, hlStyle) {
       // Single-node case: try the fast path.
       var mk = document.createElement('mark');
       mk.className = 'usr';
-      mk.setAttribute('data-slot', String(slotIndex | 0));
+      mk.setAttribute('data-slot', String((hlStyle && hlStyle.slot) | 0));
+      // Custom colors carry their real hex inline so they render exactly.
+      if (hlStyle && hlStyle.color) mk.style.setProperty('--tm-hl', hlStyle.color);
       // Bake current slider alpha into the mark so future slider moves don't affect it.
       var _alpha = document.documentElement.style.getPropertyValue('--tm-hl-alpha');
       if (_alpha) mk.style.setProperty('--tm-hl-alpha', _alpha);
@@ -3035,11 +3049,11 @@
       } catch (e) {
         // Multi-node fallback: walk text nodes inside the range's common ancestor
         // and wrap each portion that intersects the range in its own <mark>.
-        return wrapRangeByWalkingTextNodes(range, slotIndex);
+        return wrapRangeByWalkingTextNodes(range, hlStyle);
       }
     }
 
-    function wrapRangeByWalkingTextNodes(range, slotIndex) {
+    function wrapRangeByWalkingTextNodes(range, hlStyle) {
       var produced = [];
       try {
         var root = range.commonAncestorContainer;
@@ -3057,7 +3071,7 @@
           var tn = nodes[i];
           if (!tn.nodeValue) continue;
           // Don't wrap text inside existing highlights or toolbar chrome.
-          if (tn.parentNode && tn.parentNode.closest && tn.parentNode.closest('mark.usr,#hl-bar,.tm-ws-host,.tm-sr-sidebar,.tm-pop,.tm-drawing-ctx')) continue;
+          if (tn.parentNode && tn.parentNode.closest && tn.parentNode.closest('mark.usr,#hl-bar,.tm-ws-host,#sidebar,.sidebar,.tm-sr-sidebar,.tm-pop,.tm-drawing-ctx')) continue;
           var sOffset = (tn === range.startContainer) ? range.startOffset : 0;
           var eOffset = (tn === range.endContainer) ? range.endOffset : tn.nodeValue.length;
           if (eOffset <= sOffset) continue;
@@ -3065,7 +3079,8 @@
           try { sub.setStart(tn, sOffset); sub.setEnd(tn, eOffset); } catch (e2) { continue; }
           var mk = document.createElement('mark');
           mk.className = 'usr';
-          mk.setAttribute('data-slot', String(slotIndex | 0));
+          mk.setAttribute('data-slot', String((hlStyle && hlStyle.slot) | 0));
+          if (hlStyle && hlStyle.color) mk.style.setProperty('--tm-hl', hlStyle.color);
           var _alpha = document.documentElement.style.getPropertyValue('--tm-hl-alpha');
           if (_alpha) mk.style.setProperty('--tm-hl-alpha', _alpha);
           try { sub.surroundContents(mk); produced.push(mk); } catch (e3) { /* skip this node */ }
@@ -3077,7 +3092,7 @@
     document.addEventListener('mouseup', function (ev) {
       if (!window.__TM_HIGHLIGHT_ARMED) return;
       var tgt = ev.target;
-      if (tgt && tgt.closest && tgt.closest('#hl-bar,.tm-ws-host,.tm-pop,.tm-popwrap,.tm-drawing-ctx,.tm-sr-sidebar,.tm-sr-sidebar-host,.tm-sr-hamburger,.tm-sr-sidebar-toggle')) return;
+      if (tgt && tgt.closest && tgt.closest('#hl-bar,.tm-ws-host,.tm-pop,.tm-popwrap,.tm-drawing-ctx,#sidebar,.sidebar,.tm-sr-sidebar,.tm-sr-sidebar-host,.tm-sr-hamburger,.tm-sr-sidebar-toggle')) return;
       var sel;
       try { sel = window.getSelection(); } catch (eSel) { return; }
       if (!sel || sel.isCollapsed || sel.rangeCount === 0) return;
@@ -3086,8 +3101,8 @@
       if (!rng || !document.body.contains(rng.commonAncestorContainer)) return;
       // Snapshot BEFORE mutation so undo can restore pre-highlight state.
       try { pushHlHistory(); } catch (eH) { /* ignore */ }
-      var slot = activeSlotIndex();
-      var produced = wrapRangeReliably(rng, slot);
+      var hlStyle = activeHlStyle();
+      var produced = wrapRangeReliably(rng, hlStyle);
       if (!produced.length) return;
       try { sel.removeAllRanges(); } catch (eRm) { /* ignore */ }
       try { if (typeof window.__TM_SR_HL_REWIRE === 'function') window.__TM_SR_HL_REWIRE(); } catch (eRW) { /* ignore */ }
