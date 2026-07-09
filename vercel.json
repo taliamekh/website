@@ -13,5 +13,15 @@
     { "source": "/expenses", "destination": "/expenses/spending-tracker/dist/index.html" },
     { "source": "/expenses/", "destination": "/expenses/spending-tracker/dist/index.html" },
     { "source": "/expenses/:path+", "destination": "/expenses/spending-tracker/dist/:path+" }
+  ],
+  "headers": [
+    {
+      "source": "/resume",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+    },
+    {
+      "source": "/resume/:path*",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+    }
   ]
 }

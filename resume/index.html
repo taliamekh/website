@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
+  <title>Talia Mekhayche — Résumé</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Sora:wght@400;600;700&family=Roboto+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#170a1c; --deep:#21102a; --panel:#2e1640; --panel-hi:#3d2055;
+      --border:#4a2a68; --border2:#6f44a0; --accent:#c084fc; --accent-2:#fbbf24;
+      --pink:#e879f9; --text:#ecdef7; --text-muted:#b09bc8; --text-dim:#7a6588;
+      --white:#fffaf3; --tag-font:'Roboto Mono', monospace;
+    }
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+    html, body { height:100%; }
+    body {
+      background:
+        radial-gradient(1100px 620px at 50% -12%, rgba(192,132,252,0.12), transparent 60%),
+        var(--bg);
+      color:var(--text);
+      font-family:'Outfit', sans-serif; font-weight:300;
+      display:flex; flex-direction:column; min-height:100dvh;
+    }
+    header {
+      display:flex; align-items:center; gap:18px; flex-wrap:wrap;
+      padding:16px 22px; border-bottom:1px solid var(--border);
+      background:rgba(33,16,42,0.72); backdrop-filter:blur(10px);
+      position:sticky; top:0; z-index:5;
+    }
+    .id { display:flex; flex-direction:column; gap:3px; margin-right:auto; }
+    .id .kicker {
+      font-family:var(--tag-font); font-size:10.5px; letter-spacing:.2em;
+      text-transform:uppercase; color:var(--accent);
+    }
+    .id .name {
+      font-family:'Sora', sans-serif; font-weight:700; font-size:19px;
+      letter-spacing:-.01em; color:var(--white);
+    }
+    .actions { display:flex; gap:10px; flex-wrap:wrap; }
+    a.btn {
+      font-family:var(--tag-font); font-size:12px; font-weight:500; letter-spacing:.02em;
+      text-decoration:none; padding:10px 15px; border-radius:10px;
+      display:inline-flex; align-items:center; gap:8px;
+      transition:transform .12s ease, filter .12s ease, border-color .12s ease, color .12s ease;
+    }
+    a.btn:hover { transform:translateY(-1px); }
+    a.btn.primary { background:linear-gradient(180deg, var(--accent), #a855f7); color:#1a0b22; font-weight:600; }
+    a.btn.primary:hover { filter:brightness(1.07); }
+    a.btn.ghost { color:var(--text); border:1px solid var(--border2); background:rgba(255,255,255,.02); }
+    a.btn.ghost:hover { border-color:var(--accent); color:var(--white); }
+    main { flex:1 1 auto; display:flex; padding:20px; min-height:0; }
+    .doc {
+      flex:1 1 auto; width:100%; max-width:1000px; margin:0 auto; min-height:0;
+      border:1px solid var(--border); border-radius:14px; overflow:hidden;
+      box-shadow:0 24px 70px rgba(0,0,0,.45); background:#2b2b2b;
+    }
+    .doc iframe { display:block; width:100%; height:100%; border:0; }
+    .fallback { display:none; margin:auto; max-width:360px; text-align:center; }
+    .fallback .card {
+      border:1px solid var(--border); border-radius:16px; padding:28px 24px;
+      background:rgba(46,22,64,0.5);
+    }
+    .fallback h1 { font-family:'Sora', sans-serif; font-size:20px; color:var(--white); margin-bottom:6px; }
+    .fallback p { color:var(--text-muted); font-size:14px; line-height:1.5; margin-bottom:18px; }
+    @media (max-width:640px) {
+      .doc { display:none; }        /* inline PDF preview is unreliable on phones — offer the buttons */
+      .fallback { display:block; }
+      main { align-items:center; justify-content:center; }
+      .id .name { font-size:17px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="id">
+      <span class="kicker">Résumé</span>
+      <span class="name">Talia Mekhayche</span>
+    </div>
+    <div class="actions">
+      <a class="btn ghost" href="Talia-Mekhayche-Resume.pdf" target="_blank" rel="noopener">Open in new tab</a>
+      <a class="btn primary" href="Talia-Mekhayche-Resume.pdf" download="Talia-Mekhayche-Resume.pdf">Download PDF</a>
+    </div>
+  </header>
+  <main>
+    <div class="doc">
+      <iframe title="Talia Mekhayche — Résumé" src="Talia-Mekhayche-Resume.pdf#view=FitH"></iframe>
+    </div>
+    <div class="fallback">
+      <div class="card">
+        <h1>Talia Mekhayche</h1>
+        <p>Open the résumé below.</p>
+        <a class="btn primary" href="Talia-Mekhayche-Resume.pdf" target="_blank" rel="noopener" style="justify-content:center;">View résumé (PDF)</a>
+      </div>
+    </div>
+  </main>
+</body>
+</html>
