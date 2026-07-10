@@ -81,7 +81,8 @@
     opacity: 0;
   }
   body.sr-notes-expand {
-    overflow-x: visible;
+    overflow: hidden;
+    height: 100vh;
   }
   body.sr-notes-expand .notes-footer {
     display: none !important;
@@ -356,10 +357,12 @@
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+    /* `padding` is intentionally NOT transitioned: main's padding flips between
+       0 (expand view) and the nav-clearing 100px/80px (normal), and animating it
+       across the accompanying display/mode change leaves it stuck mid-value. */
     transition:
       opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.08s,
       visibility 0s linear 0s,
-      padding 0.35s ease,
       max-width 0.35s ease;
   }
   /* Expand view: maximize notes; nav is hidden entirely so the notes fill the
@@ -370,10 +373,16 @@
   body.sr-notes-expand main {
     max-width: none;
     width: 100%;
-    min-height: 100vh;
+    height: 100%;
     padding: 0;
     margin: 0;
-    transition: padding 0.35s ease, max-width 0.35s ease;
+    display: flex;
+    flex-direction: column;
+    /* NOTE: do NOT transition `padding` here. This rule also flips `display`
+       block->flex on toggle; animating padding across that display change leaves
+       it stuck at the nav-clearing 100px/80px, so the notes never fill the tab.
+       Keep padding instant; only animate max-width. */
+    transition: max-width 0.35s ease;
   }
   body.sr-auth-unlocked .ecor-panel {
     flex: 1 1 auto;
@@ -417,7 +426,7 @@
     border-left: none;
     border-right: none;
     border-top: none;
-    min-height: 100vh;
+    min-height: 0;
     flex: 1 1 auto;
   }
   /* The panel-head bar (course title + README + load status) is fully hidden
@@ -1210,8 +1219,19 @@
     flex: 1 1 auto;
     min-height: 0;
   }
+  /* Expand view fills the full tab width edge-to-edge. The resizable-column
+     gutters + drag handles (which exist only to carve out the side space the
+     user did not want) are hidden here, and the !important width overrides the
+     inline 88% that applyNotesColumnPct writes. */
+  body.sr-notes-expand .notes-gutter,
+  body.sr-notes-expand .notes-resize-handle {
+    display: none !important;
+  }
   body.sr-notes-expand .notes-column-inner {
     min-height: 0;
+    width: 100% !important;
+    max-width: none !important;
+    flex: 1 1 auto !important;
   }
   .notes-column-inner {
     flex: 0 0 88%;
@@ -2031,12 +2051,12 @@
       padding: 12px 20px;
     }
     main { padding: 96px 20px 60px; }
-    body.sr-notes-expand main { padding: 64px 0 0; }
+    body.sr-notes-expand main { padding: 0; }
   }
 
   @media (max-width: 480px) {
     main { padding: 92px 16px 48px; }
-    body.sr-notes-expand main { padding: 64px 0 0; }
+    body.sr-notes-expand main { padding: 0; }
     .lock-card { padding: 24px 20px; }
   }
 </style>
