@@ -20,20 +20,20 @@ This keeps the remote, the eventual PR title, and `git log --oneline --all` self
 
 ## Deployment
 
-The live site at the project root (`index.html`, `projects.html`, `contact.html`, `notes/`) is deployed to Vercel from `main`. Pushing to `origin/main` triggers a redeploy automatically — there's no separate "release" step.
+The live site at the project root (`index.html`, `projects.html`, `contact.html`, `workspace/`) is deployed to Vercel from `main`. Pushing to `origin/main` triggers a redeploy automatically — there's no separate "release" step.
 
 Do not push directly to `main` for unreviewed work. Use a feature branch (named per the rule above), merge it into `main` once verified, then push `main`.
 
 ## What lives where
 
-- **Production pages** at the project root: `index.html` (home), `projects.html`, `contact.html`, plus `notes/` (the Spocket-bearing Student Resources hub).
+- **Production pages** at the project root: `index.html` (home), `projects.html`, `contact.html`, plus `workspace/` (private hub) and `school-notes/` (the protected Spocket-bearing notes app).
 - **`legacy/`** — pre-Aurora site snapshot + the numbered exploration mockups (`legacy/mockups-exploration/01-…` through `19-…`). Read-only history; never link to from the live site.
 - **`api/`** — Vercel serverless functions. `gemini.js` is the Spocket AI proxy; `sift-parse.mjs` is the recipe URL parser for Sift. Leave alone unless explicitly working on those integrations.
 - **`lib/`** — server-side helpers for the Vercel functions (currently the cheerio-based sift parser modules). Not served as functions itself.
 - **`sift/`** — git subtree of [`taliamekh/sift`](https://github.com/taliamekh/sift). See the **Synced projects** section below before editing files here.
 - **`expenses/`** — git subtree of [`taliamekh/expenses`](https://github.com/taliamekh/expenses) (PRIVATE). Contains `spending-tracker/` (Vite + React SPA that ships to `mekh.ca/expenses`) and `statements-backup/` (personal financial PDFs/PNGs, excluded from deploy via `.vercelignore`). Password-gated by `middleware.js`. See the **Synced projects** and **Expenses gate** sections below.
 - **`fuel-economy/`** — git subtree of [`taliamekh/Fuel-Economy-Calculator`](https://github.com/taliamekh/Fuel-Economy-Calculator). Static front-end for the road-trip fuel cost planner. See the **Synced projects** section below before editing files here.
-- **`middleware.js`** — Vercel Edge middleware. Currently used to password-gate `/expenses/*`. Reads `EXPENSES_PASSWORD` and `EXPENSES_AUTH_SECRET` from Vercel env vars.
+- **`middleware.js`** — Vercel Edge middleware. Password-gates `/workspace/*` and `/expenses/*`; a valid Workspace device cookie also authorizes Expenses. Reads the matching Workspace and Expenses password/secret env vars.
 - **`spocket.svg`** at the root and the matching `SPOCKET_SVG` constant inside `projects.html` need to stay in sync — they're two copies of the same Spocket character render (one standalone, one inlined so the bento tile can animate her wave on hover).
 
 ## Synced projects (git subtree pattern)

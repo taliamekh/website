@@ -1,0 +1,1794 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="noindex, nofollow" name="robots"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<meta content="Interactive 2027 California robotics internship roadmap." name="description"/>
+<title>2027 California Robotics Internship Roadmap</title>
+<style>:root{
+  --bg:#07110e;
+  --panel:#0d1b17;
+  --panel2:#11241e;
+  --text:#e9f6ef;
+  --muted:#a8c1b5;
+  --accent:#72e6a6;
+  --accent2:#9cd7ff;
+  --warn:#ffd27a;
+  --danger:#ff9a9a;
+  --line:#28463b;
+  --shadow:0 14px 36px rgba(0,0,0,.28);
+  --radius:16px;
+  --sidebar-width:292px;
+  --sidebar-collapsed:82px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:
+    radial-gradient(circle at 18% 0%,rgba(114,230,166,.10),transparent 29rem),
+    radial-gradient(circle at 100% 8%,rgba(156,215,255,.08),transparent 25rem),
+    var(--bg);
+  color:var(--text);
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  line-height:1.55;
+}
+a{color:var(--accent2);text-decoration-thickness:1px;text-underline-offset:3px}
+a:hover{color:white}
+button,.button{
+  appearance:none;
+  border:1px solid var(--line);
+  border-radius:999px;
+  padding:10px 15px;
+  color:var(--text);
+  background:#132820;
+  font:inherit;
+  font-weight:750;
+  cursor:pointer;
+  text-decoration:none;
+}
+button:hover,.button:hover{border-color:var(--accent);background:#193629;color:white}
+.button.primary{background:var(--accent);color:#052014;border-color:transparent}
+.sidebar{
+  position:fixed;
+  inset:0 auto 0 0;
+  z-index:50;
+  width:var(--sidebar-width);
+  display:flex;
+  flex-direction:column;
+  background:rgba(7,17,14,.98);
+  border-right:1px solid var(--line);
+  box-shadow:15px 0 35px rgba(0,0,0,.22);
+  transition:width .22s ease, transform .22s ease;
+  overflow:hidden;
+}
+.sidebar-head{
+  min-height:92px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:18px 17px;
+  border-bottom:1px solid var(--line);
+}
+.brand-mark{
+  width:46px;height:46px;min-width:46px;
+  border-radius:15px;
+  display:grid;place-items:center;
+  background:linear-gradient(145deg,var(--accent),var(--accent2));
+  color:#041d13;
+  font-weight:950;
+  letter-spacing:-.04em;
+}
+.brand-copy{min-width:0}
+.brand-title{font-weight:900;line-height:1.12}
+.brand-sub{color:var(--muted);font-size:.76rem;margin-top:3px}
+.sidebar-nav{
+  padding:13px 10px;
+  display:grid;
+  gap:5px;
+  overflow-y:auto;
+  flex:1;
+}
+.sidebar-link{
+  min-height:48px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:8px 10px;
+  color:#d8eae0;
+  border:1px solid transparent;
+  border-radius:12px;
+  text-decoration:none;
+  white-space:nowrap;
+}
+.sidebar-link:hover{background:#10241d;border-color:var(--line);color:white}
+.sidebar-link.active{
+  background:linear-gradient(100deg,rgba(114,230,166,.20),rgba(156,215,255,.08));
+  border-color:#3a7059;
+  color:white;
+}
+.nav-number{
+  width:34px;height:34px;min-width:34px;
+  display:grid;place-items:center;
+  border-radius:10px;
+  background:#142b23;
+  border:1px solid var(--line);
+  color:var(--accent);
+  font-weight:900;
+}
+.sidebar-link.active .nav-number{background:var(--accent);color:#052014;border-color:transparent}
+.nav-label{font-weight:760;overflow:hidden;text-overflow:ellipsis}
+.sidebar-foot{
+  padding:14px;
+  border-top:1px solid var(--line);
+  background:#08130f;
+}
+.sidebar-progress-top{
+  display:flex;justify-content:space-between;gap:8px;
+  font-size:.82rem;font-weight:780;color:#d8eae0;
+}
+.progress-track{height:8px;background:#1c332a;border-radius:999px;overflow:hidden;margin-top:8px}
+.progress-bar{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .25s ease}
+.sidebar-progress-count{font-size:.72rem;color:var(--muted);margin-top:7px}
+.main{
+  min-height:100vh;
+  margin-left:var(--sidebar-width);
+  transition:margin-left .22s ease;
+}
+.topbar{
+  min-height:70px;
+  position:sticky;
+  top:0;
+  z-index:35;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  padding:10px 22px;
+  background:rgba(7,17,14,.88);
+  border-bottom:1px solid rgba(40,70,59,.8);
+  backdrop-filter:blur(15px);
+}
+.menu-toggle{
+  width:44px;height:44px;padding:0;
+  border-radius:12px;
+  display:grid;place-items:center;
+  font-size:1.25rem;
+}
+.topbar-title{font-weight:850;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.topbar-actions{display:flex;gap:8px}
+.icon-button{width:42px;height:42px;padding:0;border-radius:12px;display:grid;place-items:center}
+.content-wrap{max-width:1240px;margin:auto;padding:28px 28px 80px}
+.page-hero{
+  border:1px solid var(--line);
+  border-radius:23px;
+  background:linear-gradient(145deg,rgba(17,36,30,.97),rgba(8,19,16,.97));
+  padding:30px;
+  box-shadow:var(--shadow);
+  position:relative;
+  overflow:hidden;
+}
+.page-hero:after{
+  content:"";
+  position:absolute;right:-95px;top:-120px;width:300px;height:300px;
+  border:1px solid rgba(114,230,166,.22);border-radius:50%;
+  box-shadow:0 0 0 35px rgba(114,230,166,.04),0 0 0 72px rgba(114,230,166,.02);
+}
+.eyebrow{text-transform:uppercase;letter-spacing:.14em;font-weight:850;color:var(--accent);font-size:.76rem}
+h1{font-size:clamp(2rem,5vw,3.5rem);line-height:1.06;margin:7px 0 13px;max-width:920px}
+h2{font-size:1.55rem;margin:0 0 8px}
+h3{font-size:1.1rem;margin:0 0 6px}
+p{margin:.45rem 0}
+.lede{font-size:1.07rem;color:#d4e7dc;max-width:900px}
+.small,.muted{color:var(--muted);font-size:.92rem}
+.hero-actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:20px;position:relative;z-index:2}
+.page-panel{
+  margin-top:20px;
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  background:rgba(13,27,23,.95);
+  padding:24px;
+  box-shadow:var(--shadow);
+}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}
+.col-4{grid-column:span 4}.col-6{grid-column:span 6}.col-8{grid-column:span 8}.col-12{grid-column:span 12}
+.card{border:1px solid var(--line);background:var(--panel2);border-radius:14px;padding:17px}
+.card.soft{background:#0b1814}
+.stat{font-size:1.55rem;font-weight:900;color:var(--accent)}
+.tag{
+  display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px;
+  padding:4px 9px;margin:3px 4px 3px 0;font-size:.78rem;font-weight:800;color:#d4e7dc;background:#0a1713
+}
+.tag.good{border-color:#377a58;color:#aaf1c7}
+.tag.warn{border-color:#7e6636;color:var(--warn)}
+.tag.block{border-color:#7b4141;color:var(--danger)}
+.tag.info{border-color:#3c6680;color:#b7e2ff}
+.checklist{display:grid;gap:10px;margin-top:12px}
+.check{
+  display:grid;grid-template-columns:auto 1fr;gap:11px;align-items:start;padding:12px 13px;
+  border:1px solid var(--line);background:#0a1713;border-radius:12px
+}
+.check input[type="checkbox"]{width:19px;height:19px;margin-top:2px;accent-color:#61d99b}
+.check:has(input:checked){opacity:.66}
+.check:has(input:checked) .check-title{text-decoration:line-through}
+.check-title{font-weight:790}
+.meta{display:flex;flex-wrap:wrap;gap:7px;margin-top:5px;color:var(--muted);font-size:.85rem}
+.pill{border-radius:999px;background:#163128;padding:2px 8px}
+.priority{border-left:4px solid var(--accent)}
+.warning{border-left:4px solid var(--warn)}
+.danger{border-left:4px solid var(--danger)}
+.info{border-left:4px solid var(--accent2)}
+.job{
+  display:grid;grid-template-columns:1.5fr .8fr .9fr 1.05fr;gap:12px;align-items:start;
+  border-top:1px solid var(--line);padding:16px 0
+}
+.job:first-child{border-top:0;padding-top:4px}
+.job-name{font-weight:880;font-size:1.02rem}
+.job div{min-width:0}
+.label{display:block;color:var(--muted);font-size:.76rem;text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px}
+.fit{font-weight:850;color:var(--accent)}
+.fit.medium{color:var(--warn)}
+.fit.blocked{color:var(--danger)}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{text-align:left;vertical-align:top;border-bottom:1px solid var(--line);padding:11px 9px}
+th{color:#c7ddd2;font-size:.8rem;text-transform:uppercase;letter-spacing:.06em}
+tr:last-child td{border-bottom:0}
+.table-scroll{overflow-x:auto}
+.week{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#0a1713;margin:12px 0}
+.week-head{padding:14px 16px;background:#142a22;display:flex;justify-content:space-between;gap:12px;align-items:center}
+.week-body{padding:14px 16px}
+.week-title{font-weight:900}
+.code{
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  background:#06100d;border:1px solid var(--line);padding:12px;border-radius:10px;white-space:pre-wrap;color:#d5efe1
+}
+.callout{border:1px solid var(--line);border-radius:14px;padding:16px 18px;background:#10231d;margin:14px 0}
+.source-list{columns:2;column-gap:28px}
+.source-list li{break-inside:avoid;margin:0 0 9px}
+.application-row{
+  display:grid;grid-template-columns:auto 1.25fr .7fr .75fr 1.4fr;gap:10px;align-items:center;
+  padding:10px 0;border-bottom:1px solid var(--line)
+}
+.application-row:last-child{border-bottom:0}
+input[type="text"],input[type="date"],select{
+  width:100%;background:#07120e;border:1px solid var(--line);border-radius:9px;padding:9px;color:var(--text)
+}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.hr{height:1px;background:var(--line);margin:20px 0}
+.overview-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:20px}
+.overview-card{
+  min-height:175px;border:1px solid var(--line);border-radius:15px;padding:18px;
+  background:linear-gradient(145deg,#10231d,#0a1713);
+  text-decoration:none;color:var(--text);display:flex;flex-direction:column
+}
+.overview-card:hover{border-color:var(--accent);transform:translateY(-2px);transition:.16s ease;color:white}
+.overview-card .nav-number{margin-bottom:12px}
+.overview-card p{color:var(--muted);font-size:.9rem}
+.overview-card .go{margin-top:auto;color:var(--accent2);font-weight:800}
+.page-nav{display:flex;justify-content:space-between;gap:12px;margin-top:20px}
+.page-nav a{max-width:48%;display:flex;gap:8px;align-items:center}
+.sidebar-backdrop{display:none}
+body.sidebar-collapsed .sidebar{width:var(--sidebar-collapsed)}
+body.sidebar-collapsed .main{margin-left:var(--sidebar-collapsed)}
+body.sidebar-collapsed .brand-copy,
+body.sidebar-collapsed .nav-label,
+body.sidebar-collapsed .sidebar-progress-top span:first-child,
+body.sidebar-collapsed .sidebar-progress-count{display:none}
+body.sidebar-collapsed .sidebar-head{justify-content:center;padding-inline:10px}
+body.sidebar-collapsed .sidebar-link{justify-content:center;padding-inline:8px}
+body.sidebar-collapsed .sidebar-foot{padding:12px 10px}
+footer{color:var(--muted);padding:26px 4px;text-align:center}
+@media (max-width:1000px){
+  .col-4,.col-6,.col-8{grid-column:span 12}
+  .job{grid-template-columns:1fr 1fr}
+  .overview-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:860px){
+  .sidebar{
+    width:min(88vw,310px);
+    transform:translateX(-102%);
+  }
+  .main,body.sidebar-collapsed .main{margin-left:0}
+  body.sidebar-open .sidebar{transform:translateX(0)}
+  body.sidebar-collapsed .sidebar{width:min(88vw,310px)}
+  body.sidebar-collapsed .brand-copy,
+  body.sidebar-collapsed .nav-label,
+  body.sidebar-collapsed .sidebar-progress-top span:first-child,
+  body.sidebar-collapsed .sidebar-progress-count{display:block}
+  body.sidebar-collapsed .sidebar-link{justify-content:flex-start;padding-inline:10px}
+  body.sidebar-collapsed .sidebar-head{justify-content:flex-start;padding-inline:17px}
+  .sidebar-backdrop{
+    position:fixed;inset:0;z-index:45;background:rgba(0,0,0,.58);
+  }
+  body.sidebar-open .sidebar-backdrop{display:block}
+  .content-wrap{padding:20px 16px 65px}
+  .topbar{padding-inline:15px}
+}
+@media (max-width:640px){
+  .page-hero,.page-panel{padding:19px}
+  .job,.two-col,.overview-grid{grid-template-columns:1fr}
+  .source-list{columns:1}
+  .application-row{grid-template-columns:auto 1fr}
+  .application-row>*:nth-child(n+3){grid-column:2}
+  .topbar-title{max-width:55vw}
+  .topbar-actions .print-button{display:none}
+}
+@media print{
+  :root{--bg:#fff;--panel:#fff;--panel2:#fff;--text:#111;--muted:#555;--line:#ccc}
+  body{background:#fff;color:#111}
+  .sidebar,.topbar,.page-nav{display:none!important}
+  .main,body.sidebar-collapsed .main{margin:0}
+  .content-wrap{max-width:none;padding:0}
+  .page-hero,.page-panel,.card,.check,.week{box-shadow:none;background:#fff}
+  a{color:#111}
+}
+.route-page{display:none}
+.route-page.active{display:block}
+.route-page[hidden]{display:none!important}
+.sidebar-link{cursor:pointer}
+.page-nav button{max-width:48%}
+@media (max-width:640px){.page-nav button{max-width:none}}
+
+
+.youtube-cell{min-width:220px}
+.youtube-resource{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  width:100%;
+  margin:0 0 8px;
+  padding:8px 10px;
+  border:1px solid #6f3d3d;
+  border-radius:9px;
+  background:#1b1111;
+  color:#ffd4d4;
+  text-decoration:none;
+  font-size:.84rem;
+  font-weight:760;
+  line-height:1.3;
+}
+.youtube-resource:last-child{margin-bottom:0}
+.youtube-resource:hover{
+  border-color:#ff6b6b;
+  background:#2a1515;
+  color:white;
+}
+.youtube-icon{
+  width:23px;
+  height:23px;
+  min-width:23px;
+  border-radius:7px;
+  display:grid;
+  place-items:center;
+  background:#ff3d3d;
+  color:white;
+  font-size:.68rem;
+}
+@media(max-width:640px){
+  .youtube-cell{min-width:200px}
+}
+
+
+.company-route-grid{margin-top:4px}
+.company-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+  margin-top:14px;
+}
+.company-card{
+  border:1px solid var(--line);
+  border-radius:15px;
+  padding:18px;
+  background:linear-gradient(145deg,#10231d,#0a1713);
+  box-shadow:0 8px 22px rgba(0,0,0,.15);
+}
+.company-card-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:15px;
+  margin-bottom:9px;
+}
+.company-card-head h3{font-size:1.24rem;margin-top:3px}
+.company-tier{
+  display:inline-block;
+  color:var(--accent);
+  font-size:.72rem;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+.company-location{
+  flex:0 0 auto;
+  border:1px solid var(--line);
+  border-radius:999px;
+  padding:4px 9px;
+  color:var(--muted);
+  font-size:.76rem;
+  text-align:right;
+}
+.company-tags{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}
+.company-tags span{
+  padding:3px 8px;
+  border-radius:999px;
+  background:#163128;
+  border:1px solid #315647;
+  color:#d9eee3;
+  font-size:.75rem;
+  font-weight:760;
+}
+.company-fit{
+  padding:10px 11px;
+  border-radius:10px;
+  background:#08130f;
+  border:1px solid var(--line);
+  font-size:.87rem;
+  color:#cfe1d7;
+}
+.company-high{border-left:4px solid var(--accent)}
+.company-medium{border-left:4px solid var(--accent2)}
+.company-stretch{border-left:4px solid var(--warn)}
+.ladder{
+  margin-top:14px;
+  padding:18px;
+  border:1px solid var(--line);
+  border-radius:15px;
+  background:#091510;
+}
+.ladder-step{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:14px;
+  align-items:start;
+}
+.ladder-number{
+  width:39px;
+  height:39px;
+  display:grid;
+  place-items:center;
+  border-radius:12px;
+  background:var(--accent);
+  color:#052014;
+  font-weight:950;
+}
+.ladder-arrow{
+  margin:6px 0 6px 17px;
+  color:var(--accent2);
+  font-size:1.35rem;
+}
+@media(max-width:900px){
+  .company-grid{grid-template-columns:1fr}
+}
+@media(max-width:520px){
+  .company-card-head{display:block}
+  .company-location{display:inline-block;margin-top:7px}
+}
+
+
+.role-explainer,
+.company-explainer{
+  display:grid;
+  grid-template-columns:1fr 1.35fr;
+  gap:9px;
+  margin-top:12px;
+}
+.summary-box{
+  border:1px solid var(--line);
+  border-radius:11px;
+  padding:11px 12px;
+  background:#08130f;
+}
+.summary-company{border-left:3px solid var(--accent2)}
+.summary-work{border-left:3px solid var(--accent)}
+.summary-label{
+  margin-bottom:5px;
+  color:var(--accent);
+  font-size:.7rem;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.09em;
+}
+.summary-company .summary-label{color:var(--accent2)}
+.summary-box p{margin:0;font-size:.86rem;color:#d5e7de}
+.summary-box ul{
+  margin:0;
+  padding-left:18px;
+  color:#d5e7de;
+  font-size:.84rem;
+}
+.summary-box li{margin:0 0 4px}
+.summary-box li:last-child{margin-bottom:0}
+.company-card .company-explainer{
+  grid-template-columns:1fr;
+  margin:13px 0 11px;
+}
+.company-card .summary-box{padding:11px}
+.company-card .summary-box ul{font-size:.85rem}
+.job .role-explainer{
+  grid-column:1/-1;
+}
+@media(max-width:1050px){
+  .role-explainer{grid-template-columns:1fr}
+}
+@media(max-width:640px){
+  .summary-box p,.summary-box ul{font-size:.82rem}
+}
+</style>
+</head>
+<body>
+<aside class="sidebar" id="sidebar">
+<div class="sidebar-head">
+<div class="brand-mark">R27</div>
+<div class="brand-copy">
+<div class="brand-title">Robotics Roadmap</div>
+<div class="brand-sub">California internship plan</div>
+</div>
+</div>
+<nav aria-label="Roadmap pages" class="sidebar-nav">
+<a class="sidebar-link" data-route="overview" href="#overview" title="Overview">
+<span class="nav-number">⌂</span>
+<span class="nav-label">Overview</span>
+</a>
+<a class="sidebar-link" data-route="strategy" href="#strategy" title="Strategy">
+<span class="nav-number">1</span>
+<span class="nav-label">Strategy</span>
+</a>
+<a class="sidebar-link" data-route="internships" href="#internships" title="2027 Internships">
+<span class="nav-number">2</span>
+<span class="nav-label">2027 Internships</span>
+</a><a class="sidebar-link" data-route="companies" href="#companies" title="Company Targets"><span class="nav-number">★</span><span class="nav-label">Company Targets</span></a>
+<a class="sidebar-link" data-route="eligibility" href="#eligibility" title="U.S. Eligibility">
+<span class="nav-number">3</span>
+<span class="nav-label">U.S. Eligibility</span>
+</a>
+<a class="sidebar-link" data-route="roadmap" href="#roadmap" title="Learning Roadmap">
+<span class="nav-number">4</span>
+<span class="nav-label">Learning Roadmap</span>
+</a>
+<a class="sidebar-link" data-route="drone" href="#drone" title="Drone Project">
+<span class="nav-number">5</span>
+<span class="nav-label">Drone Project</span>
+</a>
+<a class="sidebar-link" data-route="projects" href="#projects" title="Standout Projects">
+<span class="nav-number">6</span>
+<span class="nav-label">Standout Projects</span>
+</a>
+<a class="sidebar-link" data-route="portfolio" href="#portfolio" title="Portfolio">
+<span class="nav-number">7</span>
+<span class="nav-label">Portfolio</span>
+</a>
+<a class="sidebar-link" data-route="applications" href="#applications" title="Applications">
+<span class="nav-number">8</span>
+<span class="nav-label">Applications</span>
+</a>
+<a class="sidebar-link" data-route="sources" href="#sources" title="Sources">
+<span class="nav-number">9</span>
+<span class="nav-label">Sources</span>
+</a>
+</nav>
+<div class="sidebar-foot">
+<div class="sidebar-progress-top"><span>Overall progress</span><span data-progress-text="">0%</span></div>
+<div class="progress-track"><div class="progress-bar" data-progress-bar=""></div></div>
+<div class="sidebar-progress-count" data-progress-count="">0 of 80 tasks complete</div>
+</div>
+</aside>
+<div aria-hidden="true" class="sidebar-backdrop" onclick="closeSidebar()"></div>
+<main class="main">
+<header class="topbar">
+<div style="display:flex;align-items:center;gap:12px;min-width:0">
+<button aria-label="Toggle navigation menu" class="menu-toggle" onclick="toggleSidebar()" title="Toggle menu" type="button">☰</button>
+<div class="topbar-title">Overview</div>
+</div>
+<div class="topbar-actions">
+<button aria-label="Print this page" class="icon-button print-button" onclick="window.print()" title="Print this page" type="button">⎙</button>
+</div>
+</header>
+<div class="content-wrap">
+<section class="route-page" data-page="overview" hidden="">
+<header class="page-hero">
+<div class="eyebrow">Central dashboard • updated August 3, 2026</div>
+<h1>2027 California Robotics Internship Roadmap</h1>
+<p class="lede">Central dashboard for the internship search, learning plan, and robotics portfolio.</p>
+<div class="hero-actions">
+<button onclick="window.print()" type="button">Print this page</button>
+<button onclick="resetProgress()" type="button">Reset all progress</button>
+</div>
+</header>
+<section class="page-panel">
+<div class="grid">
+<div class="card col-4">
+<div class="stat">10–12 h/week</div>
+<p>A sustainable pace for building the skills and project evidence needed before summer 2027.</p>
+</div>
+<div class="card col-4">
+<div class="stat">3 proof points</div>
+<p>One autonomy project, one mechanical design/test project, and one controls/simulation project.</p>
+</div>
+<div class="card col-4">
+<div class="stat">Apply early</div>
+<p>Several 2027 opportunities are already listed. Learning and applications should run in parallel.</p>
+</div>
+</div>
+<div class="overview-grid">
+<a class="overview-card" data-route="strategy" href="#strategy">
+<span class="nav-number">1</span>
+<h3>Strategy</h3>
+<p>Position your mechanical-engineering background for robotics hardware, controls, simulation, and autonomy.</p>
+<span class="go">Open page →</span>
+</a>
+<a class="overview-card" data-route="internships" href="#internships">
+<span class="nav-number">2</span>
+<h3>2027 Internships</h3>
+<p>Researched California roles, fit assessments, eligibility notes, and immediate application actions.</p>
+<span class="go">Open page →</span>
+</a>
+<a class="overview-card" data-route="eligibility" href="#eligibility">
+<span class="nav-number">3</span>
+<h3>U.S. Eligibility</h3>
+<p>A practical filter for J-1 internships, authorization questions, and restricted roles.</p>
+<span class="go">Open page →</span>
+</a>
+<a class="overview-card" data-route="roadmap" href="#roadmap">
+<span class="nav-number">4</span>
+<h3>Learning Roadmap</h3>
+<p>What to learn, why it matters, how long it should take, and the best source for each topic.</p>
+<span class="go">Open page →</span>
+</a>
+<a class="overview-card" data-route="drone" href="#drone">
+<span class="nav-number">5</span>
+<h3>Drone Project</h3>
+<p>A simulation-first, privacy-conscious flagship project with weekly deliverables and measurable results.</p>
+<span class="go">Open page →</span>
+</a>
+<a class="overview-card" data-route="projects" href="#projects">
+<span class="nav-number">6</span>
+<h3>Standout Projects</h3>
+<p>Projects targeted to humanoids, robotics hardware, controls, simulation, and Physical AI.</p>
+<span class="go">Open page →</span>
+</a>
+<a class="overview-card" data-route="portfolio" href="#portfolio">
+<span class="nav-number">7</span>
+<h3>Portfolio</h3>
+<p>Repository structure, engineering evidence, demo expectations, and resume bullets.</p>
+<span class="go">Open page →</span>
+</a>
+<a class="overview-card" data-route="applications" href="#applications">
+<span class="nav-number">8</span>
+<h3>Applications</h3>
+<p>A repeatable weekly workflow, editable tracker, and outreach templates.</p>
+<span class="go">Open page →</span>
+</a>
+<a class="overview-card" data-route="sources" href="#sources">
+<span class="nav-number">9</span>
+<h3>Sources</h3>
+<p>Internship listings, work-authorization guidance, aviation and privacy references, and technical learning resources.</p>
+<span class="go">Open page →</span>
+</a>
+</div>
+</section>
+<nav aria-label="Previous and next pages" class="page-nav">
+<span></span>
+<button class="button" data-route="strategy" type="button">Strategy →</button>
+</nav>
+</section>
+<section class="route-page" data-page="strategy" hidden="">
+<header class="page-hero">
+<div class="eyebrow">Roadmap page 1 of 9</div>
+<h1>Career Strategy</h1>
+<p class="lede">Position your mechanical-engineering background for robotics hardware, controls, simulation, and autonomy.</p>
+<div class="hero-actions">
+<button onclick="window.print()" type="button">Print this page</button>
+<button onclick="resetProgress()" type="button">Reset all progress</button>
+</div>
+</header>
+<section class="page-panel">
+<div class="eyebrow">1 • Direction</div>
+<h2>What the target jobs are actually asking for</h2>
+<p class="muted">The screenshots and current postings point to two overlapping tracks. Build the shared foundation first, then choose a specialization.</p>
+<div class="grid" style="margin-top:14px">
+<div class="card col-6 priority">
+<h3>Track A: Mechanical robotics, controls, and simulation</h3>
+<p>Tesla Optimus, Reliable Robotics, moss, Haast, and similar teams value:</p>
+<div>
+<span class="tag good">CAD + drawings</span><span class="tag good">FEA</span>
+<span class="tag good">GD&amp;T / DFM</span><span class="tag good">Kinematics</span>
+<span class="tag good">Dynamics + controls</span><span class="tag good">Test rigs</span>
+<span class="tag good">Python / C++</span><span class="tag good">MATLAB / Simulink</span>
+</div>
+</div>
+<div class="card col-6 info">
+<h3>Track B: Physical AI and robot autonomy</h3>
+<p>NVIDIA-style research and autonomy teams add:</p>
+<div>
+<span class="tag info">ROS 2</span><span class="tag info">Gazebo / Isaac Sim</span>
+<span class="tag info">Perception</span><span class="tag info">Sensor fusion</span>
+<span class="tag info">PyTorch</span><span class="tag info">Sim-to-real</span>
+<span class="tag info">Reinforcement learning</span>
+</div>
+<p class="small">CUDA, JAX, Warp, publications, and advanced robot learning are stretch goals—not your first priority for undergraduate mechanical roles.</p>
+</div>
+<div class="card col-4">
+<div class="stat">Apply now</div>
+<p>Do not wait until every skill is learned. Several 2027 postings are already accepting applications.</p>
+</div>
+<div class="card col-4">
+<div class="stat">10–12 h/week</div>
+<p>A sustainable pace through the school year produces roughly 350–450 focused hours before summer.</p>
+</div>
+<div class="card col-4">
+<div class="stat">3 proof points</div>
+<p>One polished autonomy project, one mechanical design/test project, and one controls/simulation project are stronger than many unfinished builds.</p>
+</div>
+</div>
+<div class="checklist">
+<label class="check">
+<input data-task="strategy-1" type="checkbox"/>
+<span><span class="check-title">Choose a primary positioning statement</span><br/>
+<span class="small">Use: “Mechanical engineering student specializing in robotic mechanisms, controls, simulation, and autonomous-system prototyping.”</span></span>
+</label>
+<label class="check">
+<input data-task="strategy-2" type="checkbox"/>
+<span><span class="check-title">Make Track A the core and Track B the differentiator</span><br/>
+<span class="small">This is the most credible route from your mechanical background into robotics while keeping Tesla/NVIDIA-style work in reach.</span></span>
+</label>
+<label class="check">
+<input data-task="strategy-3" type="checkbox"/>
+<span><span class="check-title">Reserve 10–12 focused hours each week</span><br/>
+<span class="small">Suggested split: 5 hours project, 3 hours technical study, 2 hours applications/networking, 1–2 hours documentation.</span></span>
+</label>
+</div>
+</section>
+<nav aria-label="Previous and next pages" class="page-nav">
+<button class="button" data-route="overview" type="button">← Overview</button>
+<button class="button" data-route="internships" type="button">2027 Internships →</button>
+</nav>
+</section>
+<section class="route-page" data-page="internships" hidden="">
+<header class="page-hero">
+<div class="eyebrow">Roadmap page 2 of 9</div>
+<h1>Winter, Spring, and Summer 2027 Internships</h1>
+<p class="lede">Researched California roles, fit assessments, eligibility notes, and immediate application actions.</p>
+<div class="hero-actions">
+<button onclick="window.print()" type="button">Print this page</button>
+<button onclick="resetProgress()" type="button">Reset all progress</button>
+</div>
+</header>
+<section class="page-panel">
+<div class="callout warning">
+<strong>Posting status changes quickly.</strong> The opportunities below were visible on August 3, 2026.
+        “Fit” measures technical alignment; it does not guarantee work authorization. Apply early and verify the start term, graduation-year requirement,
+        visa route, and export-control eligibility with the recruiter.
+      </div><div class="callout info role-summary-note">Each listing now separates <strong>what the company builds</strong> from <strong>the work you could realistically perform</strong>. Tasks are based on the role description and are examples, not a guarantee of assignment.</div>
+<div class="job">
+<div>
+<span class="label">Role</span>
+<div class="job-name"><a href="https://builtin.com/job/spring-27-intern-mechanical-engineering/10013769" rel="noopener" target="_blank">moss — Spring ’27 Mechanical Engineering Intern</a></div>
+<div class="small">Robotic sensor kits, enclosures, thermal/vibration design, FEA, tolerance analysis, DFM, supplier work, and field validation.</div><div class="role-explainer"><div class="summary-box summary-company"><div class="summary-label">What they do</div><p>moss develops robotic sensing systems and field-deployable hardware that must survive real operating conditions while collecting reliable data.</p></div><div class="summary-box summary-work"><div class="summary-label">What you could be doing</div><ul><li>Design sensor housings, mounts, cable routing, and serviceable mechanical assemblies in CAD.</li><li>Run structural, vibration, and thermal checks, then compare the results with prototype testing.</li><li>Prepare drawings, tolerance analyses, bills of materials, and design-for-manufacturing updates.</li><li>Support supplier communication, assembly, field installation, and failure investigation.</li></ul></div></div>
+</div>
+<div><span class="label">Place / term</span>San Francisco<br/>Spring 2027</div>
+<div><span class="label">Technical fit</span><span class="fit">Excellent</span><br/><span class="small">Best direct match</span></div>
+<div><span class="label">Eligibility action</span><span class="tag warn">Ask about J-1</span><br/><span class="small">Apply immediately; authorization language is not clear in the listing.</span></div>
+</div>
+<div class="job">
+<div>
+<span class="label">Role</span>
+<div class="job-name"><a href="https://jobs.ashbyhq.com/reliable-robotics/301305c1-eb57-4a88-ab91-97df9a77c58c" rel="noopener" target="_blank">Reliable Robotics — Mechanical Engineering Intern</a></div>
+<div class="small">Own an automated-aircraft hardware project from concept through installation; CAD, FEA, test stands, measurement, data analysis, and technical writing.</div><div class="role-explainer"><div class="summary-box summary-company"><div class="summary-label">What they do</div><p>Reliable Robotics develops aircraft automation technology intended to make aviation safer and enable remotely operated or highly automated aircraft.</p></div><div class="summary-box summary-work"><div class="summary-label">What you could be doing</div><ul><li>Own a mechanical or electromechanical aircraft subsystem from requirements through installation.</li><li>Create CAD models, drawings, fixtures, and test stands for flight or ground hardware.</li><li>Perform hand calculations and FEA, select components, and document design trade-offs.</li><li>Instrument tests, analyse measured data, investigate failures, and recommend design changes.</li></ul></div></div>
+</div>
+<div><span class="label">Place / term</span>Mountain View<br/>Spring 2027</div>
+<div><span class="label">Technical fit</span><span class="fit">Excellent</span></div>
+<div><span class="label">Eligibility action</span><span class="tag warn">Export review</span><br/><span class="small">Non-U.S. persons may be considered, but the company can decline to pursue a licence.</span></div>
+</div>
+<div class="job">
+<div>
+<span class="label">Role</span>
+<div class="job-name"><a href="https://www.tesla.com/careers/search/job/internship-cae-mechanical-design-engineer-optimus-fall-2026-266320" rel="noopener" target="_blank">Tesla Optimus — CAE Mechanical Design Intern</a></div>
+<div class="small">High-fidelity FE models, structural/sensing/thermal/mechanism design, multiphysics analysis, and cross-functional robot development.</div><div class="role-explainer"><div class="summary-box summary-company"><div class="summary-label">What they do</div><p>Tesla’s Optimus team is developing a general-purpose humanoid robot with custom actuators, mechanisms, sensors, structures, controls, and manufacturing processes.</p></div><div class="summary-box summary-work"><div class="summary-label">What you could be doing</div><ul><li>Build finite-element models of robot structures, joints, covers, and mechanisms.</li><li>Evaluate stiffness, strength, fatigue, vibration, thermal behaviour, and load paths.</li><li>Work with mechanical designers to change geometry based on simulation and test results.</li><li>Correlate analysis with physical tests and improve the accuracy of the models.</li></ul></div></div>
+</div>
+<div><span class="label">Place / term</span>Palo Alto<br/>Fall 2026; may continue into Winter/Spring 2027</div>
+<div><span class="label">Technical fit</span><span class="fit medium">Ambitious</span><br/><span class="small">Great benchmark role</span></div>
+<div><span class="label">Eligibility action</span><span class="tag warn">Ask about J-1</span><br/><span class="small">The posting mentions CPT, which normally applies to students at U.S. schools—not a Carleton student.</span></div>
+</div>
+<div class="job">
+<div>
+<span class="label">Role</span>
+<div class="job-name"><a href="https://peakenergy.com/get-in-touch/careers" rel="noopener" target="_blank">Peak Energy — Mechanical Design Intern</a></div>
+<div class="small">Enclosures, plastics, high-current conductors, harness integration, rapid prototyping, testing, thermal/structural collaboration, and production transition.</div><div class="role-explainer"><div class="summary-box summary-company"><div class="summary-label">What they do</div><p>Peak Energy develops sodium-ion battery energy-storage systems for the electrical grid. It is not a robotics company, but the work builds highly transferable electromechanical design experience.</p></div><div class="summary-box summary-work"><div class="summary-label">What you could be doing</div><ul><li>Design battery enclosures, brackets, busbar supports, harness routing, and serviceable assemblies.</li><li>Collaborate on thermal, structural, safety, and manufacturing requirements.</li><li>Prototype parts, support component testing, and resolve fit or assembly problems.</li><li>Release drawings and design updates for production-oriented hardware.</li></ul></div></div>
+</div>
+<div><span class="label">Place / term</span>Burlingame<br/>Winter 2027</div>
+<div><span class="label">Technical fit</span><span class="fit">Strong adjacent</span></div>
+<div><span class="label">Eligibility action</span><span class="tag warn">“Eligible to work”</span><br/><span class="small">Confirm whether J-1 sponsorship is accepted before investing heavily.</span></div>
+</div>
+<div class="job">
+<div>
+<span class="label">Role</span>
+<div class="job-name"><a href="https://jobs.ashbyhq.com/haastautonomous/5e3667c4-3d04-40d9-87d1-6b7fe6539e2d" rel="noopener" target="_blank">Haast Autonomous — Summer 2027 Engineering Intern</a></div>
+<div class="small">Autonomous VTOL aircraft; airframe/mechanical design, prototyping, avionics, controls, simulation, manufacturing, and flight-test support.</div><div class="role-explainer"><div class="summary-box summary-company"><div class="summary-label">What they do</div><p>Haast Autonomous develops autonomous vertical-takeoff-and-landing aircraft, combining airframe design, propulsion, avionics, controls, simulation, and flight testing.</p></div><div class="summary-box summary-work"><div class="summary-label">What you could be doing</div><ul><li>Design and prototype airframe, payload, landing, or avionics-mounting components.</li><li>Build simulation models and support control-system or mission-planning experiments.</li><li>Integrate sensors, computers, wiring, and mechanical hardware into a flight vehicle.</li><li>Prepare and support ground tests, flight tests, data review, and post-test design changes.</li></ul></div></div>
+</div>
+<div><span class="label">Place / term</span>San Francisco<br/>Summer 2027</div>
+<div><span class="label">Technical fit</span><span class="fit">Excellent</span><br/><span class="small">Main project aligns directly</span></div>
+<div><span class="label">Eligibility action</span><span class="tag warn">Ask about J-1</span><br/><span class="small">Authorization language was not visible in the posting.</span></div>
+</div>
+<div class="job">
+<div>
+<span class="label">Role</span>
+<div class="job-name"><a href="https://job-boards.greenhouse.io/andurilindustries/jobs/5153187007" rel="noopener" target="_blank">Anduril — 2027 Mechanical Engineer Intern</a></div>
+<div class="small">Prototype design, failure analysis, design reviews, hardware tests, CAD drawings, fabrication, FEA/CFD, and electromechanical integration.</div><div class="role-explainer"><div class="summary-box summary-company"><div class="summary-label">What they do</div><p>Anduril develops autonomous defence systems, including aircraft, sensors, robotic vehicles, and the hardware and software used to coordinate them.</p></div><div class="summary-box summary-work"><div class="summary-label">What you could be doing</div><ul><li>Design mechanical structures, housings, mechanisms, or test fixtures for autonomous systems.</li><li>Create CAD models and drawings, run FEA or CFD, and support fabrication.</li><li>Assemble prototypes, execute environmental or functional tests, and investigate failures.</li><li>Work with electrical, manufacturing, test, and autonomy engineers during integration.</li></ul></div></div>
+</div>
+<div><span class="label">Place / term</span>Costa Mesa / Irvine<br/>Summer 2027</div>
+<div><span class="label">Technical fit</span><span class="fit">Excellent</span></div>
+<div><span class="label">Eligibility action</span><span class="tag block">U.S. Person required</span><br/><span class="small">Likely ineligible as a Canadian student unless you independently hold qualifying status.</span></div>
+</div>
+<div class="job">
+<div>
+<span class="label">Role</span>
+<div class="job-name"><a href="https://jobs.lever.co/plus-2/c6560f15-5446-442a-878d-b7c72606149b" rel="noopener" target="_blank">PlusAI — Robotics Systems Intern, Sensor Platform</a></div>
+<div class="small">Autonomous-vehicle sensor-platform role. Term is not identified as 2027, so treat it as a live skills benchmark and company watchlist entry.</div><div class="role-explainer"><div class="summary-box summary-company"><div class="summary-label">What they do</div><p>PlusAI develops autonomous-driving systems for commercial trucks, including perception sensors, vehicle integration, autonomy software, and validation tools.</p></div><div class="summary-box summary-work"><div class="summary-label">What you could be doing</div><ul><li>Package and mount cameras, lidar, radar, computers, and supporting electronics on vehicles.</li><li>Evaluate sensor placement, visibility, vibration, thermal exposure, and serviceability.</li><li>Support calibration, logging, test-vehicle preparation, and road-test troubleshooting.</li><li>Analyse sensor or system failures and work with software and hardware teams on fixes.</li></ul></div></div>
+</div>
+<div><span class="label">Place / term</span>Santa Clara<br/>Rolling / confirm dates</div>
+<div><span class="label">Technical fit</span><span class="fit medium">Strong future fit</span></div>
+<div><span class="label">Eligibility action</span><span class="tag warn">Verify term + J-1</span></div>
+</div>
+<div class="job">
+<div>
+<span class="label">Role</span>
+<div class="job-name"><a href="https://boards.greenhouse.io/harbingermotors/jobs/4711879007" rel="noopener" target="_blank">Harbinger — Mechanical Engineering Intern, Inverter</a></div>
+<div class="small">Not strictly robotics, but very relevant CAD, test-fixture, CAE, component-test, and electromechanical packaging experience.</div><div class="role-explainer"><div class="summary-box summary-company"><div class="summary-label">What they do</div><p>Harbinger develops electric vehicle platforms for medium-duty commercial vehicles, including batteries, power electronics, chassis systems, and vehicle integration.</p></div><div class="summary-box summary-work"><div class="summary-label">What you could be doing</div><ul><li>Design inverter housings, mounts, cooling interfaces, brackets, and test fixtures.</li><li>Support structural and thermal analysis of power-electronics hardware.</li><li>Coordinate packaging with electrical, cooling, harness, and manufacturing teams.</li><li>Run component tests, document results, and improve parts for production.</li></ul></div></div>
+</div>
+<div><span class="label">Place / term</span>Garden Grove<br/>Rolling / confirm dates</div>
+<div><span class="label">Technical fit</span><span class="fit medium">Strong adjacent</span></div>
+<div><span class="label">Eligibility action</span><span class="tag good">J-1/F-1 mentioned</span><br/><span class="small">One of the clearest international-student-friendly signals found.</span></div>
+</div>
+<div class="job">
+<div>
+<span class="label">Role</span>
+<div class="job-name"><a href="https://www.careerbuilder.com/job-details/mechanical-engineering-intern-summer-2027-burlingame-ca--abc67020-86bd-40e1-bf24-458a80df9927" rel="noopener" target="_blank">Xona Space Systems — Mechanical Engineering Intern</a></div>
+<div class="small">Spacecraft hardware, CAD, drawings, analysis, fabrication, assembly, and testing. Useful benchmark for advanced hardware development.</div><div class="role-explainer"><div class="summary-box summary-company"><div class="summary-label">What they do</div><p>Xona Space Systems is developing a commercial satellite navigation constellation intended to provide precise positioning, navigation, and timing services.</p></div><div class="summary-box summary-work"><div class="summary-label">What you could be doing</div><ul><li>Design satellite structures, brackets, mechanisms, ground-support equipment, or test fixtures.</li><li>Produce CAD models and manufacturing drawings and support part fabrication.</li><li>Perform structural, thermal, vibration, or mass-property analysis.</li><li>Assist with spacecraft assembly, environmental testing, and test-data review.</li></ul></div></div>
+</div>
+<div><span class="label">Place / term</span>Burlingame<br/>Summer 2027</div>
+<div><span class="label">Technical fit</span><span class="fit medium">Strong adjacent</span></div>
+<div><span class="label">Eligibility action</span><span class="tag block">Export-restricted</span><br/><span class="small">The mirrored listing indicates U.S.-person-style restrictions.</span></div>
+</div>
+<h3 style="margin-top:22px">Application actions for this week</h3>
+<div class="checklist">
+<label class="check"><input data-task="job-1" type="checkbox"/><span><span class="check-title">Apply to moss Spring ’27</span><br/><span class="small">Tailor the first three bullets to CAD/FEA, enclosure design, sensor integration, prototyping, and field validation.</span></span></label>
+<label class="check"><input data-task="job-2" type="checkbox"/><span><span class="check-title">Apply to Reliable Robotics Spring 2027</span><br/><span class="small">Lead with mechanical fundamentals, test-stand work, Raspberry Pi electromechanics, 3D printing, and data-backed validation.</span></span></label>
+<label class="check"><input data-task="job-3" type="checkbox"/><span><span class="check-title">Apply to Haast Summer 2027</span><br/><span class="small">Include a one-page concept sheet for the multi-drone simulation project—even if the project is still in progress.</span></span></label>
+<label class="check"><input data-task="job-4" type="checkbox"/><span><span class="check-title">Review Tesla Optimus roles and apply only to the strongest one or two</span><br/><span class="small">A targeted CAE or modeling application is more credible than applying indiscriminately to every Optimus posting.</span></span></label>
+<label class="check"><input data-task="job-5" type="checkbox"/><span><span class="check-title">Email recruiters a one-sentence work-authorization question</span><br/><span class="small">“I am a Canadian student enrolled at Carleton University. Does this internship support the J-1 Intern route through a designated sponsor?”</span></span></label>
+<label class="check"><input data-task="job-6" type="checkbox"/><span><span class="check-title">Create alerts for 15 target companies</span><br/><span class="small">Tesla, NVIDIA, Figure, Dexterity, Zoox, Waymo, Intrinsic, Agility Robotics, Skild AI, PlusAI, Reliable Robotics, moss, Zipline, Haast, and Harbinger.</span></span></label>
+</div>
+</section>
+<nav aria-label="Previous and next pages" class="page-nav">
+<button class="button" data-route="strategy" type="button">← Strategy</button>
+<button class="button" data-route="companies" type="button">Company Targets →</button>
+</nav>
+</section>
+<section class="route-page" data-page="companies" hidden="">
+<header class="page-hero">
+<div class="eyebrow">California route map • researched August 3, 2026</div>
+<h1>Companies to Target for a Second Internship</h1>
+<p class="lede">
+      Apply through two routes at the same time: direct California internships and Canadian robotics
+      launchpads that can make the next California application much stronger. “Second-internship fit”
+      below measures how believable your profile can be after one prior internship plus a polished robotics project.
+    </p>
+<div class="hero-actions">
+<a class="button primary" data-route="applications" href="#applications">Open application tracker</a>
+<a class="button" data-route="drone" href="#drone">Open drone project plan</a>
+<button onclick="window.print()" type="button">Print this page</button>
+</div>
+</header>
+<section class="page-panel">
+<div class="callout priority">
+<strong>Blue Robotics clarification:</strong> its current design team and listed co-op opportunities are in
+      Victoria, British Columbia, not California. It is still one of the strongest stepping-stone applications
+      because its students can work on real marine-robotics products from design through validation and manufacturing.
+    </div><div class="callout info company-summary-note">For general company targets, the task examples show the mechanical, test, systems, simulation, or integration work you should search for when new internship postings appear.</div>
+<div class="grid company-route-grid">
+<div class="card col-4 priority">
+<div class="stat">Route A</div>
+<h3>Go directly to California</h3>
+<p>Apply to hardware, test, product-design, simulation, and systems roles that value projects as much as prior brand-name experience.</p>
+<p class="small">Best starting targets: Skydio, Zipline, Zoox, Figure, moss, Reliable Robotics, Haast, Nuro.</p>
+</div>
+<div class="card col-4 info">
+<div class="stat">Route B</div>
+<h3>Take a Canadian robotics launchpad</h3>
+<p>Get four to eight months of real robot design, testing, integration, ROS, or manufacturing experience, then reapply to California with stronger proof.</p>
+<p class="small">Best targets: Blue Robotics, Clearpath/OTTO, Kinova, Avidbots, Mission Control, MDA Space, Sanctuary AI.</p>
+</div>
+<div class="card col-4 warning">
+<div class="stat">Route C</div>
+<h3>Apply to stretch companies anyway</h3>
+<p>NVIDIA, Tesla Optimus, Applied Intuition, and humanoid teams are harder, but a targeted application can work when the project matches the exact role.</p>
+<p class="small">Do not use one generic resume for these companies.</p>
+</div>
+</div>
+<h2 style="margin-top:26px">Priority 1: strongest direct California targets</h2>
+<p class="muted">These companies have recurring or currently visible internship/early-career paths closely related to your mechanical-robotics goal.</p>
+<div class="company-grid">
+<article class="company-card company-high">
+<div class="company-card-head">
+<div><span class="company-tier">Apply aggressively</span><h3>Skydio</h3></div>
+<span class="company-location">San Mateo, CA</span>
+</div>
+<p>Autonomous drones. The visible Product Design Engineer Intern role asks for 3D CAD, mechanical fundamentals, prototyping, testing, and root-cause work; several manufacturing skills are listed as teachable bonuses.</p>
+<div class="company-explainer"><div class="summary-box summary-company"><div class="summary-label">What they do</div><p>Skydio builds autonomous drones and supporting software for inspection, public safety, defence, and enterprise operations.</p></div><div class="summary-box summary-work"><div class="summary-label">What you could be doing</div><ul><li>Design lightweight airframe, camera, battery, enclosure, or sensor-mounting components.</li><li>Prototype and test parts, investigate flight or durability failures, and improve manufacturability.</li><li>Support vibration, impact, thermal, environmental, and flight-validation testing.</li></ul></div></div><div class="company-tags"><span>CAD</span><span>DFM</span><span>Testing</span><span>Drones</span></div>
+<p class="company-fit"><strong>Second-internship fit:</strong> High technically; verify J-1 and export-control eligibility for each role.</p>
+<a href="https://www.skydio.com/jobs/ce482813-99c2-4eaa-a165-2ed201249182" rel="noopener" target="_blank">Product Design Intern posting →</a>
+</article>
+<article class="company-card company-high">
+<div class="company-card-head">
+<div><span class="company-tier">Apply aggressively</span><h3>Zipline</h3></div>
+<span class="company-location">South San Francisco, CA</span>
+</div>
+<p>Autonomous delivery aircraft. Recent mechanical-intern descriptions explicitly value actuators, Raspberry Pi-type systems, CAD, cross-disciplinary builds, design reviews, and failure analysis.</p>
+<div class="company-explainer"><div class="summary-box summary-company"><div class="summary-label">What they do</div><p>Zipline operates autonomous aerial-delivery systems that transport medical products, food, and other goods using purpose-built aircraft and logistics infrastructure.</p></div><div class="summary-box summary-work"><div class="summary-label">What you could be doing</div><ul><li>Design aircraft mechanisms, payload systems, launch/recovery equipment, or ground hardware.</li><li>Build prototypes and fixtures, conduct reliability testing, and analyse failed components.</li><li>Integrate motors, sensors, computers, power systems, and mechanical assemblies.</li></ul></div></div><div class="company-tags"><span>Mechatronics</span><span>CAD</span><span>Flight hardware</span><span>Validation</span></div>
+<p class="company-fit"><strong>Second-internship fit:</strong> High if the drone project includes real testing and a mechanical subsystem.</p>
+<a href="https://www.zipline.com/careers" rel="noopener" target="_blank">Zipline careers →</a>
+</article>
+<article class="company-card company-high">
+<div class="company-card-head">
+<div><span class="company-tier">Excellent second-step role</span><h3>Zoox</h3></div>
+<span class="company-location">Foster City, CA</span>
+</div>
+<p>Ground-up autonomous vehicles. A recent mechanical internship accepted either one prior industry internship/co-op or relevant project experience and covered body structures, electromechanisms, prototyping, sensing, serviceability, and test.</p>
+<div class="company-explainer"><div class="summary-box summary-company"><div class="summary-label">What they do</div><p>Zoox is developing a purpose-built autonomous robotaxi, including the vehicle, perception system, controls, compute platform, and supporting fleet infrastructure.</p></div><div class="summary-box summary-work"><div class="summary-label">What you could be doing</div><ul><li>Design vehicle structures, electromechanisms, sensor mounts, closures, or serviceable assemblies.</li><li>Create CAD and GD&amp;T drawings, build prototypes, and support vehicle integration.</li><li>Run component and vehicle tests and investigate durability, vibration, or packaging issues.</li></ul></div></div><div class="company-tags"><span>GD&amp;T</span><span>CATIA/CAD</span><span>Prototyping</span><span>Test</span></div>
+<p class="company-fit"><strong>Second-internship fit:</strong> Very high on paper; this is almost exactly the experience stage you are targeting.</p>
+<a href="https://jobs.luxcapital.com/companies/zoox/jobs/63863650-mechanical-engineering-intern" rel="noopener" target="_blank">Recent mechanical internship example →</a>
+</article>
+<article class="company-card company-high">
+<div class="company-card-head">
+<div><span class="company-tier">Apply aggressively</span><h3>Figure</h3></div>
+<span class="company-location">San Jose, CA</span>
+</div>
+<p>Humanoid robotics. Figure currently shows validation, mechanical integration-and-test, and hardware-reliability internships—better undergraduate targets than pure robot-learning research.</p>
+<div class="company-explainer"><div class="summary-box summary-company"><div class="summary-label">What they do</div><p>Figure develops general-purpose humanoid robots intended to perform useful physical work in industrial and eventually broader environments.</p></div><div class="summary-box summary-work"><div class="summary-label">What you could be doing</div><ul><li>Design or test robot joints, structures, covers, hands, thermal systems, or cable-routing hardware.</li><li>Build validation fixtures and execute cycle-life, load, impact, and reliability tests.</li><li>Integrate mechanical, electrical, actuator, and sensor systems and troubleshoot failures.</li></ul></div></div><div class="company-tags"><span>Humanoids</span><span>Integration</span><span>Reliability</span><span>Mechanical test</span></div>
+<p class="company-fit"><strong>Second-internship fit:</strong> Medium–high with a joint/test-rig project and strong hands-on evidence.</p>
+<a href="https://www.figure.ai/careers" rel="noopener" target="_blank">Figure internships →</a>
+</article>
+<article class="company-card company-high">
+<div class="company-card-head">
+<div><span class="company-tier">Apply aggressively</span><h3>moss</h3></div>
+<span class="company-location">San Francisco, CA</span>
+</div>
+<p>Robotic sensor kits and field hardware. The Spring 2027 mechanical role directly matches enclosure design, thermal/vibration work, FEA, tolerances, DFM, suppliers, and field validation.</p>
+<div class="company-explainer"><div class="summary-box summary-company"><div class="summary-label">What they do</div><p>moss develops robotic sensing systems and rugged field hardware that combine sensors, mechanical packaging, electronics, and deployment tools.</p></div><div class="summary-box summary-work"><div class="summary-label">What you could be doing</div><ul><li>Design sensor enclosures, mounts, thermal paths, sealing features, and service access.</li><li>Perform FEA, tolerance studies, prototype builds, supplier coordination, and field validation.</li><li>Turn field failures into documented mechanical design improvements.</li></ul></div></div><div class="company-tags"><span>Sensor packaging</span><span>FEA</span><span>DFM</span><span>Field test</span></div>
+<p class="company-fit"><strong>Second-internship fit:</strong> High; one of the best direct matches in the roadmap.</p>
+<a href="https://builtin.com/job/spring-27-intern-mechanical-engineering/10013769" rel="noopener" target="_blank">Spring 2027 role →</a>
+</article>
+<article class="company-card company-high">
+<div class="company-card-head">
+<div><span class="company-tier">Apply aggressively</span><h3>Reliable Robotics</h3></div>
+<span class="company-location">Mountain View, CA</span>
+</div>
+<p>Automated aircraft. Strong match for full-cycle mechanical ownership, CAD/FEA, test stands, instrumentation, installation, data analysis, and technical writing.</p>
+<div class="company-explainer"><div class="summary-box summary-company"><div class="summary-label">What they do</div><p>Reliable Robotics develops aircraft automation and remote-operation technology for safer, more capable aviation.</p></div><div class="summary-box summary-work"><div class="summary-label">What you could be doing</div><ul><li>Design aircraft hardware, brackets, mechanisms, installations, and test stands.</li><li>Run analysis, select components, prepare drawings, and support fabrication.</li><li>Instrument and execute ground tests, analyse results, and support flight-hardware integration.</li></ul></div></div><div class="company-tags"><span>Aircraft</span><span>Test stands</span><span>FEA</span><span>Systems integration</span></div>
+<p class="company-fit"><strong>Second-internship fit:</strong> High technically; export-control review may affect eligibility.</p>
+<a href="https://jobs.ashbyhq.com/reliable-robotics/301305c1-eb57-4a88-ab91-97df9a77c58c" rel="noopener" target="_blank">Spring 2027 role →</a>
+</article>
+<article class="company-card company-medium">
+<div class="company-card-head">
+<div><span class="company-tier">Strong target</span><h3>Haast Autonomous</h3></div>
+<span class="company-location">San Francisco, CA</span>
+</div>
+<p>Autonomous VTOL development across airframe, avionics, simulation, controls, manufacturing, and flight test. Your multi-drone simulation gives you a relevant opening story.</p>
+<div class="company-explainer"><div class="summary-box summary-company"><div class="summary-label">What they do</div><p>Haast Autonomous develops autonomous VTOL aircraft and the mechanical, avionics, control, simulation, and manufacturing systems required to operate them.</p></div><div class="summary-box summary-work"><div class="summary-label">What you could be doing</div><ul><li>Design airframe or payload hardware and integrate avionics and sensors.</li><li>Build simulation and control-system experiments using flight models.</li><li>Support manufacturing, ground tests, flight tests, and data-driven design revisions.</li></ul></div></div><div class="company-tags"><span>VTOL</span><span>Controls</span><span>Simulation</span><span>Flight test</span></div>
+<p class="company-fit"><strong>Second-internship fit:</strong> Medium–high after the drone project is published and tested.</p>
+<a href="https://jobs.ashbyhq.com/haastautonomous/5e3667c4-3d04-40d9-87d1-6b7fe6539e2d" rel="noopener" target="_blank">Summer 2027 role →</a>
+</article>
+<article class="company-card company-medium">
+<div class="company-card-head">
+<div><span class="company-tier">Early-career pipeline</span><h3>Nuro</h3></div>
+<span class="company-location">Mountain View, CA</span>
+</div>
+<p>Nuro’s Pathfinders internship program gives interns a defined project, manager, and mentor. Target vehicle hardware, systems, testing, simulation, technical integration, or fleet-engineering roles.</p>
+<div class="company-explainer"><div class="summary-box summary-company"><div class="summary-label">What they do</div><p>Nuro develops autonomous-driving technology and vehicle systems for driverless transportation and delivery applications.</p></div><div class="summary-box summary-work"><div class="summary-label">What you could be doing</div><ul><li>Work on vehicle hardware, sensor integration, thermal or structural packaging, and test equipment.</li><li>Create validation procedures and analyse data from vehicles and simulated systems.</li><li>Support systems integration across mechanical, electrical, perception, and autonomy teams.</li></ul></div></div><div class="company-tags"><span>Autonomy</span><span>Vehicle systems</span><span>Mentorship</span><span>Validation</span></div>
+<p class="company-fit"><strong>Second-internship fit:</strong> Medium–high when relevant postings appear.</p>
+<a href="https://www.nuro.ai/early-career" rel="noopener" target="_blank">Nuro early careers →</a>
+</article>
+<article class="company-card company-medium">
+<div class="company-card-head">
+<div><span class="company-tier">Hardware/test target</span><h3>Dexterity</h3></div>
+<span class="company-location">Redwood City, CA</span>
+</div>
+<p>Industrial robot manipulation. Watch internships plus junior test, manufacturing, integration, technician, and applications roles—the company currently lists a junior test-manufacturing path.</p>
+<div class="company-explainer"><div class="summary-box summary-company"><div class="summary-label">What they do</div><p>Dexterity builds AI-powered industrial robots that manipulate packages and materials in warehouses and logistics facilities.</p></div><div class="summary-box summary-work"><div class="summary-label">What you could be doing</div><ul><li>Design grippers, robot cells, fixtures, guards, and manufacturing or test equipment.</li><li>Integrate arms, sensors, conveyors, and safety hardware into complete systems.</li><li>Run cycle-life and reliability tests and troubleshoot mechanical or system-level failures.</li></ul></div></div><div class="company-tags"><span>Robot hardware</span><span>Manufacturing</span><span>Test</span><span>Integration</span></div>
+<p class="company-fit"><strong>Second-internship fit:</strong> Medium; junior test paths may be more attainable than core autonomy roles.</p>
+<a href="https://jobs.lever.co/dexterity" rel="noopener" target="_blank">Dexterity careers →</a>
+</article>
+<article class="company-card company-medium">
+<div class="company-card-head">
+<div><span class="company-tier">Watchlist</span><h3>Agility Robotics</h3></div>
+<span class="company-location">Fremont, CA + Oregon</span>
+</div>
+<p>Humanoid robotics with a California office. Monitor mechanical design, manufacturing test, calibration, simulation, systems integration, and technician openings even when no internship is posted.</p>
+<div class="company-explainer"><div class="summary-box summary-company"><div class="summary-label">What they do</div><p>Agility Robotics develops humanoid robots, including Digit, for logistics and industrial material-handling work.</p></div><div class="summary-box summary-work"><div class="summary-label">What you could be doing</div><ul><li>Design robot structures, covers, joints, fixtures, or manufacturing tooling.</li><li>Support calibration, mechanical integration, reliability testing, and production debugging.</li><li>Use simulation and test data to improve robot performance and durability.</li></ul></div></div><div class="company-tags"><span>Humanoids</span><span>Manufacturing test</span><span>Calibration</span><span>Simulation</span></div>
+<p class="company-fit"><strong>Second-internship fit:</strong> Medium as a watchlist company; internship availability varies.</p>
+<a href="https://www.agilityrobotics.com/careers" rel="noopener" target="_blank">Agility careers →</a>
+</article>
+</div>
+<h2 style="margin-top:30px">Priority 2: Canadian robotics launchpads</h2>
+<p class="muted">These can be the fastest route to the exact robot-hardware evidence California employers want, without making U.S. authorization the first hiring obstacle.</p>
+<div class="company-grid">
+<article class="company-card company-high">
+<div class="company-card-head">
+<div><span class="company-tier">Top bridge choice</span><h3>Blue Robotics</h3></div>
+<span class="company-location">Victoria, BC</span>
+</div>
+<p>Marine robotics hardware: thrusters, ROVs, autonomous surface vehicles, sensors, sealing, manufacturing, and validation. Blue Robotics says co-ops can own real product work and may be invited back.</p>
+<div class="company-explainer"><div class="summary-box summary-company"><div class="summary-label">What they do</div><p>Blue Robotics develops marine-robotics products such as underwater thrusters, remotely operated vehicles, autonomous surface vehicles, sensors, and pressure-resistant hardware.</p></div><div class="summary-box summary-work"><div class="summary-label">What you could be doing</div><ul><li>Design waterproof housings, seals, brackets, frames, propulsion hardware, and cable systems.</li><li>Prototype and test parts for pressure, corrosion, leakage, thrust, vibration, and field use.</li><li>Support products from CAD and drawings through manufacturing, assembly, and validation.</li></ul></div></div><div class="company-tags"><span>Underwater robotics</span><span>Sealing</span><span>Product design</span><span>Testing</span></div>
+<p class="company-fit"><strong>Why it leads to California:</strong> produces a rare end-to-end robotics-hardware portfolio that transfers directly to drones, mobile robots, and autonomous vehicles.</p>
+<a href="https://bluerobotics.com/jobs/" rel="noopener" target="_blank">Blue Robotics careers →</a>
+</article>
+<article class="company-card company-high">
+<div class="company-card-head">
+<div><span class="company-tier">Top bridge choice</span><h3>Clearpath Robotics / OTTO</h3></div>
+<span class="company-location">Kitchener, ON</span>
+</div>
+<p>Ground robots and autonomous mobile robots using ROS, Gazebo, sensors, navigation, mechanical/electrical design, integration, and field testing. Clearpath has historically hired co-ops across mechanical, electrical, and software disciplines.</p>
+<div class="company-explainer"><div class="summary-box summary-company"><div class="summary-label">What they do</div><p>Clearpath builds mobile robot platforms for research, while OTTO Motors develops autonomous mobile robots for industrial material movement.</p></div><div class="summary-box summary-work"><div class="summary-label">What you could be doing</div><ul><li>Design chassis, sensor mounts, protective structures, payload interfaces, or test fixtures.</li><li>Integrate lidar, cameras, computers, motors, batteries, and safety systems.</li><li>Use ROS and simulation while supporting robot testing, reliability, and field deployment.</li></ul></div></div><div class="company-tags"><span>ROS</span><span>AMRs</span><span>Navigation</span><span>Robot testing</span></div>
+<p class="company-fit"><strong>Why it leads to California:</strong> recognizable commercial robotics experience for Nuro, Zoox, Dexterity, Agility, and warehouse-robotics teams.</p>
+<a href="https://clearpathrobotics.com/robotics-careers/" rel="noopener" target="_blank">Clearpath careers →</a>
+</article>
+<article class="company-card company-high">
+<div class="company-card-head">
+<div><span class="company-tier">Apply now when open</span><h3>Kinova Robotics</h3></div>
+<span class="company-location">Boisbriand, QC</span>
+</div>
+<p>Robot arms and assistive/manipulation systems. A visible Test Developer Intern posting makes it relevant for undergraduates who can show test automation, mechanics, electronics, and data analysis.</p>
+<div class="company-explainer"><div class="summary-box summary-company"><div class="summary-label">What they do</div><p>Kinova develops lightweight robotic arms and manipulation systems for research, industry, healthcare, and assistive applications.</p></div><div class="summary-box summary-work"><div class="summary-label">What you could be doing</div><ul><li>Design or test arm components, joints, end effectors, covers, and calibration fixtures.</li><li>Automate mechanical and mechatronic validation tests and analyse performance data.</li><li>Support integration across actuators, sensors, embedded systems, and robot software.</li></ul></div></div><div class="company-tags"><span>Manipulators</span><span>Test development</span><span>Mechatronics</span><span>Data</span></div>
+<p class="company-fit"><strong>Why it leads to California:</strong> direct manipulator and test experience strengthens applications to Tesla Optimus, Figure, and Dexterity.</p>
+<a href="https://www.kinovarobotics.com/career" rel="noopener" target="_blank">Kinova careers →</a>
+</article>
+<article class="company-card company-medium">
+<div class="company-card-head">
+<div><span class="company-tier">Strong bridge</span><h3>Avidbots</h3></div>
+<span class="company-location">Kitchener, ON</span>
+</div>
+<p>Commercial autonomous cleaning robots with mapping, navigation, mechanical design, manufacturing, service, and fleet reliability. Apply to hardware, robotics test, systems, operations engineering, and autonomy-adjacent roles.</p>
+<div class="company-explainer"><div class="summary-box summary-company"><div class="summary-label">What they do</div><p>Avidbots develops autonomous commercial floor-cleaning robots and the navigation, fleet, service, and reliability systems that support them.</p></div><div class="summary-box summary-work"><div class="summary-label">What you could be doing</div><ul><li>Design mobile-robot hardware, cleaning mechanisms, sensor mounts, enclosures, or service tools.</li><li>Test robots in realistic customer environments and investigate reliability issues.</li><li>Work with navigation, manufacturing, service, and hardware teams on design improvements.</li></ul></div></div><div class="company-tags"><span>Mobile robots</span><span>Reliability</span><span>Navigation</span><span>Field systems</span></div>
+<p class="company-fit"><strong>Why it leads to California:</strong> deployed-robot experience is valuable because it shows reliability and customer-environment testing, not just lab demos.</p>
+<a href="https://avidbots.com/company/careers/" rel="noopener" target="_blank">Avidbots careers →</a>
+</article>
+<article class="company-card company-medium">
+<div class="company-card-head">
+<div><span class="company-tier">Local Ottawa option</span><h3>Mission Control Space Services</h3></div>
+<span class="company-location">Ottawa, ON</span>
+</div>
+<p>Space autonomy, GNC, AI, remote operations, and robotics. Its careers page references co-op hiring, while the team includes robotics/software co-op students.</p>
+<div class="company-explainer"><div class="summary-box summary-company"><div class="summary-label">What they do</div><p>Mission Control develops space-autonomy, artificial-intelligence, mission-operations, and robotics technology for planetary and remote missions.</p></div><div class="summary-box summary-work"><div class="summary-label">What you could be doing</div><ul><li>Build robotics or spacecraft simulation tools and mission-test environments.</li><li>Support guidance, navigation, control, perception, autonomy, or remote-operations projects.</li><li>Integrate software with sensors or robotic platforms and analyse mission-test results.</li></ul></div></div><div class="company-tags"><span>GNC</span><span>Space robotics</span><span>Autonomy</span><span>Simulation</span></div>
+<p class="company-fit"><strong>Why it leads to California:</strong> gives you autonomy, robotics software, and mission-test experience without relocating first.</p>
+<a href="https://missioncontrolspace.com/about/careers/" rel="noopener" target="_blank">Mission Control careers →</a>
+</article>
+<article class="company-card company-medium">
+<div class="company-card-head">
+<div><span class="company-tier">Large-company bridge</span><h3>MDA Space</h3></div>
+<span class="company-location">Multiple Canadian sites</span>
+</div>
+<p>Space robotics, mechanisms, structures, testing, manufacturing, and systems engineering. MDA maintains co-op and work-term programs for students.</p>
+<div class="company-explainer"><div class="summary-box summary-company"><div class="summary-label">What they do</div><p>MDA Space develops satellites, space robotics, antennas, spacecraft systems, and mission infrastructure, including major robotic systems used in orbit.</p></div><div class="summary-box summary-work"><div class="summary-label">What you could be doing</div><ul><li>Design mechanisms, structures, tooling, ground-support equipment, or robotic components.</li><li>Perform analysis and prepare test procedures for vibration, thermal, load, or qualification testing.</li><li>Support assembly, integration, verification, and documentation for flight hardware.</li></ul></div></div><div class="company-tags"><span>Space robotics</span><span>Mechanisms</span><span>Systems</span><span>Qualification test</span></div>
+<p class="company-fit"><strong>Why it leads to California:</strong> rigorous design-and-test experience is portable to aerospace autonomy, drones, robotic mechanisms, and hardware reliability.</p>
+<a href="https://mda.space/careers/" rel="noopener" target="_blank">MDA student opportunities →</a>
+</article>
+<article class="company-card company-medium">
+<div class="company-card-head">
+<div><span class="company-tier">Humanoid bridge</span><h3>Sanctuary AI</h3></div>
+<span class="company-location">Vancouver, BC</span>
+</div>
+<p>Physical AI, robotic hands, manipulation, hardware integration, data capture, and Isaac Lab workflows. Watch for hardware, robotics test, simulation, and technician/integration openings.</p>
+<div class="company-explainer"><div class="summary-box summary-company"><div class="summary-label">What they do</div><p>Sanctuary AI develops general-purpose humanoid robotics, dexterous manipulation, robot hands, teleoperation, and physical-AI training systems.</p></div><div class="summary-box summary-work"><div class="summary-label">What you could be doing</div><ul><li>Design robot-hand, arm, structure, fixture, or sensor-integration hardware.</li><li>Build data-capture and validation setups and troubleshoot robot integration issues.</li><li>Use simulation tools such as Isaac Lab to compare virtual and physical robot behaviour.</li></ul></div></div><div class="company-tags"><span>Physical AI</span><span>Robot hands</span><span>Isaac Lab</span><span>Integration</span></div>
+<p class="company-fit"><strong>Why it leads to California:</strong> highly relevant humanoid and manipulation experience for Figure, NVIDIA robotics, Tesla Optimus, and Agility.</p>
+<a href="https://sanctuary.ai/" rel="noopener" target="_blank">Sanctuary AI careers area →</a>
+</article>
+</div>
+<h2 style="margin-top:30px">Priority 3: stretch companies worth targeted applications</h2>
+<div class="company-grid">
+<article class="company-card company-stretch">
+<div class="company-card-head">
+<div><span class="company-tier">Stretch, but apply</span><h3>NVIDIA</h3></div>
+<span class="company-location">Santa Clara, CA</span>
+</div>
+<p>NVIDIA offers year-round internships of at least 12 weeks and describes internships as its main early-career pipeline. General autonomous-vehicle and robotics pipelines can include bachelor’s students; research-heavy robot-learning roles often favor graduate students.</p>
+<div class="company-explainer"><div class="summary-box summary-company"><div class="summary-label">What they do</div><p>NVIDIA develops accelerated-computing hardware and software, including GPUs, Isaac robotics tools, autonomous-vehicle platforms, simulation, AI frameworks, and developer infrastructure.</p></div><div class="summary-box summary-work"><div class="summary-label">What you could be doing</div><ul><li>Develop or validate robotics simulation, Isaac Sim/Lab workflows, or ROS 2 integrations.</li><li>Build C++ or Python tools for data, testing, robot models, sensors, and performance analysis.</li><li>Work on physical simulation, autonomous systems, hardware validation, or robotics developer tools.</li></ul></div></div><div class="company-tags"><span>Isaac Sim/Lab</span><span>ROS 2</span><span>C++</span><span>Python</span><span>Simulation</span></div>
+<p class="company-fit"><strong>Your best angle:</strong> robotics simulation, validation, physical simulation, tools, systems software, or hardware-test roles—not PhD-style embodied-AI research.</p>
+<a href="https://www.nvidia.com/en-us/about-nvidia/careers/university-recruiting/" rel="noopener" target="_blank">NVIDIA university recruiting →</a>
+</article>
+<article class="company-card company-stretch">
+<div class="company-card-head">
+<div><span class="company-tier">Stretch, role-specific</span><h3>Tesla Optimus</h3></div>
+<span class="company-location">Palo Alto, CA</span>
+</div>
+<p>Target CAE, test, mechanical design, actuator, mechanism, manufacturing, controls, and modeling roles. Avoid applying to every Optimus position with one resume.</p>
+<div class="company-explainer"><div class="summary-box summary-company"><div class="summary-label">What they do</div><p>Tesla’s Optimus program develops a general-purpose humanoid robot using custom mechanical structures, actuators, electronics, controls, simulation, and large-scale manufacturing.</p></div><div class="summary-box summary-work"><div class="summary-label">What you could be doing</div><ul><li>Design or analyse robot joints, structures, actuators, covers, and manufacturing fixtures.</li><li>Develop test rigs and measure load, stiffness, fatigue, temperature, efficiency, and lifetime.</li><li>Integrate hardware and controls and use failures to guide rapid design iterations.</li></ul></div></div><div class="company-tags"><span>Mechanisms</span><span>CAE</span><span>Controls</span><span>Actuation</span></div>
+<p class="company-fit"><strong>Your best angle:</strong> a robot-joint test rig with FEA, motor characterization, closed-loop control, and measured results.</p>
+<a href="https://www.tesla.com/careers/search/?query=Optimus%20internship" rel="noopener" target="_blank">Search Optimus internships →</a>
+</article>
+<article class="company-card company-stretch">
+<div class="company-card-head">
+<div><span class="company-tier">Stretch, simulation-heavy</span><h3>Applied Intuition</h3></div>
+<span class="company-location">Mountain View / Sunnyvale, CA</span>
+</div>
+<p>Physical-AI and autonomy infrastructure. Current research internships include robotic hardware, simulation, data, reinforcement learning, and 3D vision, though many research positions favor MSc/PhD candidates.</p>
+<div class="company-explainer"><div class="summary-box summary-company"><div class="summary-label">What they do</div><p>Applied Intuition develops simulation, validation, data, and software infrastructure used by companies building autonomous vehicles, robots, and other physical-AI systems.</p></div><div class="summary-box summary-work"><div class="summary-label">What you could be doing</div><ul><li>Build simulation scenarios, robot or vehicle models, test automation, and validation tools.</li><li>Develop C++ or Python software that connects sensors, autonomy stacks, and simulated environments.</li><li>Analyse failures and coverage across large sets of virtual and hardware-in-the-loop tests.</li></ul></div></div><div class="company-tags"><span>Simulation</span><span>Autonomy tools</span><span>Robotic hardware</span><span>Data</span></div>
+<p class="company-fit"><strong>Your best angle:</strong> simulation infrastructure, validation, test automation, vehicle/robot models, and application engineering.</p>
+<a href="https://www.appliedintuition.com/careers" rel="noopener" target="_blank">Applied Intuition careers →</a>
+</article>
+</div>
+<div class="callout warning" style="margin-top:26px">
+<strong>Do not spend equal time on every company.</strong> Put roughly 50% of your application effort into
+      high-fit direct and Canadian launchpad companies, 30% into medium targets, and 20% into stretch companies.
+      Continue to filter every U.S. role for J-1 willingness and export-control restrictions.
+    </div>
+<h2 style="margin-top:26px">Your two-internship ladder</h2>
+<div class="ladder">
+<div class="ladder-step">
+<span class="ladder-number">1</span>
+<div><h3>Now through September 2026</h3><p>Apply directly to Spring/Summer 2027 California roles while finishing the multi-drone simulation and one mechanical test project.</p></div>
+</div>
+<div class="ladder-arrow">↓</div>
+<div class="ladder-step">
+<span class="ladder-number">2</span>
+<div><h3>If California does not land immediately</h3><p>Take Blue Robotics, Clearpath/OTTO, Kinova, Avidbots, Mission Control, MDA, or Sanctuary AI. Choose the offer that gives you measurable robot design, test, or integration ownership.</p></div>
+</div>
+<div class="ladder-arrow">↓</div>
+<div class="ladder-step">
+<span class="ladder-number">3</span>
+<div><h3>Reapply during that internship</h3><p>Use real work results—CAD release, test fixture, ROS integration, root-cause investigation, field data, manufacturing change, or reliability improvement—to target California again.</p></div>
+</div>
+</div>
+<h2 style="margin-top:26px">Company-target checklist</h2>
+<div class="checklist">
+<label class="check"><input data-task="company-1" type="checkbox"/><span><span class="check-title">Add Skydio, Zipline, Zoox, Figure, Nuro, and NVIDIA alerts</span><br/><span class="small">Search mechanical design, product design, test, validation, integration, simulation, controls, and robotics systems.</span></span></label>
+<label class="check"><input data-task="company-2" type="checkbox"/><span><span class="check-title">Submit a Blue Robotics future-opportunities application</span><br/><span class="small">Reference underwater sealing, electromechanical packaging, Raspberry Pi control, testing, and your willingness to relocate to Victoria.</span></span></label>
+<label class="check"><input data-task="company-3" type="checkbox"/><span><span class="check-title">Create a Canadian robotics resume version</span><br/><span class="small">Target Blue Robotics, Clearpath/OTTO, Kinova, Avidbots, Mission Control, MDA, and Sanctuary AI.</span></span></label>
+<label class="check"><input data-task="company-4" type="checkbox"/><span><span class="check-title">Create a California mechanical-robotics resume version</span><br/><span class="small">Prioritize CAD, FEA, GD&amp;T, test fixtures, controls, ROS 2, simulation, and quantified validation.</span></span></label>
+<label class="check"><input data-task="company-5" type="checkbox"/><span><span class="check-title">Send five targeted engineer messages per week</span><br/><span class="small">Contact current mechanical, test, integration, or robotics-systems engineers—not only recruiters.</span></span></label>
+<label class="check"><input data-task="company-6" type="checkbox"/><span><span class="check-title">Ask the J-1 question before assuming a U.S. role is impossible</span><br/><span class="small">Skip only roles that clearly require U.S. Person status or another qualification you do not have.</span></span></label>
+</div>
+</section>
+<nav aria-label="Previous and next pages" class="page-nav">
+<button class="button" data-route="internships" type="button">← 2027 Internships</button>
+<button class="button" data-route="eligibility" type="button">U.S. Eligibility →</button>
+</nav>
+</section><section class="route-page" data-page="eligibility" hidden="">
+<header class="page-hero">
+<div class="eyebrow">Roadmap page 3 of 9</div>
+<h1>U.S. Work Authorization and Export Controls</h1>
+<p class="lede">A practical filter for J-1 internships, authorization questions, and restricted roles.</p>
+<div class="hero-actions">
+<button onclick="window.print()" type="button">Print this page</button>
+<button onclick="resetProgress()" type="button">Reset all progress</button>
+</div>
+</header>
+<section class="page-panel">
+<div class="grid">
+<div class="card col-6 priority">
+<h3>Likely practical route: J-1 Intern</h3>
+<p>BridgeUSA’s Intern category includes foreign students currently enrolled at a degree-granting institution outside the United States, and engineering is an eligible occupational category.</p>
+<p class="small">The employer must be willing to host the internship and a designated sponsor manages the exchange program and DS-2019 process. This is not automatic sponsorship.</p>
+<a href="https://j1visa.state.gov/programs/intern/" rel="noopener" target="_blank">Official BridgeUSA Intern criteria</a>
+</div>
+<div class="card col-6 danger">
+<h3>Separate issue: export controls</h3>
+<p>A company can support a J-1 yet still restrict a specific job because it involves controlled technology or source code. “U.S. Person required” is usually a hard filter.</p>
+<p class="small">For “non-U.S. persons may be considered,” apply and let the employer conduct its own review. Never claim eligibility you do not have.</p>
+<a href="https://www.bis.gov/sites/default/files/documents/deemed-exports-licensing-guidelines-foreign-persons.pdf" rel="noopener" target="_blank">BIS deemed-export guidance</a>
+</div>
+</div>
+<div class="checklist">
+<label class="check"><input data-task="visa-1" type="checkbox"/><span><span class="check-title">Ask Carleton’s co-op/international office how a U.S. J-1 internship can fit your program</span><br/><span class="small">Get written confirmation of enrolment dates, expected graduation, and whether you can take Winter/Spring 2027 away from classes.</span></span></label>
+<label class="check"><input data-task="visa-2" type="checkbox"/><span><span class="check-title">Prepare a reusable eligibility statement</span><br/><span class="small">“Canadian citizen/student enrolled full-time at Carleton University; would require J-1 Intern sponsorship through a designated program sponsor.” Adjust citizenship wording to your actual status.</span></span></label>
+<label class="check"><input data-task="visa-3" type="checkbox"/><span><span class="check-title">Add a work-authorization column to every application tracker</span><br/><span class="small">Use: J-1 possible, unclear—ask, U.S. Person required, or already authorized.</span></span></label>
+<label class="check"><input data-task="visa-4" type="checkbox"/><span><span class="check-title">Do not rely on Tesla’s CPT wording</span><br/><span class="small">CPT is associated with F-1 study in the U.S. Ask whether Tesla can host a J-1 Intern from a Canadian university.</span></span></label>
+</div>
+</section>
+<nav aria-label="Previous and next pages" class="page-nav">
+<button class="button" data-route="companies" type="button">← Company Targets</button>
+<button class="button" data-route="roadmap" type="button">Learning Roadmap →</button>
+</nav>
+</section>
+<section class="route-page" data-page="roadmap" hidden="">
+<header class="page-hero">
+<div class="eyebrow">Roadmap page 4 of 9</div>
+<h1>Robotics Skills Roadmap</h1>
+<p class="lede">What to learn, why it matters, how long it should take, and the best source for each topic.</p>
+<div class="hero-actions">
+<button onclick="window.print()" type="button">Print this page</button>
+<button onclick="resetProgress()" type="button">Reset all progress</button>
+</div>
+</header>
+<section class="page-panel">
+<div class="callout info">
+<strong>Time estimates are focused-practice estimates, not promises.</strong> “Working level” means you can build and explain a small project without copying a tutorial.
+        The sequence is designed around 10–12 hours per week and your existing mechanical/prototyping experience.
+      </div>
+<div class="callout info youtube-note"><strong>How to use the YouTube column: </strong>Watch the recommended lesson while completing the linked official tutorial. For each topic, build or document something immediately instead of watching the entire playlist passively.</div><div class="table-scroll"><table>
+<thead><tr><th>Skill</th><th>Target level</th><th>Estimated focused time</th><th>Why it matters</th><th>Primary source</th><th>YouTube lessons</th></tr></thead>
+<tbody>
+<tr><td>Linux command line</td><td>Navigate, install packages, permissions, processes, SSH</td><td>6–10 h</td><td>ROS 2, PX4, simulation, robot deployment</td><td><a href="https://ubuntu.com/tutorials/command-line-for-beginners" rel="noopener" target="_blank">Ubuntu tutorial</a></td><td class="youtube-cell"><a class="youtube-resource" href="https://www.youtube.com/watch?v=sWbUDq4S6Y8" rel="noopener" target="_blank"><span class="youtube-icon">▶</span><span>Linux command line full course</span></a><a class="youtube-resource" href="https://www.youtube.com/watch?v=AJ1XS_3Waas" rel="noopener" target="_blank"><span class="youtube-icon">▶</span><span>2026 terminal course</span></a></td></tr>
+<tr><td>Git + GitHub</td><td>Branches, pull requests, issues, releases, readable commits</td><td>6–10 h</td><td>Every robotics team expects collaborative code and traceability</td><td><a href="https://github.com/skills/introduction-to-github" rel="noopener" target="_blank">GitHub Skills</a></td><td class="youtube-cell"><a class="youtube-resource" href="https://www.youtube.com/watch?v=RGOj5yH7evk" rel="noopener" target="_blank"><span class="youtube-icon">▶</span><span>Git &amp; GitHub crash course</span></a></td></tr>
+<tr><td>Python for robotics</td><td>Functions/classes, NumPy, plotting, files, tests, serial/network I/O</td><td>30–45 h</td><td>Perception, tools, data analysis, ROS nodes, automation</td><td><a href="https://docs.python.org/3/tutorial/" rel="noopener" target="_blank">Official Python tutorial</a></td><td class="youtube-cell"><a class="youtube-resource" href="https://www.youtube.com/watch?v=rfscVS0vtbw" rel="noopener" target="_blank"><span class="youtube-icon">▶</span><span>Python beginner course</span></a><a class="youtube-resource" href="https://www.youtube.com/results?search_query=NumPy+full+course+for+beginners+robotics" rel="noopener" target="_blank"><span class="youtube-icon">▶</span><span>NumPy for robotics/data</span></a></td></tr>
+<tr><td>Modern C++ + CMake</td><td>RAII, STL, classes, smart pointers, debugging, build targets</td><td>45–70 h</td><td>Performance-critical robotics, ROS 2, simulation engines</td><td><a href="https://learn.microsoft.com/en-us/cpp/get-started/?view=msvc-170" rel="noopener" target="_blank">C++ guide</a> · <a href="https://cmake.org/cmake/help/latest/guide/tutorial/" rel="noopener" target="_blank">CMake tutorial</a></td><td class="youtube-cell"><a class="youtube-resource" href="https://www.youtube.com/watch?v=-TkoO8Z07hI" rel="noopener" target="_blank"><span class="youtube-icon">▶</span><span>C++ full course</span></a><a class="youtube-resource" href="https://www.youtube.com/results?search_query=CMake+tutorial+for+beginners+C%2B%2B" rel="noopener" target="_blank"><span class="youtube-icon">▶</span><span>CMake beginner tutorials</span></a></td></tr>
+<tr><td>ROS 2</td><td>Nodes, topics, services, actions, launch, parameters, rosbag, TF2</td><td>40–60 h</td><td>Common integration layer across sensors, controls, planning, and simulation</td><td><a href="https://docs.ros.org/en/jazzy/Tutorials.html" rel="noopener" target="_blank">ROS 2 Jazzy tutorials</a></td><td class="youtube-cell"><a class="youtube-resource" href="https://www.youtube.com/playlist?list=PLNWNEEf8BvG64FVZT4IdieI1PuYnHkUrt" rel="noopener" target="_blank"><span class="youtube-icon">▶</span><span>ROS 2 Jazzy fundamentals</span></a><a class="youtube-resource" href="https://www.youtube.com/playlist?list=PLO89phzZmnHgTtr2uncyQN5hNMopUQa3e" rel="noopener" target="_blank"><span class="youtube-icon">▶</span><span>Detailed Jazzy playlist</span></a></td></tr>
+<tr><td>Robotics math</td><td>Frames, rotation matrices, homogeneous transforms, Jacobians, FK/IK</td><td>35–55 h</td><td>Manipulators, drones, humanoids, calibration, controls</td><td><a href="https://modernrobotics.northwestern.edu/nu-gm-book-resource/" rel="noopener" target="_blank">Modern Robotics</a></td><td class="youtube-cell"><a class="youtube-resource" href="https://www.youtube.com/playlist?list=PLnFjAxpFjmdW-VPpbe0ataw0btWo4wKZR" rel="noopener" target="_blank"><span class="youtube-icon">▶</span><span>Modern Robotics specialization</span></a></td></tr>
+<tr><td>Dynamics + controls</td><td>State-space, stability, PID, filters, actuator limits, trajectory tracking</td><td>55–80 h</td><td>Direct match to Tesla Optimus and autonomous vehicles</td><td><a href="https://matlabacademy.mathworks.com/details/matlab-onramp/gettingstarted" rel="noopener" target="_blank">MATLAB Onramp</a> · <a href="https://matlabacademy.mathworks.com/details/simulink-onramp/simulink" rel="noopener" target="_blank">Simulink Onramp</a></td><td class="youtube-cell"><a class="youtube-resource" href="https://www.youtube.com/playlist?list=PLn8PRpmsu08rdL7jwgrQjewdFXxDHbyIV" rel="noopener" target="_blank"><span class="youtube-icon">▶</span><span>MATLAB/Simulink robotics control</span></a><a class="youtube-resource" href="https://www.youtube.com/results?search_query=control+systems+engineering+PID+state+space+full+course" rel="noopener" target="_blank"><span class="youtube-icon">▶</span><span>Control systems fundamentals</span></a></td></tr>
+<tr><td>CAD + engineering drawings</td><td>Parametric assemblies, mechanisms, tolerance stack-up, drawing package</td><td>35–55 h</td><td>Core mechanical-robotics deliverable</td><td><a href="https://learn.onshape.com/" rel="noopener" target="_blank">Onshape Learning Center</a> · <a href="https://www.autodesk.com/learn/ondemand/collection/self-paced-learning-for-fusion" rel="noopener" target="_blank">Fusion learning</a></td><td class="youtube-cell"><a class="youtube-resource" href="https://www.youtube.com/playlist?list=PLYxAYSCl7PAc" rel="noopener" target="_blank"><span class="youtube-icon">▶</span><span>Official Onshape beginner playlist</span></a><a class="youtube-resource" href="https://www.youtube.com/playlist?list=PLxmrkna-ixrIQmsPR3MITi4Ru1bnMH4-l" rel="noopener" target="_blank"><span class="youtube-icon">▶</span><span>Onshape CAD fundamentals</span></a></td></tr>
+<tr><td>GD&amp;T + DFM</td><td>Datums, position/profile, fits, inspection logic, process-aware design</td><td>20–30 h</td><td>Frequently explicit in robotics-hardware postings</td><td><a href="https://www.asme.org/codes-standards/find-codes-standards/y14-5-dimensioning-tolerancing" rel="noopener" target="_blank">ASME Y14.5 reference</a></td><td class="youtube-cell"><a class="youtube-resource" href="https://www.youtube.com/playlist?list=PLId-CG-Zsc_ZlRAoM5BNbFWfQOhnrTHXD" rel="noopener" target="_blank"><span class="youtube-icon">▶</span><span>GD&amp;T Basics playlist</span></a><a class="youtube-resource" href="https://www.youtube.com/playlist?list=PLKaojPU8IOnHU75NcH7Muq7K92rTNekXI" rel="noopener" target="_blank"><span class="youtube-icon">▶</span><span>GD&amp;T full lessons</span></a></td></tr>
+<tr><td>FEA fundamentals</td><td>Loads/constraints, mesh convergence, hand-checks, static/modal/thermal basics</td><td>30–45 h</td><td>Tesla CAE, moss, Reliable Robotics, Anduril, Peak</td><td><a href="https://innovationspace.ansys.com/courses/learning-track/introduction-to-finite-element-methods/" rel="noopener" target="_blank">Ansys FEA track</a></td><td class="youtube-cell"><a class="youtube-resource" href="https://www.youtube.com/results?search_query=Ansys+finite+element+analysis+beginner+course" rel="noopener" target="_blank"><span class="youtube-icon">▶</span><span>Ansys FEA beginner lessons</span></a><a class="youtube-resource" href="https://www.youtube.com/results?search_query=FEA+mesh+convergence+tutorial+Ansys" rel="noopener" target="_blank"><span class="youtube-icon">▶</span><span>Mesh convergence tutorials</span></a></td></tr>
+<tr><td>Gazebo + PX4 simulation</td><td>Spawn vehicles, sensors, multi-vehicle SITL, missions, logs, failure handling</td><td>35–55 h</td><td>Fastest safe path to a credible multi-drone autonomy project</td><td><a href="https://gazebosim.org/docs/harmonic/tutorials/" rel="noopener" target="_blank">Gazebo</a> · <a href="https://docs.px4.io/main/en/simulation/multi-vehicle-simulation" rel="noopener" target="_blank">PX4 multi-vehicle</a></td><td class="youtube-cell"><a class="youtube-resource" href="https://www.youtube.com/watch?v=QwKkXDp7yNI" rel="noopener" target="_blank"><span class="youtube-icon">▶</span><span>PX4 + ROS 2 + Gazebo setup</span></a><a class="youtube-resource" href="https://www.youtube.com/watch?v=6wcO8CZ_BnQ" rel="noopener" target="_blank"><span class="youtube-icon">▶</span><span>PX4 autonomy workshop</span></a></td></tr>
+<tr><td>Computer vision + tracking</td><td>Image pipeline, calibration basics, detector inference, anonymous multi-object tracks</td><td>35–55 h</td><td>Incident detection, sensor platforms, autonomy</td><td><a href="https://opencv.org/university/free-opencv-course/" rel="noopener" target="_blank">OpenCV course</a> · <a href="https://docs.opencv.org/5.0/tutorials_contrib/tracking/tutorial_introduction_to_tracker.html" rel="noopener" target="_blank">Tracking tutorial</a></td><td class="youtube-cell"><a class="youtube-resource" href="https://www.youtube.com/results?search_query=OpenCV+object+tracking+tutorial+Python+playlist" rel="noopener" target="_blank"><span class="youtube-icon">▶</span><span>OpenCV tracking tutorials</span></a><a class="youtube-resource" href="https://www.youtube.com/results?search_query=multi+object+tracking+OpenCV+Python+tutorial" rel="noopener" target="_blank"><span class="youtube-icon">▶</span><span>Multi-object tracking</span></a></td></tr>
+<tr><td>PyTorch basics</td><td>Tensors, data loaders, pretrained inference, simple fine-tuning, evaluation</td><td>25–40 h</td><td>Useful for perception; required before advanced robot learning</td><td><a href="https://docs.pytorch.org/tutorials/beginner/basics/intro.html" rel="noopener" target="_blank">PyTorch basics</a></td><td class="youtube-cell"><a class="youtube-resource" href="https://www.youtube.com/results?search_query=PyTorch+for+beginners+official+tutorial" rel="noopener" target="_blank"><span class="youtube-icon">▶</span><span>PyTorch beginner course</span></a><a class="youtube-resource" href="https://www.youtube.com/results?search_query=PyTorch+computer+vision+course+for+beginners" rel="noopener" target="_blank"><span class="youtube-icon">▶</span><span>Computer vision with PyTorch</span></a></td></tr>
+<tr><td>Isaac Sim</td><td>Import robot, sensors, articulation, ROS bridge, scripted experiment</td><td>30–50 h</td><td>Valuable for NVIDIA/physical-AI roles after ROS 2 and Gazebo</td><td><a href="https://docs.isaacsim.omniverse.nvidia.com/latest/robot_setup_tutorials/index.html" rel="noopener" target="_blank">Isaac Sim robot setup</a></td><td class="youtube-cell"><a class="youtube-resource" href="https://www.youtube.com/playlist?list=PLU_rF1cv2oRneZp6fsJ2U2Gsn2jY5F8ve" rel="noopener" target="_blank"><span class="youtube-icon">▶</span><span>Isaac Sim complete series</span></a><a class="youtube-resource" href="https://www.youtube.com/playlist?list=PL3jK4xNnlCVf1SzxjCm7ZxDBNl9QYyV8X" rel="noopener" target="_blank"><span class="youtube-icon">▶</span><span>NVIDIA official Isaac Sim playlist</span></a></td></tr>
+<tr><td>Test engineering</td><td>Requirements, test matrix, instrumentation, uncertainty, plots, failure report</td><td>20–35 h</td><td>Turns projects into evidence of engineering judgement</td><td>Apply course/lab methods to every project; use the job postings as the required-output benchmark.</td><td class="youtube-cell"><a class="youtube-resource" href="https://www.youtube.com/results?search_query=engineering+verification+and+validation+test+plan+tutorial" rel="noopener" target="_blank"><span class="youtube-icon">▶</span><span>Engineering verification &amp; validation</span></a><a class="youtube-resource" href="https://www.youtube.com/results?search_query=engineering+measurement+uncertainty+tutorial" rel="noopener" target="_blank"><span class="youtube-icon">▶</span><span>Measurement uncertainty basics</span></a></td></tr>
+</tbody>
+</table></div>
+<h3 style="margin-top:24px">Phase plan</h3>
+<div class="week">
+<div class="week-head"><span class="week-title">Phase 0 — Aug 3–9, 2026: application-ready foundation</span><span class="tag info">8–12 h</span></div>
+<div class="week-body checklist">
+<label class="check"><input data-task="phase0-1" type="checkbox"/><span><span class="check-title">Complete GitHub Skills and publish one clean repository</span></span></label>
+<label class="check"><input data-task="phase0-2" type="checkbox"/><span><span class="check-title">Install Ubuntu 24.04 or a reliable Ubuntu development environment</span></span></label>
+<label class="check"><input data-task="phase0-3" type="checkbox"/><span><span class="check-title">Create a one-page robotics resume tailored to CAD, controls, prototyping, and software</span></span></label>
+<label class="check"><input data-task="phase0-4" type="checkbox"/><span><span class="check-title">Apply to the first three high-fit roles before doing more coursework</span></span></label>
+</div>
+</div>
+<div class="week">
+<div class="week-head"><span class="week-title">Phase 1 — Aug–Sep 2026: ROS 2, Python, Linux, Git</span><span class="tag info">60–80 h</span></div>
+<div class="week-body checklist">
+<label class="check"><input data-task="phase1-1" type="checkbox"/><span><span class="check-title">Build two ROS 2 Python nodes with topics, services, parameters, launch files, and rosbag logging</span></span></label>
+<label class="check"><input data-task="phase1-2" type="checkbox"/><span><span class="check-title">Port one Raspberry Pi motor/sensor exercise into a documented ROS 2 hardware node</span></span></label>
+<label class="check"><input data-task="phase1-3" type="checkbox"/><span><span class="check-title">Add unit tests, a wiring diagram, and measured timing/error results</span></span></label>
+</div>
+</div>
+<div class="week">
+<div class="week-head"><span class="week-title">Phase 2 — Sep–Nov 2026: kinematics, dynamics, controls, C++</span><span class="tag info">90–120 h</span></div>
+<div class="week-body checklist">
+<label class="check"><input data-task="phase2-1" type="checkbox"/><span><span class="check-title">Complete frames, transforms, forward kinematics, Jacobians, and numerical inverse kinematics</span></span></label>
+<label class="check"><input data-task="phase2-2" type="checkbox"/><span><span class="check-title">Model and tune a PID-controlled motor or 2-link arm in MATLAB/Simulink</span></span></label>
+<label class="check"><input data-task="phase2-3" type="checkbox"/><span><span class="check-title">Rewrite one performance-sensitive ROS node in modern C++ and build it with CMake</span></span></label>
+<label class="check"><input data-task="phase2-4" type="checkbox"/><span><span class="check-title">Explain stability, saturation, sampling rate, filtering, and tracking error in a short test report</span></span></label>
+</div>
+</div>
+<div class="week">
+<div class="week-head"><span class="week-title">Phase 3 — Nov 2026–Jan 2027: mechanical design and validation</span><span class="tag info">80–110 h</span></div>
+<div class="week-body checklist">
+<label class="check"><input data-task="phase3-1" type="checkbox"/><span><span class="check-title">Design an electromechanical assembly with sensors, compute, power, connectors, fasteners, and service access</span></span></label>
+<label class="check"><input data-task="phase3-2" type="checkbox"/><span><span class="check-title">Produce a drawing package with datums, tolerances, fits, BOM, and manufacturing notes</span></span></label>
+<label class="check"><input data-task="phase3-3" type="checkbox"/><span><span class="check-title">Run hand calculations plus mesh-converged static/modal/thermal FEA</span></span></label>
+<label class="check"><input data-task="phase3-4" type="checkbox"/><span><span class="check-title">Build and instrument a prototype; compare predicted versus measured behaviour</span></span></label>
+</div>
+</div>
+<div class="week">
+<div class="week-head"><span class="week-title">Phase 4 — Jan–Mar 2027: perception, sensor fusion, simulation</span><span class="tag info">90–125 h</span></div>
+<div class="week-body checklist">
+<label class="check"><input data-task="phase4-1" type="checkbox"/><span><span class="check-title">Complete the OpenCV pipeline and evaluate detection/tracking with precision, recall, false alarms, and latency</span></span></label>
+<label class="check"><input data-task="phase4-2" type="checkbox"/><span><span class="check-title">Add an IMU/GPS/camera simulation and demonstrate basic state estimation or sensor fusion</span></span></label>
+<label class="check"><input data-task="phase4-3" type="checkbox"/><span><span class="check-title">Recreate one project experiment in Isaac Sim after it already works in Gazebo/PX4</span></span></label>
+</div>
+</div>
+<div class="week">
+<div class="week-head"><span class="week-title">Phase 5 — Ongoing: interviews and proof of engineering judgement</span><span class="tag info">2–3 h/week</span></div>
+<div class="week-body checklist">
+<label class="check"><input data-task="phase5-1" type="checkbox"/><span><span class="check-title">Prepare eight project stories using problem → constraints → trade-off → test → result</span></span></label>
+<label class="check"><input data-task="phase5-2" type="checkbox"/><span><span class="check-title">Practise statics, dynamics, materials, heat transfer, mechanisms, controls, and estimation questions weekly</span></span></label>
+<label class="check"><input data-task="phase5-3" type="checkbox"/><span><span class="check-title">Publish one technical update every two weeks on GitHub or LinkedIn</span></span></label>
+</div>
+</div>
+</section>
+<nav aria-label="Previous and next pages" class="page-nav">
+<button class="button" data-route="eligibility" type="button">← U.S. Eligibility</button>
+<button class="button" data-route="drone" type="button">Drone Project →</button>
+</nav>
+</section>
+<section class="route-page" data-page="drone" hidden="">
+<header class="page-hero">
+<div class="eyebrow">Roadmap page 5 of 9</div>
+<h1>30-Day Multi-Drone Incident-Response Project</h1>
+<p class="lede">A simulation-first, privacy-conscious flagship project with weekly deliverables and measurable results.</p>
+<div class="hero-actions">
+<button onclick="window.print()" type="button">Print this page</button>
+<button onclick="resetProgress()" type="button">Reset all progress</button>
+</div>
+</header>
+<section class="page-panel">
+<div class="callout warning">
+<strong>Professional framing matters.</strong> Present this as an <em>incident-detection, evidence, and safety-alert system</em>, not an autonomous “suspect pursuit” system.
+        Build it simulation-first and test only with consenting participants in a controlled area. Do not add weapons, physical interception, facial recognition,
+        licence-plate recognition, covert surveillance, or autonomous following of people in public.
+      </div>
+<div class="grid">
+<div class="card col-8 priority">
+<h3>Portfolio project statement</h3>
+<p>
+            “Designed a multi-agent aerial incident-response prototype in ROS 2 and PX4/Gazebo. A sentinel vehicle detects a simulated property-damage event,
+            requests human confirmation, dispatches an observer vehicle, hands off an anonymous target track, maintains geofencing and battery failsafes,
+            and produces an auditable incident report.”
+          </p>
+</div>
+<div class="card col-4">
+<h3>Realistic month-one scope</h3>
+<div class="stat">Simulation demo</div>
+<p class="small">Three virtual drones, one synthetic or consented video stream, one dashboard, three repeatable scenarios, and measured performance.</p>
+</div>
+</div>
+<h3 style="margin-top:22px">System architecture</h3>
+<div class="code">Camera / simulated event
+        ↓
+Perception node → anonymous track ID + confidence
+        ↓
+Incident verifier → rule-based event state machine
+        ↓
+Human approval gate
+        ↓
+Fleet coordinator → role assignment + handoff
+        ↓
+PX4 / ROS 2 vehicle interfaces
+        ↓
+Safety supervisor → geofence, VLOS test boundary, battery, link-loss, timeout, return-to-home
+        ↓
+Logger + dashboard → timestamps, decisions, positions, latency, false alarms</div>
+<div class="two-col" style="margin-top:14px">
+<div class="card">
+<h3>Recommended stack</h3>
+<p><span class="tag">Ubuntu 24.04</span><span class="tag">ROS 2 Jazzy</span><span class="tag">PX4 SITL</span><span class="tag">Gazebo Harmonic</span><span class="tag">Python</span><span class="tag">OpenCV</span><span class="tag">GitHub</span></p>
+<p class="small">Use prerecorded/synthetic footage or a consenting actor. A pretrained generic detector is acceptable; your engineering contribution should be orchestration, handoff, safety, validation, and documentation.</p>
+</div>
+<div class="card">
+<h3>Success metrics</h3>
+<p><span class="tag info">Detection latency</span><span class="tag info">Approval-to-dispatch time</span><span class="tag info">Track continuity</span><span class="tag info">Handoff time</span><span class="tag info">False-alarm rate</span><span class="tag info">Geofence violations</span><span class="tag info">Return-to-home success</span></p>
+</div>
+</div>
+<div class="week">
+<div class="week-head"><span class="week-title">Week 1 — Architecture and multi-vehicle simulation</span><span class="tag info">12–15 h</span></div>
+<div class="week-body checklist">
+<label class="check"><input data-task="drone-w1-1" type="checkbox"/><span><span class="check-title">Install ROS 2 Jazzy, Gazebo Harmonic, and PX4 SITL</span></span></label>
+<label class="check"><input data-task="drone-w1-2" type="checkbox"/><span><span class="check-title">Launch three simulated vehicles and command takeoff, waypoint, hold, and return-to-home</span></span></label>
+<label class="check"><input data-task="drone-w1-3" type="checkbox"/><span><span class="check-title">Write a one-page requirements document and state diagram</span><br/><span class="small">States: NORMAL → VERIFY → HUMAN APPROVAL → OBSERVE → HANDOFF → TIMEOUT / RETURN HOME.</span></span></label>
+<label class="check"><input data-task="drone-w1-4" type="checkbox"/><span><span class="check-title">Define privacy and safety requirements before coding perception</span><br/><span class="small">No identity inference, minimum data collection, short retention, geofence, hard timeout, manual abort.</span></span></label>
+</div>
+</div>
+<div class="week">
+<div class="week-head"><span class="week-title">Week 2 — Detection, anonymous tracking, and event verification</span><span class="tag info">12–16 h</span></div>
+<div class="week-body checklist">
+<label class="check"><input data-task="drone-w2-1" type="checkbox"/><span><span class="check-title">Build an OpenCV pipeline on prerecorded or synthetic footage</span></span></label>
+<label class="check"><input data-task="drone-w2-2" type="checkbox"/><span><span class="check-title">Output anonymous track IDs, bounding boxes, confidence, and timestamps</span></span></label>
+<label class="check"><input data-task="drone-w2-3" type="checkbox"/><span><span class="check-title">Implement a rule-based incident trigger with a confidence threshold and confirmation window</span></span></label>
+<label class="check"><input data-task="drone-w2-4" type="checkbox"/><span><span class="check-title">Create a human approve / reject control before any observer dispatch</span></span></label>
+<label class="check"><input data-task="drone-w2-5" type="checkbox"/><span><span class="check-title">Measure latency and false alarms on at least 20 labelled clips or scripted trials</span></span></label>
+</div>
+</div>
+<div class="week">
+<div class="week-head"><span class="week-title">Week 3 — Fleet coordination, handoff, and failsafes</span><span class="tag info">14–18 h</span></div>
+<div class="week-body checklist">
+<label class="check"><input data-task="drone-w3-1" type="checkbox"/><span><span class="check-title">Implement role assignment: sentinel, observer A, observer B</span></span></label>
+<label class="check"><input data-task="drone-w3-2" type="checkbox"/><span><span class="check-title">Dispatch the closest safe vehicle based on distance, battery, and availability</span></span></label>
+<label class="check"><input data-task="drone-w3-3" type="checkbox"/><span><span class="check-title">Demonstrate a track/mission handoff when battery or communication quality falls below a threshold</span></span></label>
+<label class="check"><input data-task="drone-w3-4" type="checkbox"/><span><span class="check-title">Add geofence, speed/altitude limits, link-loss behaviour, timeout, manual abort, and return-to-home</span></span></label>
+<label class="check"><input data-task="drone-w3-5" type="checkbox"/><span><span class="check-title">Log every state transition and decision for later review</span></span></label>
+</div>
+</div>
+<div class="week">
+<div class="week-head"><span class="week-title">Week 4 — Validation, documentation, and demo</span><span class="tag info">12–16 h</span></div>
+<div class="week-body checklist">
+<label class="check"><input data-task="drone-w4-1" type="checkbox"/><span><span class="check-title">Run three repeatable scenarios</span><br/><span class="small">True incident, false alarm, and observer battery/link failure requiring handoff.</span></span></label>
+<label class="check"><input data-task="drone-w4-2" type="checkbox"/><span><span class="check-title">Record results in a test matrix and plot the key metrics</span></span></label>
+<label class="check"><input data-task="drone-w4-3" type="checkbox"/><span><span class="check-title">Create an architecture diagram, 2–3 minute demo video, and 2-page validation report</span></span></label>
+<label class="check"><input data-task="drone-w4-4" type="checkbox"/><span><span class="check-title">Publish a clean GitHub repository with setup instructions and one-command demo launch</span></span></label>
+<label class="check"><input data-task="drone-w4-5" type="checkbox"/><span><span class="check-title">Write a “limitations and responsible-use” section</span><br/><span class="small">Explain why real-world public pursuit was intentionally excluded and what legal/safety approvals a future deployment would require.</span></span></label>
+</div>
+</div>
+<h3 style="margin-top:22px">Canadian flight and privacy gate</h3>
+<div class="grid">
+<div class="card col-6 danger">
+<h3>Do not test the full concept in public this month</h3>
+<p>Canada’s rules now distinguish VLOS, advanced, EVLOS, sheltered, and lower-risk BVLOS operations. A multi-drone system that follows a moving person can quickly exceed a simple recreational VLOS test.</p>
+<p class="small">Keep the portfolio demo in simulation. Any later flight test should be designed around the exact aircraft weight, airspace, bystanders, pilot certificate, registration, observer setup, and operating category.</p>
+<a href="https://tc.canada.ca/en/aviation/drone-safety" rel="noopener" target="_blank">Transport Canada drone safety</a>
+</div>
+<div class="card col-6 warning">
+<h3>Use privacy-by-design</h3>
+<p>Collect only what is required for the test, make the test visible to participants, obtain consent, restrict access, and delete recordings on a defined schedule.</p>
+<p class="small">Use anonymous track IDs and avoid identity inference. Keep an explicit data-retention setting in the demo.</p>
+<a href="https://www.priv.gc.ca/en/privacy-topics/surveillance/video-surveillance-by-businesses/gl_vs_080306/" rel="noopener" target="_blank">Canadian privacy guidance for video surveillance</a>
+</div>
+</div>
+</section>
+<nav aria-label="Previous and next pages" class="page-nav">
+<button class="button" data-route="roadmap" type="button">← Learning Roadmap</button>
+<button class="button" data-route="projects" type="button">Standout Projects →</button>
+</nav>
+</section>
+<section class="route-page" data-page="projects" hidden="">
+<header class="page-hero">
+<div class="eyebrow">Roadmap page 6 of 9</div>
+<h1>Additional Projects That Make You Stand Out</h1>
+<p class="lede">Projects targeted to humanoids, robotics hardware, controls, simulation, and Physical AI.</p>
+<div class="hero-actions">
+<button onclick="window.print()" type="button">Print this page</button>
+<button onclick="resetProgress()" type="button">Reset all progress</button>
+</div>
+</header>
+<section class="page-panel">
+<div class="grid">
+<div class="card col-6">
+<h3>1. Series-elastic or cable-driven robot joint test rig</h3>
+<p>Design the joint, select motor/gear ratio, model torque-speed and thermal limits, fabricate the assembly, implement PID/impedance control, and compare model versus measured results.</p>
+<div class="meta"><span class="pill">70–100 h</span><span class="pill">Best for Tesla / humanoids</span></div>
+<div class="checklist">
+<label class="check"><input data-task="proj-1a" type="checkbox"/><span><span class="check-title">CAD assembly + drawings + tolerance stack</span></span></label>
+<label class="check"><input data-task="proj-1b" type="checkbox"/><span><span class="check-title">FEA and hand calculations</span></span></label>
+<label class="check"><input data-task="proj-1c" type="checkbox"/><span><span class="check-title">Motor characterization and closed-loop control</span></span></label>
+</div>
+</div>
+<div class="card col-6">
+<h3>2. Rugged robotic sensor enclosure</h3>
+<p>Package a camera, IMU, compute board, power, and connectors for vibration, rain, heat, serviceability, and manufacturability. Build it and run drop, vibration, splash, and thermal tests.</p>
+<div class="meta"><span class="pill">45–70 h</span><span class="pill">Best for moss / Reliable</span></div>
+<div class="checklist">
+<label class="check"><input data-task="proj-2a" type="checkbox"/><span><span class="check-title">Thermal and structural requirements</span></span></label>
+<label class="check"><input data-task="proj-2b" type="checkbox"/><span><span class="check-title">Sealing, mounting, cable routing, and DFM</span></span></label>
+<label class="check"><input data-task="proj-2c" type="checkbox"/><span><span class="check-title">Environmental test report with failures and revisions</span></span></label>
+</div>
+</div>
+<div class="card col-6">
+<h3>3. Two-link arm digital twin</h3>
+<p>Build a small arm or test fixture, derive forward/inverse kinematics, identify motor/friction parameters, simulate it, and compare commanded versus measured trajectories.</p>
+<div class="meta"><span class="pill">60–90 h</span><span class="pill">Best for controls / simulation</span></div>
+<div class="checklist">
+<label class="check"><input data-task="proj-3a" type="checkbox"/><span><span class="check-title">Kinematics + Jacobian implementation</span></span></label>
+<label class="check"><input data-task="proj-3b" type="checkbox"/><span><span class="check-title">ROS 2 + Gazebo model</span></span></label>
+<label class="check"><input data-task="proj-3c" type="checkbox"/><span><span class="check-title">Calibration and model-error analysis</span></span></label>
+</div>
+</div>
+<div class="card col-6">
+<h3>4. Autonomous mobile manipulator in simulation</h3>
+<p>Combine navigation, perception, and arm planning to locate and pick an object. Focus on interface design, failure recovery, repeatability, and test metrics—not only a successful demo.</p>
+<div class="meta"><span class="pill">70–110 h</span><span class="pill">Best for ROS / NVIDIA-style roles</span></div>
+<div class="checklist">
+<label class="check"><input data-task="proj-4a" type="checkbox"/><span><span class="check-title">ROS 2 interfaces and TF tree</span></span></label>
+<label class="check"><input data-task="proj-4b" type="checkbox"/><span><span class="check-title">Perception and planning pipeline</span></span></label>
+<label class="check"><input data-task="proj-4c" type="checkbox"/><span><span class="check-title">50-trial reliability evaluation</span></span></label>
+</div>
+</div>
+</div>
+</section>
+<nav aria-label="Previous and next pages" class="page-nav">
+<button class="button" data-route="drone" type="button">← Drone Project</button>
+<button class="button" data-route="portfolio" type="button">Portfolio →</button>
+</nav>
+</section>
+<section class="route-page" data-page="portfolio" hidden="">
+<header class="page-hero">
+<div class="eyebrow">Roadmap page 7 of 9</div>
+<h1>Recruiter-Ready Portfolio</h1>
+<p class="lede">Repository structure, engineering evidence, demo expectations, and resume bullets.</p>
+<div class="hero-actions">
+<button onclick="window.print()" type="button">Print this page</button>
+<button onclick="resetProgress()" type="button">Reset all progress</button>
+</div>
+</header>
+<section class="page-panel">
+<div class="two-col">
+<div class="card">
+<h3>Repository structure</h3>
+<div class="code">project-name/
+├── README.md
+├── LICENSE
+├── docs/
+│   ├── architecture.png
+│   ├── requirements.md
+│   ├── safety_privacy.md
+│   └── test_report.pdf
+├── ros2_ws/src/
+├── simulation/
+├── perception/
+├── controls/
+├── tests/
+├── data/sample/
+├── cad/
+└── results/metrics.csv</div>
+</div>
+<div class="card">
+<h3>README order</h3>
+<ol>
+<li>One-sentence problem and result</li>
+<li>30-second demo GIF/video</li>
+<li>Architecture diagram</li>
+<li>What you personally designed</li>
+<li>Requirements and constraints</li>
+<li>Setup and one-command launch</li>
+<li>Test matrix and quantitative results</li>
+<li>Failures, trade-offs, and next steps</li>
+<li>Safety, privacy, and responsible-use limits</li>
+</ol>
+</div>
+</div>
+<h3 style="margin-top:22px">Evidence checklist for every project</h3>
+<div class="checklist">
+<label class="check"><input data-task="port-1" type="checkbox"/><span><span class="check-title">A clear requirement with a number</span><br/><span class="small">Example: dispatch within 3 seconds; maintain track for 90% of a 30-second scenario; enclosure first mode above a defined frequency.</span></span></label>
+<label class="check"><input data-task="port-2" type="checkbox"/><span><span class="check-title">A design trade-off table</span><br/><span class="small">Mass versus stiffness, accuracy versus compute load, range versus safety boundary, or cost versus performance.</span></span></label>
+<label class="check"><input data-task="port-3" type="checkbox"/><span><span class="check-title">A failure that caused a design revision</span><br/><span class="small">Recruiters value demonstrated debugging and judgement more than a flawless-looking demo.</span></span></label>
+<label class="check"><input data-task="port-4" type="checkbox"/><span><span class="check-title">Model-to-test comparison</span><br/><span class="small">Show predicted and measured values, error, and the likely causes.</span></span></label>
+<label class="check"><input data-task="port-5" type="checkbox"/><span><span class="check-title">A short technical video</span><br/><span class="small">2–3 minutes: problem, architecture, demo, metrics, limitation, next step.</span></span></label>
+</div>
+<h3 style="margin-top:22px">Draft resume bullets for the drone project</h3>
+<div class="card soft">
+<p><strong>Version while in progress:</strong> Developing a three-vehicle incident-response simulation in ROS 2, PX4, and Gazebo with human-approved dispatch, anonymous visual tracking, geofencing, battery-aware role assignment, and auditable state logging.</p>
+<p><strong>Version after testing:</strong> Designed and validated a three-vehicle ROS 2/PX4 incident-response simulation, achieving <em>[X] s</em> median dispatch latency, <em>[Y]%</em> track continuity, and <em>[Z]%</em> successful failsafe recovery across <em>[N]</em> scripted trials.</p>
+</div>
+</section>
+<nav aria-label="Previous and next pages" class="page-nav">
+<button class="button" data-route="projects" type="button">← Standout Projects</button>
+<button class="button" data-route="applications" type="button">Applications →</button>
+</nav>
+</section>
+<section class="route-page" data-page="applications" hidden="">
+<header class="page-hero">
+<div class="eyebrow">Roadmap page 8 of 9</div>
+<h1>Applications and Networking</h1>
+<p class="lede">A repeatable weekly workflow, editable tracker, and outreach templates.</p>
+<div class="hero-actions">
+<button onclick="window.print()" type="button">Print this page</button>
+<button onclick="resetProgress()" type="button">Reset all progress</button>
+</div>
+</header>
+<section class="page-panel">
+<div class="callout priority">
+<strong>Weekly target:</strong> 4 high-quality applications, 5 targeted networking messages, 1 portfolio update, and 1 mock interview.
+      </div>
+<h3>Application checklist</h3>
+<div class="checklist">
+<label class="check"><input data-task="app-1" type="checkbox"/><span><span class="check-title">Create a master resume and three tailored versions</span><br/><span class="small">Mechanical design/CAE; controls/simulation; autonomy/robotics systems.</span></span></label>
+<label class="check"><input data-task="app-2" type="checkbox"/><span><span class="check-title">Put projects above unrelated work when applying to robotics roles</span></span></label>
+<label class="check"><input data-task="app-3" type="checkbox"/><span><span class="check-title">Use the exact tools and deliverables from the job posting—only when truthful</span></span></label>
+<label class="check"><input data-task="app-4" type="checkbox"/><span><span class="check-title">Send a 100-word message to one engineer or former intern per company</span><br/><span class="small">Ask one specific question about the team’s hardware development, simulation, or test process—not for a job immediately.</span></span></label>
+<label class="check"><input data-task="app-5" type="checkbox"/><span><span class="check-title">Follow up 7–10 days after applying when a contact exists</span></span></label>
+</div>
+<h3 style="margin-top:22px">Editable mini-tracker</h3>
+<p class="small">Fields save automatically in this browser.</p>
+<div id="tracker">
+<div class="application-row">
+<input data-task="track-1" type="checkbox"/>
+<input data-save="company-1" type="text" value="moss — Spring ’27 Mechanical Engineering"/>
+<select data-save="status-1"><option>Apply now</option><option>Applied</option><option>Networking</option><option>Interview</option><option>Closed</option></select>
+<input data-save="date-1" type="date"/>
+<input data-save="note-1" placeholder="Contact, J-1 answer, follow-up date" type="text"/>
+</div>
+<div class="application-row">
+<input data-task="track-2" type="checkbox"/>
+<input data-save="company-2" type="text" value="Reliable Robotics — Spring 2027"/>
+<select data-save="status-2"><option>Apply now</option><option>Applied</option><option>Networking</option><option>Interview</option><option>Closed</option></select>
+<input data-save="date-2" type="date"/>
+<input data-save="note-2" placeholder="Export-control response / contact" type="text"/>
+</div>
+<div class="application-row">
+<input data-task="track-3" type="checkbox"/>
+<input data-save="company-3" type="text" value="Haast Autonomous — Summer 2027"/>
+<select data-save="status-3"><option>Apply now</option><option>Applied</option><option>Networking</option><option>Interview</option><option>Closed</option></select>
+<input data-save="date-3" type="date"/>
+<input data-save="note-3" placeholder="Attach project concept sheet" type="text"/>
+</div>
+<div class="application-row">
+<input data-task="track-4" type="checkbox"/>
+<input data-save="company-4" type="text" value="Tesla Optimus — targeted role"/>
+<select data-save="status-4"><option>Research</option><option>Applied</option><option>Networking</option><option>Interview</option><option>Closed</option></select>
+<input data-save="date-4" type="date"/>
+<input data-save="note-4" placeholder="Role ID and authorization question" type="text"/>
+</div>
+<div class="application-row">
+<input data-task="track-5" type="checkbox"/>
+<input data-save="company-5" type="text" value="Add target"/>
+<select data-save="status-5"><option>Research</option><option>Apply now</option><option>Applied</option><option>Networking</option><option>Interview</option><option>Closed</option></select>
+<input data-save="date-5" type="date"/>
+<input data-save="note-5" placeholder="Notes" type="text"/>
+</div>
+</div>
+<h3 style="margin-top:22px">Networking message template</h3>
+<div class="card soft">
+<p>Hi [Name], I’m a third-year mechanical engineering student at Carleton moving toward robotics hardware, controls, and simulation. I’m building a ROS 2/PX4 multi-agent autonomy project and was especially interested in your team’s work on [specific system]. What skill or project evidence tends to distinguish interns who contribute quickly on your team? Thank you for any insight.</p>
+</div>
+</section>
+<nav aria-label="Previous and next pages" class="page-nav">
+<button class="button" data-route="portfolio" type="button">← Portfolio</button>
+<button class="button" data-route="sources" type="button">Sources →</button>
+</nav>
+</section>
+<section class="route-page" data-page="sources" hidden="">
+<header class="page-hero">
+<div class="eyebrow">Roadmap page 9 of 9</div>
+<h1>Research and Learning Sources</h1>
+<p class="lede">Internship listings, authorization guidance, aviation and privacy references, and learning resources.</p>
+<div class="hero-actions">
+<button onclick="window.print()" type="button">Print this page</button>
+<button onclick="resetProgress()" type="button">Reset all progress</button>
+</div>
+</header>
+<section class="page-panel">
+<p class="small">Job pages can be revised or removed. Learning durations in this plan are estimates based on the scope required to produce a demonstrable project.</p>
+<h3>Internships and job benchmarks</h3>
+<ul class="source-list">
+<li><a href="https://builtin.com/job/spring-27-intern-mechanical-engineering/10013769" rel="noopener" target="_blank">moss — Spring ’27 Mechanical Engineering Intern</a></li>
+<li><a href="https://jobs.ashbyhq.com/reliable-robotics/301305c1-eb57-4a88-ab91-97df9a77c58c" rel="noopener" target="_blank">Reliable Robotics — Mechanical Engineering Intern</a></li>
+<li><a href="https://www.tesla.com/careers/search/job/internship-cae-mechanical-design-engineer-optimus-fall-2026-266320" rel="noopener" target="_blank">Tesla Optimus — CAE Mechanical Design Intern</a></li>
+<li><a href="https://www.tesla.com/en_GB/careers/search/job/internship-physics-engine-development-engineer-optimus-summer-2026-257048" rel="noopener" target="_blank">Tesla Optimus — Physics Engine Development benchmark</a></li>
+<li><a href="https://peakenergy.com/get-in-touch/careers" rel="noopener" target="_blank">Peak Energy careers — Winter 2027 listing</a></li>
+<li><a href="https://jobs.ashbyhq.com/haastautonomous/5e3667c4-3d04-40d9-87d1-6b7fe6539e2d" rel="noopener" target="_blank">Haast Autonomous — Summer 2027 Engineering Internship</a></li>
+<li><a href="https://job-boards.greenhouse.io/andurilindustries/jobs/5153187007" rel="noopener" target="_blank">Anduril — 2027 Mechanical Engineer Intern</a></li>
+<li><a href="https://jobs.lever.co/plus-2/c6560f15-5446-442a-878d-b7c72606149b" rel="noopener" target="_blank">PlusAI — Robotics Systems Intern, Sensor Platform</a></li>
+<li><a href="https://boards.greenhouse.io/harbingermotors/jobs/4711879007" rel="noopener" target="_blank">Harbinger — Mechanical Engineering Intern</a></li>
+</ul>
+<h3>Work authorization, aviation, and privacy</h3>
+<ul class="source-list">
+<li><a href="https://j1visa.state.gov/programs/intern/" rel="noopener" target="_blank">U.S. Department of State — BridgeUSA Intern program</a></li>
+<li><a href="https://www.uscis.gov/working-in-the-united-states/students-and-exchange-visitors/exchange-visitors" rel="noopener" target="_blank">USCIS — Exchange visitors</a></li>
+<li><a href="https://www.bis.gov/sites/default/files/documents/deemed-exports-licensing-guidelines-foreign-persons.pdf" rel="noopener" target="_blank">U.S. BIS — deemed-export guidance</a></li>
+<li><a href="https://tc.canada.ca/en/aviation/drone-safety/2025-summary-changes-canada-drone-regulations" rel="noopener" target="_blank">Transport Canada — 2025/2026 RPAS rule changes</a></li>
+<li><a href="https://tc.canada.ca/en/aviation/drone-safety/learn-rules-you-fly-your-drone/drone-operation-categories-pilot-certificates/advanced-operations" rel="noopener" target="_blank">Transport Canada — advanced, EVLOS, and sheltered operations</a></li>
+<li><a href="https://www.priv.gc.ca/en/privacy-topics/surveillance/video-surveillance-by-businesses/gl_vs_080306/" rel="noopener" target="_blank">Privacy Commissioner of Canada — overt video surveillance</a></li>
+<li><a href="https://www.priv.gc.ca/en/privacy-topics/privacy-laws-in-canada/the-personal-information-protection-and-electronic-documents-act-pipeda/p_principle/" rel="noopener" target="_blank">PIPEDA fair information principles</a></li>
+</ul>
+<h3>Technical learning</h3>
+<ul class="source-list">
+<li><a href="https://ubuntu.com/tutorials/command-line-for-beginners" rel="noopener" target="_blank">Ubuntu command-line tutorial</a></li>
+<li><a href="https://github.com/skills/introduction-to-github" rel="noopener" target="_blank">GitHub Skills</a></li>
+<li><a href="https://docs.python.org/3/tutorial/" rel="noopener" target="_blank">Python tutorial</a></li>
+<li><a href="https://learn.microsoft.com/en-us/cpp/get-started/?view=msvc-170" rel="noopener" target="_blank">Microsoft C++ guide</a></li>
+<li><a href="https://cmake.org/cmake/help/latest/guide/tutorial/" rel="noopener" target="_blank">CMake tutorial</a></li>
+<li><a href="https://docs.ros.org/en/jazzy/Tutorials.html" rel="noopener" target="_blank">ROS 2 Jazzy tutorials</a></li>
+<li><a href="https://modernrobotics.northwestern.edu/nu-gm-book-resource/" rel="noopener" target="_blank">Modern Robotics</a></li>
+<li><a href="https://matlabacademy.mathworks.com/details/matlab-onramp/gettingstarted" rel="noopener" target="_blank">MATLAB Onramp</a></li>
+<li><a href="https://matlabacademy.mathworks.com/details/simulink-onramp/simulink" rel="noopener" target="_blank">Simulink Onramp</a></li>
+<li><a href="https://learn.onshape.com/" rel="noopener" target="_blank">Onshape Learning Center</a></li>
+<li><a href="https://innovationspace.ansys.com/courses/learning-track/introduction-to-finite-element-methods/" rel="noopener" target="_blank">Ansys FEA learning track</a></li>
+<li><a href="https://www.asme.org/codes-standards/find-codes-standards/y14-5-dimensioning-tolerancing" rel="noopener" target="_blank">ASME Y14.5</a></li>
+<li><a href="https://gazebosim.org/docs/harmonic/tutorials/" rel="noopener" target="_blank">Gazebo Harmonic tutorials</a></li>
+<li><a href="https://docs.px4.io/main/en/simulation/multi-vehicle-simulation" rel="noopener" target="_blank">PX4 multi-vehicle simulation</a></li>
+<li><a href="https://opencv.org/university/free-opencv-course/" rel="noopener" target="_blank">OpenCV free course</a></li>
+<li><a href="https://docs.pytorch.org/tutorials/beginner/basics/intro.html" rel="noopener" target="_blank">PyTorch basics</a></li>
+<li><a href="https://docs.isaacsim.omniverse.nvidia.com/latest/robot_setup_tutorials/index.html" rel="noopener" target="_blank">Isaac Sim robot setup</a></li>
+</ul>
+</section>
+<nav aria-label="Previous and next pages" class="page-nav">
+<button class="button" data-route="applications" type="button">← Applications</button>
+<button class="button" data-route="overview" type="button">Overview →</button>
+</nav>
+</section>
+<footer>2027 Robotics Internship Roadmap • Each menu item opens a separate page view inside this single sandbox-compatible file.</footer>
+</div>
+</main>
+<script>
+const STORAGE_KEY = 'robotics-roadmap-2027-spa-v1';
+const SIDEBAR_KEY = 'robotics-roadmap-sidebar-spa-v1';
+const TOTAL_TASKS = 86;
+const PAGE_TITLES = {'overview': '2027 California Robotics Internship Roadmap', 'strategy': 'Career Strategy', 'internships': 'Winter, Spring, and Summer 2027 Internships', 'companies': 'Companies to Target for a Second Internship', 'eligibility': 'U.S. Work Authorization and Export Controls', 'roadmap': 'Robotics Skills Roadmap', 'drone': '30-Day Multi-Drone Incident-Response Project', 'projects': 'Additional Projects That Make You Stand Out', 'portfolio': 'Recruiter-Ready Portfolio', 'applications': 'Applications and Networking', 'sources': 'Research and Learning Sources'};
+
+function readState(){
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
+  catch(e) { return {}; }
+}
+function writeState(state){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+function collectState(existing){
+  const state = existing || readState();
+  state.tasks = state.tasks || {};
+  state.fields = state.fields || {};
+  document.querySelectorAll('input[data-task]').forEach(box => {
+    state.tasks[box.dataset.task] = box.checked;
+  });
+  document.querySelectorAll('[data-save]').forEach(field => {
+    state.fields[field.dataset.save] = field.value;
+  });
+  state.updated = new Date().toISOString();
+  return state;
+}
+function loadSavedState(){
+  const state = readState();
+  document.querySelectorAll('input[data-task]').forEach(box => {
+    if(state.tasks && Object.prototype.hasOwnProperty.call(state.tasks, box.dataset.task)){
+      box.checked = !!state.tasks[box.dataset.task];
+    }
+  });
+  document.querySelectorAll('[data-save]').forEach(field => {
+    if(state.fields && Object.prototype.hasOwnProperty.call(state.fields, field.dataset.save)){
+      field.value = state.fields[field.dataset.save];
+    }
+  });
+  updateProgress(false);
+}
+function updateProgress(save=true){
+  const state = collectState(readState());
+  if(save) writeState(state);
+  const done = Object.values(state.tasks || {}).filter(Boolean).length;
+  const pct = TOTAL_TASKS ? Math.round(done / TOTAL_TASKS * 100) : 0;
+  document.querySelectorAll('[data-progress-bar]').forEach(el => el.style.width = pct + '%');
+  document.querySelectorAll('[data-progress-text]').forEach(el => el.textContent = pct + '%');
+  document.querySelectorAll('[data-progress-count]').forEach(el => el.textContent = `${done} of ${TOTAL_TASKS} tasks complete`);
+}
+function resetProgress(){
+  if(!confirm('Reset all checklist progress and editable tracker fields?')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  document.querySelectorAll('input[data-task]').forEach(box => box.checked = false);
+  document.querySelectorAll('[data-save]').forEach(field => {
+    if(field.tagName === 'SELECT') field.selectedIndex = 0;
+    else if(field.type === 'date') field.value = '';
+    else if((field.dataset.save || '').startsWith('note-')) field.value = '';
+  });
+  updateProgress(true);
+}
+function isMobile(){ return window.matchMedia('(max-width: 860px)').matches; }
+function applySavedSidebar(){
+  if(isMobile()){
+    document.body.classList.remove('sidebar-collapsed');
+  } else {
+    document.body.classList.toggle('sidebar-collapsed', localStorage.getItem(SIDEBAR_KEY) === 'collapsed');
+  }
+}
+function toggleSidebar(){
+  if(isMobile()){
+    document.body.classList.toggle('sidebar-open');
+  } else {
+    const collapsed = document.body.classList.toggle('sidebar-collapsed');
+    localStorage.setItem(SIDEBAR_KEY, collapsed ? 'collapsed' : 'expanded');
+  }
+}
+function closeSidebar(){ document.body.classList.remove('sidebar-open'); }
+
+function validPage(key){
+  return !!document.querySelector(`.route-page[data-page="${CSS.escape(key)}"]`);
+}
+function showPage(key, updateHash=true){
+  if(!validPage(key)) key = 'overview';
+  document.querySelectorAll('.route-page').forEach(page => {
+    const active = page.dataset.page === key;
+    page.hidden = !active;
+    page.classList.toggle('active', active);
+  });
+  document.querySelectorAll('.sidebar-link').forEach(link => {
+    const active = link.dataset.route === key;
+    link.classList.toggle('active', active);
+    if(active) link.setAttribute('aria-current','page');
+    else link.removeAttribute('aria-current');
+  });
+  const topbar = document.querySelector('.topbar-title');
+  const activeLink = document.querySelector(`.sidebar-link[data-route="${CSS.escape(key)}"] .nav-label`);
+  if(topbar && activeLink) topbar.textContent = activeLink.textContent;
+  document.title = (PAGE_TITLES[key] || 'Robotics Roadmap') + ' | Robotics Roadmap';
+  if(updateHash){
+    history.pushState({page:key}, '', '#' + key);
+  }
+  window.scrollTo({top:0, behavior:'instant'});
+  closeSidebar();
+}
+function routeFromHash(){
+  const key = location.hash.replace(/^#/, '') || 'overview';
+  showPage(key, false);
+}
+
+document.addEventListener('click', (event) => {
+  const target = event.target.closest('[data-route]');
+  if(!target) return;
+  event.preventDefault();
+  showPage(target.dataset.route, true);
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  applySavedSidebar();
+  loadSavedState();
+  routeFromHash();
+  document.querySelectorAll('input[data-task]').forEach(box => box.addEventListener('change', () => updateProgress(true)));
+  document.querySelectorAll('[data-save]').forEach(field => {
+    field.addEventListener('input', () => writeState(collectState(readState())));
+    field.addEventListener('change', () => writeState(collectState(readState())));
+  });
+});
+window.addEventListener('hashchange', routeFromHash);
+window.addEventListener('popstate', routeFromHash);
+window.addEventListener('resize', applySavedSidebar);
+</script>
+</body>
+</html>

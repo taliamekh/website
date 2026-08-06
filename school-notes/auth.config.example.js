@@ -1,7 +1,7 @@
 /**
- * Optional: override the student-resources password.
+ * Optional: override the legacy School Notes password.
  *
- * If this file is missing, notes/index.html uses a built-in default
+ * Legacy local fallback only. Production Workspace access is verified server-side.
  * (change DEFAULT_STUDENT_RESOURCES_PASSWORD in that file to rotate it).
  *
  * To use this file: copy to auth.config.js (gitignored) and set your phrase.

@@ -44,6 +44,10 @@ docs
 # Version it in git, but keep it out of the public deploy.
 sandbox
 
+# Local server used to preview the Workspace auth flow without Vercel credentials.
+scripts/workspace-preview.mjs
+scripts/check-workspace-spocket.mjs
+
 # Internal repo files that shouldn't be served at the public web root — project
 # docs / config / meta, not site content, and nothing on the live site links to
 # them. Build-required files (package.json, package-lock.json, vercel.json) are

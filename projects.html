@@ -570,6 +570,27 @@
     border: 1px solid color-mix(in srgb, var(--pop) 35%, transparent);
     font-weight: 500;
   }
+  .modal-sheet .p-links {
+    display: flex; gap: 10px; flex-wrap: wrap;
+    margin-top: 24px;
+  }
+  .modal-sheet .p-link {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 18px;
+    font-family: var(--tag-font); font-size: 11px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    font-weight: 700;
+    color: var(--white);
+    text-decoration: none; border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--pop) 42%, transparent);
+    background: color-mix(in srgb, var(--pop) 16%, transparent);
+    transition: transform 0.2s, border-color 0.2s, background 0.2s;
+  }
+  .modal-sheet .p-link:hover {
+    transform: translateY(-1px);
+    border-color: var(--pop);
+    background: color-mix(in srgb, var(--pop) 24%, transparent);
+  }
 
   /* Spocket */
   .spocket-stage {
@@ -826,7 +847,7 @@
   <ul class="nav-links">
     <li><a href="index.html">Home</a></li>
     <li><a href="projects.html" class="active">Projects</a></li>
-    <li><a href="notes/">Student Resources</a></li>
+    <li><a href="workspace/">Workspace</a></li>
     <li><a href="portal.html">Client Portal</a></li>
     <li><a href="contact.html" class="contact-cta">Contact</a></li>
   </ul>
@@ -979,11 +1000,11 @@ window.PROJECTS = [
     ]
   },
   { id:'spocket', num:'04', title:'Spocket — AI-powered study assistant',
-    summary:'React + Gemini AI tutor for the Student Resources workspace. Live, not a mockup.',
+    summary:'React + Gemini AI assistant for the School Notes workspace. Live, not a mockup.',
     awards:[],
     tags:['React','Gemini AI','Vercel Serverless','postMessage / iframe'],
     cover:'spocket.svg',
-    description:'<strong>Spocket</strong> is an AI-powered study assistant for the Student Resources workspace I use with students I tutor. She is a <strong>React</strong> layer on top of the notes page with a <strong>Gemini AI</strong> backend. Students can ask freeform questions about their notes and get answers grounded in the actual content, or use Find &amp; Explain to highlight and understand specific sections across the study guide and formula sheet. Onboarding, workspace help, Roam/Study modes, and keyboard shortcut reference are all built in.',
+    description:'<strong>Spocket</strong> is an AI-powered assistant for School Notes inside my private Workspace. She is a <strong>React</strong> layer on top of the notes page with a <strong>Gemini AI</strong> backend. I can ask freeform questions grounded in the actual course content, or use Find &amp; Explain to highlight and understand specific sections across the study guide and formula sheet. Onboarding, workspace help, Roam/Study modes, and keyboard shortcut reference are all built in.',
     sections:[
       {label:'What it does',bullets:[
         '<strong>AI-powered Q&A:</strong> Students ask freeform questions about their notes and Spocket answers using Gemini, grounded only in the actual uploaded content — no hallucinated answers from the internet.',
@@ -1070,6 +1091,46 @@ window.PROJECTS = [
     photos:[],
     fuelEconomy:true
   },
+  { id:'surgy', num:'09', title:'SurgY',
+    summary:'VR surgical trainer with custom haptic gloves, finger-curl sensing, force feedback, and QNX edge AI monitoring.',
+    awards:[{kind:'pop',text:'🏆 1st Overall · cuHacking7'}],
+    tags:['ESP32','LucidGloves','3D Printing','Potentiometers','Servo Motors','SteamVR','OpenGloves','Raspberry Pi 5','QNX','C++17','mlpack'],
+    cover:'surgy-glove-closeup.png',
+    description:'SurgY is a VR surgical training system that makes simulated procedures physical and measurable. Custom haptic gloves let trainees control virtual hands while servo-driven strings resist finger motion when the simulation detects contact, and a separate Raspberry Pi 5 running QNX monitors hand movement locally for anomaly detection.',
+    sections:[
+      {label:'What it does',bullets:[
+        'Tracks real finger curl through retractable spools and potentiometers, then streams finger flexion data from an <strong>ESP32</strong> into <strong>OpenGloves</strong> and <strong>SteamVR</strong>.',
+        'Uses <strong>servo-driven force feedback</strong> to resist individual fingers, making virtual surgical interactions feel physically present instead of only visual.',
+        'Mirrors glove telemetry over USB to a <strong>Raspberry Pi 5 running QNX</strong>, keeping hand monitoring independent from the VR interaction path.'
+      ]},
+      {label:'QNX AI monitoring',bullets:[
+        'Processes left and right hands independently with <strong>20-frame sliding windows</strong>.',
+        'Extracts features for finger position, frame-to-frame movement, and short-term movement variability.',
+        'Runs local <strong>mlpack KNN inference</strong> against a recorded baseline to flag unusual or unstable movement without a cloud connection.'
+      ]},
+      {label:'Personal contribution',bullets:[
+        'Developed the core concept for SurgY: pairing haptic VR surgical practice with independent QNX hand-motion analysis.',
+        'Built all project hardware, including the LucidGloves-style 3D-printed glove assembly, potentiometer sensing, servo force-feedback layout, and wiring.',
+        '<strong>Repurposed</strong> the chest expansion and retraction mechanism from the sleep apnea hardware into a finger-curl angle sensor for the glove.'
+      ]},
+      {label:'Built with',bullets:[
+        '<strong>Hardware:</strong> ESP32, 3D-printed LucidGloves-style components, potentiometers, servo motors, USB serial, Raspberry Pi 5.',
+        '<strong>Software:</strong> OpenGloves, SteamVR, QNX, C++17, POSIX threads, mlpack, Armadillo.'
+      ]},
+      {label:'Next steps',bullets:[
+        'Collect larger real-user datasets and expand beyond finger flexion into hand orientation, tool trajectories, grip consistency, tremor characteristics, and procedure-specific motion patterns.'
+      ]}
+    ],
+    links:[
+      {label:'View Devpost',url:'https://devpost.com/software/surgy'},
+      {label:'View Source',url:'https://github.com/angelo-riv/surgy'}
+    ],
+    photos:[
+      {src:'surgy-metaquest-gloves.png',alt:'Meta Quest headset with SurgY haptic gloves'},
+      {src:'surgy-glove-closeup.png',alt:'Close-up of the haptic glove finger-curl mechanism'},
+      {src:'surgy-controlled-incision.png',alt:'SurgY controlled-incision VR simulation'}
+    ]
+  },
   { id:'haptic-gloves', num:'06', title:'Force Feedback Haptic Gloves',
     summary:'VR glove that physically stops your fingers when you grab a virtual object.',
     awards:[{kind:'pop',text:'On-going'}],
@@ -1097,6 +1158,8 @@ window.renderProjectDetail = function(p) {
   const sectionsHTML = (p.sections||[]).map(s=>`
     <div class="p-label">${s.label}</div>
     <ul class="p-points">${s.bullets.map(b=>`<li>${b}</li>`).join('')}</ul>`).join('');
+  const linksHTML = (p.links||[]).length
+    ? `<div class="p-links">${p.links.map(link=>`<a href="${link.url}" target="_blank" rel="noopener" class="p-link" onclick="event.stopPropagation()">${link.label}</a>`).join('')}</div>` : '';
   const photosHTML = (p.photos&&p.photos.length)
     ? `<div class="p-photos">${p.photos.map(ph=>`<figure class="p-photo"><img src="${ph.src}" alt="${ph.alt}"><figcaption>${ph.alt}</figcaption></figure>`).join('')}</div>` : '';
   const spocketHTML = p.spocket ? `
@@ -1110,9 +1173,9 @@ window.renderProjectDetail = function(p) {
         </svg>
       </div>
       <div class="spocket-msg">
-        <span class="spocket-whisper">Try Spocket live · Student Resources</span>
-        <p><span class="spocket-hi">This is the real thing, not a mockup.</span> Open <strong>Student Resources</strong> to walk through onboarding, ask AI questions about the notes, use Find &amp; Explain, and try Roam/Study modes. Everything runs live.</p>
-        <a href="notes/?from=spocket-project" class="spocket-cta" onclick="event.stopPropagation()">Open Student Resources →</a>
+        <span class="spocket-whisper">Try Spocket live · School Notes</span>
+        <p><span class="spocket-hi">This is the real thing, not a mockup.</span> Open <strong>School Notes</strong> to walk through onboarding, ask AI questions about the notes, use Find &amp; Explain, and try Roam/Study modes. Everything runs live.</p>
+        <a href="school-notes/?from=spocket-project" class="spocket-cta" onclick="event.stopPropagation()">Open School Notes →</a>
       </div>
     </div>` : '';
   const siftHTML = p.sift ? `
@@ -1136,7 +1199,7 @@ window.renderProjectDetail = function(p) {
       </div>
     </div>` : '';
   return `<div class="p-awards">${awardsHTML}</div>
-    <h3 class="p-title">${p.title}</h3>${descHTML}${descBullets}${sectionsHTML}${spocketHTML}${siftHTML}${fuelHTML}${photosHTML}
+    <h3 class="p-title">${p.title}</h3>${descHTML}${descBullets}${sectionsHTML}${linksHTML}${spocketHTML}${siftHTML}${fuelHTML}${photosHTML}
     <div class="p-tags">${tagsHTML}</div>`;
 };
 
@@ -1148,11 +1211,12 @@ const sizes = {
   'spocket':'size-tall',
   'wind-turbine':'size-mid',
   'haptic-gloves':'size-mid',
+  'surgy':'size-tall',
   'sift':'size-tall',
   'fuel-economy':'size-tall'
 };
 const noImage = { 'wind-turbine': true, 'haptic-gloves': true, 'sift': true, 'fuel-economy': true };
-const tileOrder = ['deskclaw','sleep-apnea','spocket','water-filter','wind-turbine','haptic-gloves','sift','fuel-economy'];
+const tileOrder = ['deskclaw','sleep-apnea','spocket','water-filter','wind-turbine','haptic-gloves','surgy','sift','fuel-economy'];
 const tagLimit = { 'size-2x2': 6, 'size-2x1': 5, 'size-wide': 6, 'size-tall': 4, 'size-mid': 3 };
 
 /* Fuel-Economy mark — a Porsche 911 GT3 RS in side profile, drawn as pink
@@ -1468,7 +1532,11 @@ function setPalette(id) {
   if (fuelTile && palette.colors['wind-turbine']) {
     fuelTile.style.setProperty('--tile-accent', palette.colors['wind-turbine']);
   }
-  const colorArr = tileOrder.map(pid => palette.colors[pid]);
+  const surgyTile = document.querySelector('.tile[data-id="surgy"]');
+  if (surgyTile && palette.colors['haptic-gloves']) {
+    surgyTile.style.setProperty('--tile-accent', palette.colors['haptic-gloves']);
+  }
+  const colorArr = tileOrder.map(pid => palette.colors[pid] || palette.colors['haptic-gloves'] || palette.colors.spocket);
   document.documentElement.style.setProperty(
     '--palette-gradient',
     `linear-gradient(90deg, ${colorArr.join(', ')})`

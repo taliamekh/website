@@ -1,5 +1,7 @@
 const { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } = React;
 const SpocketReactDOM = typeof window !== "undefined" && window.ReactDOM ? window.ReactDOM : null;
+const SPOCKET_IS_WORKSPACE_LANDING =
+  typeof window !== "undefined" && window.SPOCKET_PAGE_CONTEXT === "workspace";
 
 /** True if postMessage came from the iframe root or a direct child frame (nested embed). */
 function tmSpocketFindSourceMatchesFrame(frameContentWindow, source) {
@@ -105,13 +107,33 @@ const TREE = {
 
   /* ── FIRST-TIME USER FLOW (visitor unknown to Spocket) ── */
   start: {
-    msg: "Hi! I'm Spocket, Talia's study assistant. What brings you here today?",
+    msg: SPOCKET_IS_WORKSPACE_LANDING
+      ? "Hi! I'm Spocket, Talia's Workspace assistant. This is where she keeps **School Notes, Projects, Expenses, and Road to CA**. I also roam, tell questionable robot jokes, and run study modes."
+      : "Hi! I'm Spocket, Talia's Workspace assistant. You're in **School Notes**, where I help organize, explore, and explain the course material.",
     eyes: "curious",
     options: [
-      { label: "I'm a student", next: "student_claim" },
-      { label: "I need access", next: "recruiter" },
-      { label: "Looking for a tutor", next: "tutor_me" },
-      { label: "Just browsing", next: "casual_bye" },
+      { label: "What is Workspace?", next: "workspace_intro" },
+      { label: "What can you do here?", next: "about_spocket" },
+      { label: "I need access", next: "workspace_access" },
+      { label: "Let's study", next: "_exit" },
+    ],
+  },
+  workspace_intro: {
+    msg: SPOCKET_IS_WORKSPACE_LANDING
+      ? "Workspace is Talia's private home for School Notes, Projects, Expenses, and Road to CA. Use the four bubbles to open each area in a new tab."
+      : "Workspace is Talia's private home for school notes, test projects, planning tools, expenses, and personal roadmaps. This School Notes area is where my full study toolkit lives.",
+    eyes: "happy",
+    options: [
+      { label: "What can you do here?", next: "about_spocket" },
+      { label: "Got it", next: "_exit" },
+    ],
+  },
+  workspace_access: {
+    msg: "Workspace access is private. If Talia invited you and you need the password, contact her directly from the site's Contact page.",
+    eyes: "nervous",
+    options: [
+      { label: "What can you do here?", next: "about_spocket" },
+      { label: "Understood", next: "_exit" },
     ],
   },
   unlock_name_entry: {
@@ -128,15 +150,6 @@ const TREE = {
       { label: "Sounds good", next: "_parked_dismiss" },
     ],
   },
-  student_claim: {
-    msg: "Great! The password card is right there, type it in whenever you are ready. If you need a temp code, I can help with that.",
-    eyes: "happy",
-    options: [
-      { label: "I need to request access", next: "no_password" },
-      { label: "Tell me about yourself", next: "about_spocket" },
-      { label: "Got it, thanks", next: "_exit" },
-    ],
-  },
   casual_bye: {
     msg: "No worries! Feel free to look around the portfolio! The projects and resume are on the main page.",
     eyes: "happy",
@@ -146,18 +159,20 @@ const TREE = {
   /* Shared info hub — used both pre-unlock (from start) and post-unlock (from ask_spocket_unlocked).
      Sub-questions use _info_back / _info_done which pick() resolves dynamically. */
   about_spocket: {
-    msg: "I'm the study assistant for this page! My dialogue is hand-scripted, but after you unlock I have an AI mode that reads the course notes and answers questions using Gemini. I also do Find in notes, study timers, and workspace tools. Anything else you want to know?",
+    msg: SPOCKET_IS_WORKSPACE_LANDING
+      ? "I'm the assistant for this Workspace. My dialogue, expressions, roaming, idle jokes, and study tools are hand-scripted. Open School Notes when you want my notes-specific Find and Explain tools."
+      : "I'm the assistant for School Notes. My dialogue and workspace tools are hand-scripted, and my AI mode reads the course notes to answer grounded questions. I can also Find and Explain topics, run study timers, and guide the annotation tools.",
     eyes: "happy",
     options: [
       { label: "Why a robot?", next: "sq_why_robot" },
       { label: "Are you AI?", next: "sq_ai_real" },
       { label: "Where did you come from?", next: "sq_origin" },
-      { label: "Let me go unlock", next: "_exit" },
-      { label: "I need access", next: "recruiter" },
+      { label: "How do I get access?", next: "workspace_access" },
+      { label: "Back to notes", next: "_exit" },
     ],
   },
   sq_why_robot: {
-    msg: "The robot look is just a consistent visual anchor: students get a single recognizable control for help, immersive modes, and find-in-notes instead of hunting for a generic FAQ link. The face is an SVG component with expression props tied to dialogue nodes.",
+    msg: "The robot look is a consistent visual anchor for help, immersive modes, and Find in Notes instead of another generic menu. My face is an SVG component with expressions tied to each dialogue node.",
     eyes: "happy",
     options: [
       { label: "Another question", next: "_info_back" },
@@ -173,7 +188,7 @@ const TREE = {
     ],
   },
   sq_origin: {
-    msg: "Authored for this site as a JSX bundle (Babel in-browser on Student Resources) mounting into #spocket-root, alongside the lock overlay and dual iframes for the study guide. Styling mixes inline layout objects with the page CSS. Iterations add features (immersive modes, find bridge) without changing the hosting model.",
+    msg: "I'm authored as a JSX bundle loaded in School Notes, with the notes and formula views running in frames beside me. My tools can bridge into those pages for highlights, Find and Explain, and study modes.",
     eyes: "happy",
     options: [
       { label: "Another question", next: "_info_back" },
@@ -272,33 +287,6 @@ const TREE = {
       { label: "More topics", next: "notes_help_hub" },
       { label: "Done", next: "_parked_dismiss" },
     ],
-  },
-  tutor_me: {
-    msg: "Shoot me an email, you'll hear back ASAP. I promise I don't byte... get it?",
-    eyes: "happy",
-    showIpad: true,
-    options: [{ label: "Thanks, I'll be in touch!", next: "tutor_bye" }],
-  },
-  tutor_bye: {
-    msg: "Yay! Good luck out there!",
-    eyes: "happy",
-    returnCard: true,
-    animation: "balloon_away",
-    options: [{ label: "Bye Spocket!", next: "_exit" }],
-  },
-  recruiter: {
-    msg: "Have you contacted me for a temporary access password?",
-    eyes: "nervous",
-    options: [
-      { label: "Yes, I have one", next: "student_claim" },
-      { label: "No, not yet", next: "no_password" },
-    ],
-  },
-  no_password: {
-    msg: "No worries! Fill this out and you'll get a temp password sent to your email!",
-    eyes: "happy",
-    showForm: true,
-    options: [{ label: "Actually, never mind", next: "end_convo" }],
   },
   all_cookies: {
     msg: "ALL of them?! Another one can't hurt right? Here, take a cookie on the house!",
@@ -1130,7 +1118,7 @@ function SpocketImmersiveChrome({
   );
 }
 
-function StudyPanel({ onClose, siteNavOpen = false, onToggleSiteNav = () => {}, embedded = false }) {
+function StudyPanel({ onClose, siteNavOpen = false, onToggleSiteNav = () => {}, embedded = false, allowSiteNavToggle = SPOCKET_IS_WORKSPACE_LANDING }) {
   const S={fontFamily:"'JetBrains Mono',monospace"};
   const[light,setLight]=useState(false);
   const T=light?{bg:"#f4f0e8",bg2:"#e8e0d4",text:"#1a1a2e",text2:"#4a4a5a",accent:"#3a3028",border:"#c8b8a0",line:"#c8b8a050"}
@@ -1311,7 +1299,7 @@ function StudyPanel({ onClose, siteNavOpen = false, onToggleSiteNav = () => {}, 
         onToggleSiteNav={onToggleSiteNav}
         dockToggleInNav={false}
         hideImmersiveTopBar
-        allowSiteNavToggle={embedded}
+        allowSiteNavToggle={embedded && allowSiteNavToggle}
       />
       <div style={{flex:1,minHeight:0,position:"relative",overflow:"hidden"}}>
       {/* Library background — user's image */}
@@ -1604,7 +1592,7 @@ function StudyPanel({ onClose, siteNavOpen = false, onToggleSiteNav = () => {}, 
       {/* ── GUIDED TOUR OVERLAY ── */}
       {tourStep>=0&&(()=>{
         const TOUR=[
-          {title:"Welcome to the Study Library! 📚",msg:"This is the Study layout: timers, planner, ambient audio, and reminders around the same assistant shell as the rest of Student Resources. The tour below walks each widget.",pos:"center"},
+          {title:"Welcome to the Study Library! 📚",msg:"This is the Study layout: timers, planner, ambient audio, and reminders around the same assistant shell as School Notes. The tour below walks each widget.",pos:"center"},
           {title:"📋 Study Planner",msg:"This is your notebook! Add tasks with time allocations, check them off as you go, and click the ⏱ icon on any task to link it to your timer. Drag it from the top bar and resize from any edge.",pos:"left"},
           {title:"🕐 Clock",msg:"Your live digital clock. Shows the current time, seconds, and date. Drag it anywhere and resize it. The text scales to fit.",pos:"right"},
           {title:"⏱ Study Timer",msg:"Set a countdown with presets (5m, 10m, 25m...) or type a custom time. Hit Start to begin! Turn on Repeat for pomodoro-style cycles. It tracks how many cycles you have done and logs your session history.",pos:"right"},
@@ -1777,7 +1765,7 @@ function RoamMode({ onExit, siteNavOpen, onToggleSiteNav }) {
 
   return(
     <div style={{position:"absolute",inset:0,zIndex:15,display:"flex",flexDirection:"column",overflow:"hidden",pointerEvents:"auto"}}>
-      {!studyMode&&<SpocketImmersiveChrome label="Spocket · Roam" siteNavOpen={siteNavOpen} onToggleSiteNav={onToggleSiteNav} />}
+      {!studyMode&&<SpocketImmersiveChrome label="Spocket · Roam" siteNavOpen={siteNavOpen} onToggleSiteNav={onToggleSiteNav} allowSiteNavToggle={SPOCKET_IS_WORKSPACE_LANDING} />}
       {!studyMode?(
       <div ref={containerRef} style={{flex:1,minHeight:0,position:"relative",overflow:"hidden",background:"linear-gradient(180deg,#1a3a20,#142a18 40%,#102015)"}}>
       <div style={{position:"absolute",inset:0,opacity:0.06,background:"radial-gradient(circle at 15% 20%,rgba(100,200,100,0.4),transparent 30%),radial-gradient(circle at 85% 80%,rgba(100,200,100,0.3),transparent 25%),radial-gradient(circle at 50% 50%,rgba(80,160,80,0.2),transparent 40%)"}}/>
@@ -1856,7 +1844,7 @@ function RoamMode({ onExit, siteNavOpen, onToggleSiteNav }) {
     </div>
       ):(
       <div style={{flex:1,minHeight:0,position:"relative",overflow:"hidden"}}>
-        <StudyPanel embedded onClose={()=>{setStudyMode(false);setStatusText("Study break!");timerRef.current=setTimeout(pickNext,8000);}} siteNavOpen={siteNavOpen} onToggleSiteNav={onToggleSiteNav} />
+        <StudyPanel embedded allowSiteNavToggle={SPOCKET_IS_WORKSPACE_LANDING} onClose={()=>{setStudyMode(false);setStatusText("Study break!");timerRef.current=setTimeout(pickNext,8000);}} siteNavOpen={siteNavOpen} onToggleSiteNav={onToggleSiteNav} />
       </div>
       )}
     </div>
@@ -1875,6 +1863,7 @@ function ParkedRobot({
   onFindInNotes = () => {},
   onAskAboutNotes = () => {},
   onLogOut = () => {},
+  isMobile = false,
 }) {
   const [h, setH] = useState(false);
   const [joke, setJ] = useState(IDLE_JOKES[0]);
@@ -1897,6 +1886,10 @@ function ParkedRobot({
   };
   useEffect(() => () => cancelClose(), []);
   useEffect(() => {
+    if (isMobile) {
+      setI("none");
+      return;
+    }
     const a = ["sleep", "music", "build", "none"];
     let i = 0;
     const iv = setInterval(() => {
@@ -1904,14 +1897,14 @@ function ParkedRobot({
       if (!h) setI(a[i]);
     }, 4500);
     return () => clearInterval(iv);
-  }, [h]);
+  }, [h, isMobile]);
   useEffect(() => {
     if (h) {
       setI("none");
       setJ(IDLE_JOKES[Math.floor(Math.random() * IDLE_JOKES.length)]);
     }
   }, [h]);
-  // Subscribe to Student Resources theme so Spocket's menu can flip colors.
+  // Subscribe to the School Notes theme so Spocket's menu can flip colors.
   const [srTheme, setSrTheme] = useState(() => {
     try {
       if (typeof document !== "undefined" && document.documentElement.classList.contains("sr-light")) return "light";
@@ -1936,8 +1929,26 @@ function ParkedRobot({
   };
   return (
     <div
-      onMouseEnter={() => { cancelClose(); setH(true); }}
-      onMouseLeave={scheduleClose}
+      onMouseEnter={() => { if (!isMobile) { cancelClose(); setH(true); } }}
+      onMouseLeave={() => { if (!isMobile) scheduleClose(); }}
+      onClick={(e) => {
+        if (e.target && typeof e.target.closest === "function" && e.target.closest("button")) return;
+        cancelClose();
+        setH(true);
+      }}
+      onFocus={() => { cancelClose(); setH(true); }}
+      onBlur={scheduleClose}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          cancelClose();
+          setH(true);
+        }
+      }}
+      role="button"
+      tabIndex={0}
+      aria-label="Open Spocket menu"
+      aria-expanded={h}
       style={{
         position: "fixed",
         bottom: 4,
@@ -2091,7 +2102,7 @@ function ParkedRobot({
           </svg>
         </div>
       )}
-      <div style={{ animation: h ? "none" : idle === "sleep" ? "sleepBob 3s ease-in-out infinite" : "idleBob 3s ease-in-out infinite" }}>
+      <div style={{ animation: h || isMobile ? "none" : idle === "sleep" ? "sleepBob 3s ease-in-out infinite" : "idleBob 3s ease-in-out infinite" }}>
         <Robot eyes={h ? "startled" : "happy"} scale={(typeof window !== "undefined" && window.innerWidth <= 480) ? 0.3 : 0.4} startled={h} idleAnim={h ? "none" : idle} />
       </div>
       <div style={{ textAlign: "center", marginTop: -6, fontSize: (typeof window !== "undefined" && window.innerWidth <= 480) ? 6 : 7, color: "#7fdbca35", fontFamily: "monospace" }}>SPOCKET</div>
@@ -2560,7 +2571,6 @@ function App() {
       return false;
     }
   });
-
   /* ── RESPONSIVE: track viewport size ── */
   const [vpW, setVpW] = useState(() => typeof window !== "undefined" ? window.innerWidth : 1024);
   const [vpH, setVpH] = useState(() => typeof window !== "undefined" ? window.innerHeight : 800);
@@ -2828,7 +2838,10 @@ function App() {
 
   const requestLogout = useCallback(() => {
     try {
-      if (typeof window.confirm === "function" && !window.confirm("Log out and lock the notes?")) return;
+      const logoutPrompt = SPOCKET_IS_WORKSPACE_LANDING
+        ? "Log out and lock the Workspace?"
+        : "Log out and lock the notes?";
+      if (typeof window.confirm === "function" && !window.confirm(logoutPrompt)) return;
     } catch (e) {}
     try {
       window.dispatchEvent(new CustomEvent("sr-notes-lock-request"));
@@ -3374,9 +3387,9 @@ function App() {
     // ?from=spocket-project visitors came specifically to see Spocket's
     // entrance animation — don't hijack that with the name prompt, which
     // would force her into corner-park mode and override startReturning().
-    const isFromSpocketProject = typeof window !== "undefined"
-      && /[?&]from=spocket-project(?:&|$)/.test(window.location.search);
-    if (isFromSpocketProject) return;
+    const isDirectSpocketMode = typeof window !== "undefined"
+      && /[?&](?:from=spocket-project|spocket=study)(?:&|$)/.test(window.location.search);
+    if (isDirectSpocketMode) return;
     let skip = false;
     try {
       skip = localStorage.getItem(LS_SPOCKET_NAME_SKIP) === "1";
@@ -3594,11 +3607,18 @@ function App() {
   // Once storage is checked, start the appropriate flow (skip full intro when notes already unlocked)
   useEffect(() => {
     if (!storageChecked) return;
-    // ?from=spocket-project comes from the Spocket project tile's "Open Student Resources"
+    // ?from=spocket-project comes from the Spocket project tile's "Open School Notes"
     // CTA. The visitor explicitly clicked through to see Spocket live, so override the
     // already-unlocked snap-to-parked and run the entrance animation regardless.
     const fromSpocketProject = typeof window !== "undefined"
       && /[?&]from=spocket-project(?:&|$)/.test(window.location.search);
+    const directStudy = typeof window !== "undefined"
+      && /[?&]spocket=study(?:&|$)/.test(window.location.search);
+
+    if (directStudy && typeof document !== "undefined" && document.body.classList.contains("sr-auth-unlocked")) {
+      startStudy();
+      return;
+    }
 
     if (typeof document !== "undefined" && document.body.classList.contains("sr-auth-unlocked") && !fromSpocketProject) {
       snapToParkedIdle();
@@ -3609,7 +3629,7 @@ function App() {
     } else {
       start();
     }
-  }, [storageChecked, isReturning, start, startReturning, snapToParkedIdle]);
+  }, [storageChecked, isReturning, start, startReturning, snapToParkedIdle, startStudy]);
 
   useEffect(() => {
     const onUnlock = () => {
@@ -3823,7 +3843,7 @@ function App() {
         ? findMatchNotes
         : 0;
   const findCanStepMatches = findActiveMatchCount > 0;
-  /* Embedded in notes/index.html: no duplicate nav or full-page backdrop — only Spocket UI layers. */
+  /* Embedded in School Notes: no duplicate nav or full-page backdrop, only Spocket UI layers. */
   const outerStyle = {
     width: "100%",
     height: "100%",
@@ -4287,7 +4307,7 @@ function App() {
               {/* Robot body */}
               <div
                 style={{
-                  animation: balloon ? "balloonUp 2.5s ease-in forwards" : phase === "talking" ? "idleBob 3s ease-in-out infinite" : "none",
+                  animation: mobileGate ? "none" : balloon ? "balloonUp 2.5s ease-in forwards" : phase === "talking" ? "idleBob 3s ease-in-out infinite" : "none",
                   position: "relative",
                 }}
               >
@@ -4536,6 +4556,7 @@ function App() {
             onFindInNotes={startFindInNotes}
             onAskAboutNotes={startAiChat}
             onLogOut={requestLogout}
+            isMobile={isMobile}
           />
         )}
 
@@ -4561,6 +4582,7 @@ function App() {
           onFindInNotes={startFindInNotes}
           onAskAboutNotes={startAiChat}
           onLogOut={requestLogout}
+          isMobile={isMobile}
         />
       </div>
       )}

@@ -9,6 +9,14 @@
       "maxDuration": 30
     }
   },
+  "redirects": [
+    { "source": "/notes", "destination": "/school-notes/", "permanent": true },
+    { "source": "/notes/", "destination": "/school-notes/", "permanent": true },
+    { "source": "/workspace/school-notes", "destination": "/school-notes/", "permanent": true },
+    { "source": "/workspace/school-notes/:path*", "destination": "/school-notes/:path*", "permanent": true },
+    { "source": "/private", "destination": "/workspace/road-to-ca/", "permanent": true },
+    { "source": "/private/", "destination": "/workspace/road-to-ca/", "permanent": true }
+  ],
   "rewrites": [
     { "source": "/expenses", "destination": "/expenses/spending-tracker/dist/index.html" },
     { "source": "/expenses/", "destination": "/expenses/spending-tracker/dist/index.html" },
@@ -22,6 +30,38 @@
     {
       "source": "/resume/:path*",
       "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+    },
+    {
+      "source": "/workspace",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
+        { "key": "Cache-Control", "value": "private, no-store" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" }
+      ]
+    },
+    {
+      "source": "/workspace/:path*",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
+        { "key": "Cache-Control", "value": "private, no-store" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" }
+      ]
+    },
+    {
+      "source": "/school-notes",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
+        { "key": "Cache-Control", "value": "private, no-store" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" }
+      ]
+    },
+    {
+      "source": "/school-notes/:path*",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
+        { "key": "Cache-Control", "value": "private, no-store" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" }
+      ]
     }
   ]
 }
