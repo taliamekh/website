@@ -1,5 +1,6 @@
 const pageContent = document.querySelector('#page-content');
 const body = document.body;
+const siteHeader = document.querySelector('.site-header');
 const navLinks = [...document.querySelectorAll('[data-page-link]')];
 const menuToggle = document.querySelector('.menu-toggle');
 const mainMenu = document.querySelector('#main-menu');
@@ -643,7 +644,6 @@ const views = {
           <p>A private space for the projects I'm helping clients build. Enter your access key to open your project plan.</p>
           <button class="text-action" type="button" data-go-page="contact">Need access? Contact me</button>
         </div>
-        <div class="portal-seal" aria-hidden="true"><span>TM</span></div>
         <form class="access-card" id="portal-form" autocomplete="off">
           <label for="portal-key">Access key</label>
           <div class="key-field">
@@ -919,9 +919,16 @@ function closeWorkspaceLock() {
   if (!modal.classList.contains('workspace-lock-modal')) return;
   modal.hidden = true;
   modal.classList.remove('workspace-lock-modal');
-  body.classList.remove('modal-open');
+  modal.style.removeProperty('--workspace-lock-top');
+  body.classList.remove('modal-open', 'workspace-locked');
   pageContent.inert = false;
   pageContent.removeAttribute('aria-hidden');
+}
+
+function positionWorkspaceLock() {
+  if (!modal.classList.contains('workspace-lock-modal') || !siteHeader) return;
+  const headerBottom = Math.ceil(siteHeader.getBoundingClientRect().bottom + 10);
+  modal.style.setProperty('--workspace-lock-top', `${headerBottom}px`);
 }
 
 function workspaceNextTarget() {
@@ -945,9 +952,10 @@ function openWorkspaceLock(message = '') {
       <p class="form-status" role="status" aria-live="polite">${message}</p>
     </form>`;
   modal.hidden = false;
-  body.classList.add('modal-open');
+  body.classList.add('modal-open', 'workspace-locked');
   pageContent.inert = true;
   pageContent.setAttribute('aria-hidden', 'true');
+  positionWorkspaceLock();
   modal.querySelector('#workspace-password').focus();
 
   modal.querySelector('#workspace-auth-form').addEventListener('submit', async event => {
@@ -1203,6 +1211,7 @@ document.addEventListener('keydown', event => {
   if (typeStudio && !typeStudio.hidden) setTypeStudioOpen(false);
 });
 window.addEventListener('resize', queueProjectLayout);
+window.addEventListener('resize', positionWorkspaceLock);
 window.addEventListener('hashchange', () => {
   const next = parseHash();
   render(next.option, next.page, true);
