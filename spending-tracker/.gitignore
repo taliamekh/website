@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Local Gmail connector secrets and imported inbox data
+scripts/gmail/imap.local.json
+data/imports/*.local.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

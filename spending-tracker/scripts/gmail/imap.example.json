@@ -1,0 +1,19 @@
+{
+  "user": "your.email@gmail.com",
+  "appPassword": "xxxx xxxx xxxx xxxx",
+  "host": "imap.gmail.com",
+  "port": 993,
+  "secure": true,
+  "mailbox": "INBOX",
+  "search": {
+    "sinceDays": 90,
+    "terms": [
+      "CIBC",
+      "Transaction",
+      "purchase",
+      "card"
+    ]
+  },
+  "maxMessages": 250,
+  "outputPath": "data/imports/gmail-pending.local.json"
+}
