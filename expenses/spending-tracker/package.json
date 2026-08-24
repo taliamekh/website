@@ -6,10 +6,14 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "gmail:test": "node scripts/gmail/import-imap.mjs --test",
+    "gmail:import": "node scripts/gmail/import-imap.mjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
+    "imapflow": "^1.4.7",
+    "mailparser": "^3.9.14",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   },

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 // ========== ALL SPENDING TRANSACTIONS ==========
 /*
@@ -17,12 +17,17 @@ import { useState } from "react";
  *    - src: Either "visa" or "debit"
  *    - gift: true  ← add this if it's a gift (won't count in totals)
  *
+ *  CATEGORIZATION RULES:
+ *    Put imported statement rows in RAW_TRANSACTIONS. Known merchant rules
+ *    below can normalize rough imports before totals are calculated.
+ *    Example: AI Camera Merchant = AliExpress project parts.
+ *
  *  AVAILABLE CATEGORIES:
  *    "Gas", "Food & Dining", "Groceries", "School/Project Expenses",
  *    "Beauty", "Home & Furnishing", "Health & Pharmacy",
  *    "Retail & Shopping", "Transportation", "Car Maintenance",
  *    "Entertainment", "Subscriptions", "Fees & Interest",
- *    "Toronto Trip", "Savings & Investing"
+ *    "Toronto Trip", "Savings & Investing", "Rewards & Credits"
  *
  *  REMOVING A TRANSACTION:
  *    Delete the entire line (from { to },)
@@ -34,7 +39,7 @@ import { useState } from "react";
  * ============================================================
  */
 
-const ALL_TRANSACTIONS = [
+const RAW_TRANSACTIONS = [
   // === DECEMBER 2025 ===
   { date: "2025-12-03", desc: "Porkbun.com (domain)", amount: 12.86, cat: "Subscriptions", src: "visa" },
   { date: "2025-12-03", desc: "Amazon: BIC Wite-Out Correction Tape", amount: 7.85, cat: "School/Project Expenses", src: "visa", projCat: "Supplies" },
@@ -53,7 +58,7 @@ const ALL_TRANSACTIONS = [
   { date: "2025-12-14", desc: "Presotea Barrhaven", amount: 21.50, cat: "Food & Dining", src: "visa" },
   { date: "2025-12-14", desc: "Loblaws 1035 (return)", amount: -45.65, cat: "Groceries", src: "visa" },
   { date: "2025-12-14", desc: "Esso Circle K, Ottawa", amount: 45.54, cat: "Gas", src: "visa" },
-  { date: "2025-12-17", desc: "Amazon: Ear Plugs for Sleeping 45dB (returned)", amount: 55.36, cat: "School/Project Expenses", src: "visa", projCat: "Other" },
+  { date: "2025-12-17", desc: "Amazon: Ear Plugs for Sleeping 45dB (returned)", amount: 55.36, cat: "School/Project Expenses", src: "visa", projCat: "Other", excludeFromTotals: true, returnStatus: "returned" },
   { date: "2025-12-17", desc: "Amazon: NYX Epic Ink Liner (gift for Suhani)", amount: 14.68, cat: "Beauty", src: "visa" },
   { date: "2025-12-17", desc: "Amazon: e.l.f. Lip Liner (gift for Suhani)", amount: 4.17, cat: "Beauty", src: "visa" },
   { date: "2025-12-18", desc: "Tim Hortons, Carleton", amount: 9.02, cat: "Food & Dining", src: "visa" },
@@ -71,7 +76,7 @@ const ALL_TRANSACTIONS = [
   { date: "2025-12-26", desc: "IKEA Ottawa", amount: 9.03, cat: "Home & Furnishing", src: "visa" },
   { date: "2025-12-26", desc: "Staples #225 (return)", amount: -22.59, cat: "Retail & Shopping", src: "visa" },
   { date: "2025-12-26", desc: "Shoppers Drug Mart 643", amount: 20.09, cat: "Health & Pharmacy", src: "visa" },
-  { date: "2025-12-27", desc: "Amazon: Ear Plugs refund", amount: -55.36, cat: "School/Project Expenses", src: "visa", projCat: "Other" },
+  { date: "2025-12-27", desc: "Amazon: Ear Plugs refund", amount: -55.36, cat: "School/Project Expenses", src: "visa", projCat: "Other", excludeFromTotals: true, returnStatus: "returned" },
   { date: "2025-12-27", desc: "Amazon: Silica Desiccant Beads + Mini Hygrometer", amount: 10.71, cat: "School/Project Expenses", src: "visa", projCat: "Supplies" },
   { date: "2025-12-27", desc: "MacEwen, Richmond", amount: 39.72, cat: "Gas", src: "visa" },
   { date: "2025-12-28", desc: "Sephora Bayshore (Christmas gift)", amount: 253.40, cat: "Beauty", src: "visa", gift: true },
@@ -93,7 +98,7 @@ const ALL_TRANSACTIONS = [
   { date: "2026-01-09", desc: "Richmond IDA Pharmacy", amount: 24.73, cat: "Health & Pharmacy", src: "visa" },
   { date: "2026-01-12", desc: "Amazon: Aquaphor Healing Balm Stick", amount: 13.53, cat: "Beauty", src: "visa" },
   { date: "2026-01-12", desc: "Amazon: OidoZac Laminator Machine 11-in-1", amount: 50.84, cat: "School/Project Expenses", src: "visa", projCat: "Tools" },
-  { date: "2026-01-13", desc: "Amazon: Laminator (duplicate – returned)", amount: 50.84, cat: "School/Project Expenses", src: "visa", projCat: "Tools" },
+  { date: "2026-01-13", desc: "Amazon: Laminator (duplicate – returned)", amount: 50.84, cat: "School/Project Expenses", src: "visa", projCat: "Tools", excludeFromTotals: true, returnStatus: "returned" },
   { date: "2026-01-13", desc: "Amazon: Miuzei MG90S Servo Motors 10-pack", amount: 42.93, cat: "School/Project Expenses", src: "visa", projCat: "Electronics" },
   { date: "2026-01-15", desc: "Amazon: d'alba White Truffle Spray Serum", amount: 24.86, cat: "Beauty", src: "visa" },
   { date: "2026-01-16", desc: "Amazon: Preciva Crimping Tool + 1050Pcs JST Connectors", amount: 48.58, cat: "School/Project Expenses", src: "visa", projCat: "Electronics" },
@@ -114,7 +119,7 @@ const ALL_TRANSACTIONS = [
   { date: "2026-02-11", desc: "Returned Payment Fee (Visa)", amount: 42.50, cat: "Fees & Interest", src: "visa" },
   { date: "2026-02-11", desc: "Carleton Food Court", amount: 31.64, cat: "Food & Dining", src: "visa" },
   { date: "2026-02-12", desc: "Amazon: 72 PCS Sewing Thread Assortment (return pending)", amount: 29.14, cat: "School/Project Expenses", src: "visa", projCat: "Sewing" },
-  { date: "2026-02-12", desc: "Amazon: Laminator refund", amount: -50.84, cat: "School/Project Expenses", src: "visa", projCat: "Tools" },
+  { date: "2026-02-12", desc: "Amazon: Laminator refund", amount: -50.84, cat: "School/Project Expenses", src: "visa", projCat: "Tools", excludeFromTotals: true, returnStatus: "returned" },
   { date: "2026-02-12", desc: "Amazon: Gütermann 26pc Sew-All Thread Set", amount: 45.20, cat: "School/Project Expenses", src: "visa", projCat: "Sewing" },
   { date: "2026-02-12", desc: "Walmart Supercenter #3638, Nepean", amount: 28.68, cat: "Groceries", src: "visa" },
   { date: "2026-02-13", desc: "Walmart Supercenter #1200, Ottawa", amount: 26.62, cat: "Groceries", src: "visa" },
@@ -186,6 +191,131 @@ const ALL_TRANSACTIONS = [
   { date: "2026-04-13", desc: "Pizza Pizza #225, Ottawa", amount: 12.29, cat: "Food & Dining", src: "visa" },
   { date: "2026-04-14", desc: "MacEwen, Richmond", amount: 28.53, cat: "Gas", src: "visa" },
   { date: "2026-04-14", desc: "Stendhal, Nepean", amount: 123.45, cat: "Retail & Shopping", src: "visa" },
+
+  // === APRIL 2026 (continued) ===
+  { date: "2026-04-16", desc: "Pizza Pizza #202, Ottawa", amount: 21.45, cat: "Food & Dining", src: "visa" },
+  { date: "2026-04-16", desc: "Amazon: Nose Hair Trimmers", amount: 20.13, cat: "Beauty", src: "visa", amazonOrder: "702-2109034-7432204" },
+  { date: "2026-04-17", desc: "D Spot Dessert Cafe, Kanata", amount: 27.29, cat: "Food & Dining", src: "visa" },
+  { date: "2026-04-18", desc: "Loblaws 1035, Nepean", amount: 31.85, cat: "Groceries", src: "visa" },
+  { date: "2026-04-19", desc: "Claude.AI Subscription (Anthropic)", amount: 138.10, cat: "Subscriptions", src: "visa" },
+  { date: "2026-04-20", desc: "MacEwen, Richmond", amount: 31.28, cat: "Gas", src: "visa" },
+  { date: "2026-04-22", desc: "Walmart Supercenter #1200, Ottawa", amount: 34.36, cat: "Groceries", src: "visa" },
+  { date: "2026-04-23", desc: "Future Bakery & Cafe, Toronto", amount: 3.83, cat: "Food & Dining", src: "visa" },
+  { date: "2026-04-23", desc: "Uber, Toronto", amount: 6.00, cat: "Transportation", src: "visa" },
+  { date: "2026-04-23", desc: "Uber, Toronto", amount: 2.00, cat: "Transportation", src: "visa" },
+  { date: "2026-04-23", desc: "Uber, Toronto", amount: 43.05, cat: "Transportation", src: "visa" },
+  { date: "2026-04-23", desc: "Tim Hortons #103869, Brighton", amount: 5.63, cat: "Food & Dining", src: "visa" },
+  { date: "2026-04-24", desc: "Saint Germain Bakery, Mississauga", amount: 9.32, cat: "Food & Dining", src: "visa", hackathon: "bearhacks", hackCat: "Food & Drinks" },
+  { date: "2026-04-24", desc: "Dollarama #275, Mississauga", amount: 2.54, cat: "Retail & Shopping", src: "visa", hackathon: "bearhacks", hackCat: "Supplies" },
+  { date: "2026-04-24", desc: "Kiokii, Mississauga", amount: 45.18, cat: "Beauty", src: "visa", hackathon: "bearhacks", hackCat: "Shopping" },
+  { date: "2026-04-24", desc: "Shack Square One, Mississauga", amount: 14.67, cat: "Food & Dining", src: "visa", hackathon: "bearhacks", hackCat: "Food & Drinks" },
+  { date: "2026-04-24", desc: "Walmart Supercenter #1061, Mississauga", amount: 8.92, cat: "Groceries", src: "visa", hackathon: "bearhacks", hackCat: "Food & Drinks" },
+  { date: "2026-04-25", desc: "Booster Juice #431, Mississauga", amount: 9.48, cat: "Food & Dining", src: "visa", hackathon: "bearhacks", hackCat: "Food & Drinks" },
+  { date: "2026-04-26", desc: "Claude.AI Subscription (Anthropic)", amount: 196.34, cat: "Subscriptions", src: "visa", hackathon: "bearhacks", hackCat: "Tools & Services" },
+  { date: "2026-04-27", desc: "Tim Hortons #9436, Toronto", amount: 3.35, cat: "Food & Dining", src: "visa" },
+  { date: "2026-04-29", desc: "SHEIN (PayPal)", amount: 60.73, cat: "Retail & Shopping", src: "visa" },
+  { date: "2026-04-29", desc: "Taco Boyz, Ottawa", amount: 20.28, cat: "Food & Dining", src: "visa" },
+  // === MAY 2026 ===
+  { date: "2026-05-02", desc: "Walmart Supercenter #1118, Stittsville", amount: 204.00, cat: "Groceries", src: "visa" },
+  { date: "2026-05-03", desc: "Chung Chun Rice Hot Dog, Kanata", amount: 8.46, cat: "Food & Dining", src: "visa" },
+  { date: "2026-05-03", desc: "Amazon: Aztec Secret Clay Mask", amount: 14.66, cat: "Beauty", src: "visa", amazonOrder: "701-1940472-7324203" },
+  { date: "2026-05-03", desc: "Altitude Gym, Kanata", amount: 20.91, cat: "Entertainment", src: "visa" },
+  { date: "2026-05-03", desc: "Walmart Store #3134, Kanata", amount: 12.26, cat: "Groceries", src: "visa" },
+  { date: "2026-05-05", desc: "Amazon.ca Prime Membership", amount: 5.64, cat: "Subscriptions", src: "visa" },
+  { date: "2026-05-06", desc: "Amazon: Merangue Portfolio Clipboard", amount: 7.33, cat: "School/Project Expenses", src: "visa", projCat: "Supplies", amazonOrder: "701-7726934-7160214" },
+  { date: "2026-05-07", desc: "Pizza Pizza #225, Ottawa", amount: 25.87, cat: "Food & Dining", src: "visa" },
+  { date: "2026-05-08", desc: "Amazon: Jacked Factory Creatine", amount: 28.20, cat: "Health & Pharmacy", src: "visa", amazonOrder: "702-1275206-1724269" },
+  { date: "2026-05-09", desc: "Amazon: L-Theanine Capsules", amount: 15.81, cat: "Health & Pharmacy", src: "visa", amazonOrder: "701-5676307-7533832" },
+  { date: "2026-05-09", desc: "Amazon: GAOY Nail Polish Set", amount: 22.58, cat: "Beauty", src: "visa", amazonOrder: "701-5340214-2869812" },
+  { date: "2026-05-10", desc: "Amazon: GAOY White Nail Art Liner", amount: 11.29, cat: "Beauty", src: "visa", amazonOrder: "701-4241875-4971426", excludeFromTotals: true, returnStatus: "returned" },
+  { date: "2026-05-11", desc: "Amazon: GAOY White Nail Art Liner refund", amount: -11.29, cat: "Beauty", src: "visa", amazonOrder: "701-4241875-4971426", excludeFromTotals: true, returnStatus: "returned" },
+  { date: "2026-05-12", desc: "MacEwen, Richmond", amount: 28.24, cat: "Gas", src: "visa" },
+  { date: "2026-05-12", desc: "Walmart Supercenter #1118, Stittsville", amount: 33.56, cat: "Groceries", src: "visa" },
+  { date: "2026-05-12", desc: "Bambu Lab (PayPal)", amount: 279.61, cat: "School/Project Expenses", src: "visa" },
+  { date: "2026-05-13", desc: "Amazon: IR Break Beam Sensors", amount: 16.49, cat: "School/Project Expenses", src: "visa", projCat: "Electronics", amazonOrder: "702-2231858-6479461" },
+  { date: "2026-05-13", desc: "Wings Wizard Riverside, Newmarket", amount: 20.33, cat: "Food & Dining", src: "visa" },
+  { date: "2026-05-15", desc: "Dollarama #1513, Richmond", amount: 2.26, cat: "Retail & Shopping", src: "visa" },
+  { date: "2026-05-15", desc: "Metro 100244, Ottawa", amount: 13.55, cat: "Groceries", src: "visa" },
+  { date: "2026-05-15", desc: "MacEwen, Richmond", amount: 32.34, cat: "Gas", src: "visa" },
+  { date: "2026-05-15", desc: "City of Ottawa Parking Lot 6", amount: 2.00, cat: "Transportation", src: "visa" },
+  { date: "2026-05-15", desc: "EcoTank MacEwen, Richmond", amount: 8.88, cat: "Gas", src: "visa" },
+  { date: "2026-05-17", desc: "Shiloh Threaded Garden, Ottawa", amount: 16.00, cat: "Food & Dining", src: "visa" },
+  { date: "2026-05-17", desc: "City of Ottawa Parking Lot 6", amount: 2.00, cat: "Transportation", src: "visa" },
+  { date: "2026-05-17", desc: "Chatime CHA120, Ottawa", amount: 17.75, cat: "Food & Dining", src: "visa" },
+  { date: "2026-05-18", desc: "Happy Lamb Hot Pot, Ottawa", amount: 37.66, cat: "Food & Dining", src: "visa" },
+  { date: "2026-05-18", desc: "MacEwen, Richmond", amount: 29.95, cat: "Gas", src: "visa" },
+  { date: "2026-05-19", desc: "Walmart Supercenter #1200, Ottawa", amount: 11.08, cat: "Groceries", src: "visa" },
+  { date: "2026-05-21", desc: "Amazon: GAOY Jelly Nude Black Gel Polish", amount: 10.16, cat: "Beauty", src: "visa", amazonOrder: "701-6819164-4809026" },
+  { date: "2026-05-21", desc: "Amazon: Soldering station and fume extractor", amount: 180.77, cat: "School/Project Expenses", src: "visa", projCat: "Tools", amazonOrder: "701-6819164-4809026" },
+  { date: "2026-05-22", desc: "Dollarama #1234, Nepean", amount: 3.93, cat: "Retail & Shopping", src: "visa" },
+  { date: "2026-05-22", desc: "Tartelette Pastry & Cafe, Ottawa", amount: 11.64, cat: "Food & Dining", src: "visa" },
+  { date: "2026-05-22", desc: "MacEwen, Richmond", amount: 40.51, cat: "Gas", src: "visa" },
+  { date: "2026-05-24", desc: "Amazon: GAOY Blue Cat Eye Nail Polish", amount: 13.55, cat: "Beauty", src: "visa", amazonOrder: "701-93506096-3990601" },
+  { date: "2026-05-24", desc: "AI Camera Merchant (PayPal)", amount: 10.75, cat: "Retail & Shopping", src: "visa" },
+  { date: "2026-05-24", desc: "AI Camera Merchant (PayPal)", amount: 13.12, cat: "Retail & Shopping", src: "visa" },
+  { date: "2026-05-24", desc: "AI Camera Merchant (PayPal)", amount: 16.77, cat: "Retail & Shopping", src: "visa" },
+  { date: "2026-05-25", desc: "Amazon: GAOY Nude Cat Eye Nail Polish", amount: 13.55, cat: "Beauty", src: "visa", amazonOrder: "701-4609950-6499468" },
+  { date: "2026-05-25", desc: "Barrhaven Optometric Centre, Nepean", amount: 196.00, cat: "Health & Pharmacy", src: "visa" },
+  { date: "2026-05-25", desc: "King's YIG Richmond #8", amount: 18.05, cat: "Groceries", src: "visa" },
+  { date: "2026-05-26", desc: "Richmond IDA Pharmacy", amount: 8.10, cat: "Health & Pharmacy", src: "visa" },
+  { date: "2026-05-28", desc: "Dollarama #1380, Ottawa", amount: 12.43, cat: "Retail & Shopping", src: "visa" },
+  { date: "2026-05-28", desc: "MacEwen, Richmond", amount: 24.06, cat: "Gas", src: "visa" },
+  { date: "2026-05-29", desc: "Machi Machi, Toronto", amount: 20.34, cat: "Food & Dining", src: "visa" },
+  { date: "2026-05-29", desc: "Super Hot Pot, Toronto", amount: 18.04, cat: "Food & Dining", src: "visa" },
+  { date: "2026-05-29", desc: "Fresh Picked Market, Toronto", amount: 7.89, cat: "Groceries", src: "visa" },
+  { date: "2026-05-29", desc: "Chatime CHA65, Toronto", amount: 14.93, cat: "Food & Dining", src: "visa" },
+  { date: "2026-05-29", desc: "Peoples Jewellers #5144, Toronto", amount: 55.37, cat: "Retail & Shopping", src: "visa" },
+  { date: "2026-05-30", desc: "AMPM, Toronto", amount: 10.00, cat: "Food & Dining", src: "visa" },
+  { date: "2026-05-30", desc: "Busbud, Montreal", amount: 53.54, cat: "Transportation", src: "visa" },
+  { date: "2026-05-30", desc: "Pizza Pizza #011, Toronto", amount: 1.46, cat: "Food & Dining", src: "visa" },
+  { date: "2026-05-30", desc: "Chick-fil-A Yonge & Bloor, Toronto", amount: 15.47, cat: "Food & Dining", src: "visa" },
+  { date: "2026-05-31", desc: "Nord Lyon, Toronto", amount: 9.61, cat: "Retail & Shopping", src: "visa" },
+  { date: "2026-05-31", desc: "Brandy Melville, Toronto", amount: 24.86, cat: "Retail & Shopping", src: "visa" },
+  // === JUNE 2026 ===
+  { date: "2026-06-01", desc: "2844code (PayPal)", amount: -2.45, cat: "Subscriptions", src: "visa" },
+  { date: "2026-06-01", desc: "2844code (PayPal)", amount: 2.45, cat: "Subscriptions", src: "visa" },
+  { date: "2026-06-02", desc: "Amazon: Rosin Soldering Paste Flux", amount: 9.68, cat: "School/Project Expenses", src: "visa", projCat: "Supplies", amazonOrder: "702-8576868-9820247" },
+  { date: "2026-06-02", desc: "CIBC cash back redemption", amount: -60.00, cat: "Rewards & Credits", src: "visa" },
+  { date: "2026-06-02", desc: "Temu.com", amount: 101.04, cat: "School/Project Expenses", src: "visa" },
+  { date: "2026-06-02", desc: "Claude.AI Subscription (Anthropic)", amount: 158.20, cat: "Subscriptions", src: "visa" },
+  { date: "2026-06-02", desc: "Uber, Toronto", amount: 8.66, cat: "Transportation", src: "visa" },
+  { date: "2026-06-02", desc: "Uber, Toronto", amount: 1.00, cat: "Transportation", src: "visa" },
+  { date: "2026-06-04", desc: "Etsy shop onboard fee", amount: 26.00, cat: "School/Project Expenses", src: "visa" },
+  { date: "2026-06-04", desc: "Amazon: Crimp Beads Kit", amount: 14.23, cat: "School/Project Expenses", src: "visa", projCat: "Supplies", amazonOrder: "701-4845338-4566662" },
+  { date: "2026-06-05", desc: "Amazon: Pearl Beads", amount: 16.94, cat: "School/Project Expenses", src: "visa", projCat: "Supplies", amazonOrder: "701-8535283-0847444", excludeFromTotals: true, returnStatus: "returned" },
+  { date: "2026-06-05", desc: "Amazon: Gold Chain Rolls", amount: 15.80, cat: "School/Project Expenses", src: "visa", projCat: "Supplies", amazonOrder: "701-8146322-4019428" },
+  { date: "2026-06-05", desc: "Amazon: Water Drop Crystal Beads", amount: 19.20, cat: "School/Project Expenses", src: "visa", projCat: "Supplies", amazonOrder: "701-9068193-7257861" },
+  { date: "2026-06-05", desc: "Amazon.ca Prime Membership", amount: 5.64, cat: "Subscriptions", src: "visa" },
+  { date: "2026-06-07", desc: "The Oz Store, Ottawa", amount: 7.60, cat: "Health & Pharmacy", src: "visa" },
+  { date: "2026-06-07", desc: "Festival Aloha, Pointe-Calumet", amount: 6.00, cat: "Entertainment", src: "visa" },
+  { date: "2026-06-07", desc: "Subway 25476, Ottawa", amount: 13.77, cat: "Food & Dining", src: "visa" },
+  { date: "2026-06-10", desc: "Claude.AI Subscription (Anthropic)", amount: 199.58, cat: "Subscriptions", src: "visa" },
+  { date: "2026-06-11", desc: "Amazon: Uni Alpha-Gel Kuru Toga Pencil", amount: 15.02, cat: "School/Project Expenses", src: "visa", projCat: "Supplies", amazonOrder: "701-2669320-3285064", excludeFromTotals: true, returnStatus: "returned" },
+  { date: "2026-06-11", desc: "MacEwen, Richmond", amount: 27.81, cat: "Gas", src: "visa" },
+  { date: "2026-06-12", desc: "Value Village #2147, Nepean", amount: 10.16, cat: "Retail & Shopping", src: "visa" },
+  { date: "2026-06-13", desc: "Proxi, Nepean", amount: 33.03, cat: "Gas", src: "visa" },
+  { date: "2026-06-14", desc: "AI Camera Merchant (PayPal)", amount: 19.36, cat: "Retail & Shopping", src: "visa" },
+  { date: "2026-06-14", desc: "AI Camera Merchant (PayPal)", amount: 19.99, cat: "Retail & Shopping", src: "visa" },
+  { date: "2026-06-14", desc: "AI Camera Merchant (PayPal)", amount: 13.52, cat: "Retail & Shopping", src: "visa" },
+  { date: "2026-06-17", desc: "Amazon: Furtalk Winter Beanie", amount: 22.59, cat: "Retail & Shopping", src: "visa", amazonOrder: "701-8453232-8501820", excludeFromTotals: true, returnStatus: "returned" },
+  // === JULY 2026 ===
+  { date: "2026-07-02", desc: "Wendy's Restaurant #6376, Ottawa", amount: 7.21, cat: "Food & Dining", src: "visa" },
+  { date: "2026-07-02", desc: "Etsy monthly bill", amount: 3.70, cat: "Subscriptions", src: "visa" },
+  { date: "2026-07-05", desc: "Amazon.ca Prime Membership", amount: 5.64, cat: "Subscriptions", src: "visa" },
+  { date: "2026-07-06", desc: "Amazon: Furtalk Winter Beanie refund", amount: -22.59, cat: "Retail & Shopping", src: "visa", amazonOrder: "701-8453232-8501820", excludeFromTotals: true, returnStatus: "returned" },
+  { date: "2026-07-06", desc: "Amazon: Pearl Beads refund", amount: -16.94, cat: "School/Project Expenses", src: "visa", projCat: "Supplies", amazonOrder: "701-8535283-0847444", excludeFromTotals: true, returnStatus: "returned" },
+  { date: "2026-07-06", desc: "King's YIG Richmond #8", amount: 22.99, cat: "Groceries", src: "visa" },
+  { date: "2026-07-06", desc: "Amazon: NFC Cards", amount: 21.46, cat: "School/Project Expenses", src: "visa", projCat: "Electronics", amazonOrder: "701-4096712-3094622" },
+  { date: "2026-07-06", desc: "Amazon: Uni Alpha-Gel Kuru Toga Pencil refund", amount: -15.02, cat: "School/Project Expenses", src: "visa", projCat: "Supplies", amazonOrder: "701-2669320-3285064", excludeFromTotals: true, returnStatus: "returned" },
+  { date: "2026-07-07", desc: "Amazon: EverPure Clarifying Shampoo", amount: 15.75, cat: "Beauty", src: "visa", amazonOrder: "701-2615115-3424240" },
+  { date: "2026-07-09", desc: "MacEwen, Richmond", amount: 25.97, cat: "Gas", src: "visa" },
+  { date: "2026-07-09", desc: "Kanata Honda", amount: 138.01, cat: "Car Maintenance", src: "visa" },
+  { date: "2026-07-11", desc: "Canadian Tire #457, Kanata", amount: 23.91, cat: "Car Maintenance", src: "visa" },
+  { date: "2026-07-11", desc: "Amazon: Potentiometers", amount: 13.10, cat: "School/Project Expenses", src: "visa", projCat: "Electronics", amazonOrder: "701-1456401-6453069" },
+  { date: "2026-07-11", desc: "Dollarama #1513, Richmond", amount: 15.04, cat: "Retail & Shopping", src: "visa" },
+  { date: "2026-07-12", desc: "HTSP Ottawa - Carleton Fredericton", amount: 20.00, cat: "Transportation", src: "visa" },
+  { date: "2026-07-13", desc: "Returned Payment Fee (Visa)", amount: 42.50, cat: "Fees & Interest", src: "visa" },
+  { date: "2026-07-13", desc: "Rider Express Ontario", amount: 33.59, cat: "Transportation", src: "visa" },
   // === DEBIT ACCOUNT ===
   { date: "2025-11-05", desc: "Apple.com/Bill", amount: 4.51, cat: "Subscriptions", src: "debit" },
   { date: "2025-12-01", desc: "CIBC Securities (investment)", amount: 25.00, cat: "Savings & Investing", src: "debit" },
@@ -207,7 +337,58 @@ const ALL_TRANSACTIONS = [
   { date: "2026-03-31", desc: "Overdraft Interest", amount: 0.38, cat: "Fees & Interest", src: "debit" },
   { date: "2026-04-06", desc: "Apple.com/Bill", amount: 4.51, cat: "Subscriptions", src: "debit" },
   { date: "2026-04-08", desc: "NSF Charge (debit acct)", amount: 10.00, cat: "Fees & Interest", src: "debit" },
+  { date: "2026-04-20", desc: "Presotea Barrhaven", amount: 12.42, cat: "Food & Dining", src: "debit" },
+  { date: "2026-04-24", desc: "Presto/PRES debit purchase", amount: 8.04, cat: "Transportation", src: "debit", hackathon: "bearhacks", hackCat: "Transit" },
+  { date: "2026-04-24", desc: "Presto/PRES debit purchase", amount: 0.26, cat: "Transportation", src: "debit", hackathon: "bearhacks", hackCat: "Transit" },
+  { date: "2026-04-27", desc: "Presto/PRES debit purchase", amount: 6.02, cat: "Transportation", src: "debit" },
+  { date: "2026-04-30", desc: "CIBC Securities (investment)", amount: 25.00, cat: "Savings & Investing", src: "debit" },
+  { date: "2026-05-05", desc: "Apple.com/Bill", amount: 4.51, cat: "Subscriptions", src: "debit" },
+  { date: "2026-05-29", desc: "Presto/PRES debit purchase", amount: 3.30, cat: "Transportation", src: "debit" },
+  { date: "2026-05-29", desc: "Overdraft Fee", amount: 5.00, cat: "Fees & Interest", src: "debit" },
+  { date: "2026-05-29", desc: "Overdraft Interest", amount: 0.05, cat: "Fees & Interest", src: "debit" },
+  { date: "2026-06-01", desc: "Presto/PRES debit purchase", amount: 3.30, cat: "Transportation", src: "debit" },
+  { date: "2026-06-01", desc: "Presto/PRES debit purchase", amount: 3.30, cat: "Transportation", src: "debit" },
+  { date: "2026-06-01", desc: "Presto/PRES debit purchase", amount: 3.30, cat: "Transportation", src: "debit" },
+  { date: "2026-06-01", desc: "Presto/PRES debit purchase", amount: 3.30, cat: "Transportation", src: "debit" },
+  { date: "2026-06-01", desc: "CIBC Securities (investment)", amount: 25.00, cat: "Savings & Investing", src: "debit" },
+  { date: "2026-06-04", desc: "Presto Fare", amount: 3.30, cat: "Transportation", src: "debit" },
+  { date: "2026-06-05", desc: "Apple.com/Bill", amount: 4.51, cat: "Subscriptions", src: "debit" },
+  { date: "2026-06-24", desc: "Presto/PRES debit purchase", amount: 3.30, cat: "Transportation", src: "debit" },
+  { date: "2026-06-25", desc: "Presto/PRES debit purchase", amount: 3.30, cat: "Transportation", src: "debit" },
+  { date: "2026-06-26", desc: "Presto/PRES debit purchase", amount: 3.30, cat: "Transportation", src: "debit" },
+  { date: "2026-06-26", desc: "Presto/PRES debit purchase", amount: 3.30, cat: "Transportation", src: "debit" },
+  { date: "2026-06-30", desc: "CIBC Securities (investment)", amount: 25.00, cat: "Savings & Investing", src: "debit" },
+  { date: "2026-06-30", desc: "Overdraft Fee", amount: 5.00, cat: "Fees & Interest", src: "debit" },
+  { date: "2026-06-30", desc: "Overdraft Interest", amount: 0.12, cat: "Fees & Interest", src: "debit" },
+  { date: "2026-07-06", desc: "Apple.com/Bill", amount: 4.51, cat: "Subscriptions", src: "debit" },
+  { date: "2026-07-09", desc: "NSF Charge (debit acct)", amount: 10.00, cat: "Fees & Interest", src: "debit" },
 ];
+
+const CATEGORIZATION_RULES = [
+  {
+    id: "ali-express-project-parts",
+    match: /AI Camera Merchant/i,
+    updates: {
+      cat: "School/Project Expenses",
+      projCat: "Parts",
+      merchant: "AliExpress",
+      categoryReason: "AI Camera Merchant is AliExpress project parts",
+    },
+    rename: (desc) => desc.replace("AI Camera Merchant", "AliExpress / AI Camera Merchant"),
+  },
+];
+
+const applyCategorizationRules = (txn) => {
+  const rule = CATEGORIZATION_RULES.find(r => r.match.test(txn.desc));
+  if (!rule) return txn;
+  return {
+    ...txn,
+    desc: rule.rename ? rule.rename(txn.desc) : txn.desc,
+    ...rule.updates,
+  };
+};
+
+const ALL_TRANSACTIONS = RAW_TRANSACTIONS.map(applyCategorizationRules);
 
 // ========== PAYMENT TRACKER (statement-based running balance) ==========
 const STATEMENT_LEDGER = [
@@ -259,14 +440,52 @@ const STATEMENT_LEDGER = [
     closeBal: 198.15,
   },
   {
-    period: "Apr 2026", stmtDate: "Ongoing", openBal: 198.15,
-    newCharges: 639.63, otherCredits: 0, interest: 0, fees: 42.50,
+    period: "Apr 2026", stmtDate: "Apr 18, 2026", openBal: 198.15,
+    newCharges: 970.03, otherCredits: 0, interest: 11.35, fees: 42.50,
     payments: [
       { date: "2026-04-07", desc: "Pre-authorized payment", amount: 198.15, status: "bounced",
         bounceFees: [
           { desc: "Returned Payment Fee (Visa)", amount: 42.50 },
           { desc: "NSF Charge (debit account)", amount: 10.00 },
         ]},
+      { date: "2026-04-16", desc: "Manual payment", amount: 198.15, status: "ok" },
+    ],
+    closeBal: 1023.88,
+  },
+  {
+    period: "May 2026", stmtDate: "May 18, 2026", openBal: 1023.88,
+    newCharges: 1449.44, otherCredits: 11.29, interest: 0, fees: 0,
+    payments: [
+      { date: "2026-04-23", desc: "Manual payment", amount: 500.00, status: "ok" },
+      { date: "2026-05-06", desc: "Manual payment", amount: 300.00, status: "ok" },
+      { date: "2026-05-11", desc: "Manual payment", amount: 36.00, status: "ok" },
+      { date: "2026-05-11", desc: "Manual payment", amount: 250.00, status: "ok" },
+      { date: "2026-05-13", desc: "Pre-authorized payment", amount: 212.59, status: "ok" },
+    ],
+    closeBal: 1163.44,
+  },
+  {
+    period: "Jun 2026", stmtDate: "Jun 18, 2026", openBal: 1163.44,
+    newCharges: 1745.64, otherCredits: 62.45, interest: 0, fees: 0,
+    payments: [
+      { date: "2026-05-26", desc: "Manual payment", amount: 500.00, status: "ok" },
+      { date: "2026-05-28", desc: "Manual payment", amount: 210.00, status: "ok" },
+      { date: "2026-06-07", desc: "Manual payment", amount: 700.00, status: "ok" },
+      { date: "2026-06-08", desc: "Pre-authorized payment", amount: 390.99, status: "ok" },
+    ],
+    closeBal: 1045.64,
+  },
+  {
+    period: "Jul 2026", stmtDate: "Ongoing", openBal: 1045.64,
+    newCharges: 346.37, otherCredits: 54.55, interest: 0, fees: 42.50,
+    payments: [
+      { date: "2026-07-09", desc: "Pre-authorized payment", amount: 991.09, status: "bounced",
+        bounceFees: [
+          { desc: "Returned Payment Fee (Visa)", amount: 42.50 },
+          { desc: "NSF Charge (debit account)", amount: 10.00 },
+        ]},
+      { date: "2026-07-09", desc: "Manual payment from savings", amount: 100.00, status: "ok" },
+      { date: "2026-07-14", desc: "Manual payment from chequing", amount: 350.00, status: "ok" },
     ],
     closeBal: null,
   },
@@ -299,6 +518,26 @@ const MONEY_RECEIVED = [
   { date: "2026-04-08", from: "Naji Mekhayche (Dad)", amount: 150.00, type: "dad" },
   { date: "2026-04-10", from: "Deposit Canada", amount: 30.91, type: "government" },
   { date: "2026-04-10", from: "Kai kyunghyeon Song (Toronto trip)", amount: 97.00, type: "friend" },
+  { date: "2026-04-20", from: "Kai kyunghyeon Song", amount: 10.00, type: "friend" },
+  { date: "2026-04-22", from: "Kai kyunghyeon Song", amount: 10.00, type: "friend" },
+  { date: "2026-05-06", from: "Naji Mekhayche (Dad)", amount: 130.00, type: "dad" },
+  { date: "2026-05-07", from: "Suhani Singh", amount: 13.00, type: "friend" },
+  { date: "2026-05-08", from: "Deposit Canada", amount: 30.91, type: "government" },
+  { date: "2026-05-11", from: "Suhani Singh", amount: 22.58, type: "friend" },
+  { date: "2026-05-27", from: "Kai kyunghyeon Song", amount: 20.00, type: "friend" },
+  { date: "2026-05-28", from: "Naji Mekhayche (Dad)", amount: 196.00, type: "dad" },
+  { date: "2026-05-29", from: "Jacob Victor Puvan", amount: 30.00, type: "friend" },
+  { date: "2026-06-01", from: "Kai kyunghyeon Song", amount: 10.00, type: "friend" },
+  { date: "2026-06-05", from: "TPS/GST Deposit", amount: 215.54, type: "government" },
+  { date: "2026-06-08", from: "Naji Mekhayche (Dad)", amount: 300.00, type: "dad" },
+  { date: "2026-06-08", from: "Kai kyunghyeon Song", amount: 20.00, type: "friend" },
+  { date: "2026-06-10", from: "Deposit Canada", amount: 30.99, type: "government" },
+  { date: "2026-06-11", from: "Kai kyunghyeon Song", amount: 10.00, type: "friend" },
+  { date: "2026-06-16", from: "Naji Mekhayche (Dad)", amount: 80.00, type: "dad" },
+  { date: "2026-06-19", from: "S M Afik Kamal", amount: 16.00, type: "friend" },
+  { date: "2026-06-24", from: "Kai kyunghyeon Song", amount: 10.00, type: "friend" },
+  { date: "2026-07-03", from: "Benefit Essentials/Essentials", amount: 118.43, type: "government" },
+  { date: "2026-07-10", from: "Deposit Canada", amount: 378.00, type: "government" },
 ];
 
 const MONEY_SENT_OUT = [
@@ -310,6 +549,11 @@ const MONEY_SENT_OUT = [
   { date: "2026-03-20", to: "Kai", amount: 15.00 },
   { date: "2026-03-23", to: "Kai", amount: 10.00 },
   { date: "2026-03-23", to: "One-time contact", amount: 30.00 },
+  { date: "2026-04-23", to: "Kai", amount: 136.00 },
+  { date: "2026-06-08", to: "Suhani Singh", amount: 75.00 },
+  { date: "2026-06-12", to: "Frank", amount: 17.30 },
+  { date: "2026-06-22", to: "Jen", amount: 54.30 },
+  { date: "2026-07-06", to: "Melon", amount: 21.00 },
 ];
 
 /*
@@ -471,6 +715,78 @@ const AMAZON_ORDERS = [
   { date: "2026-04-08", total: 15.81, status: "delivered", items: [
     { name: "Amazon Basics Multipurpose Copy Printer Paper 500 Sheets", subCat: "Project Supplies" },
   ]},
+  { date: "2026-04-15", orderId: "702-2109034-7432204", total: 20.13, status: "delivered", cardTxn: "2026-04-16 Amazon: Nose Hair Trimmers", items: [
+    { name: "Nose Hair Trimmers for Men, rechargeable ear and nose hair trimmer", subCat: "Necessities" },
+  ]},
+  // --- May 2026 ---
+  { date: "2026-05-03", orderId: "701-1940472-7324203", total: 14.66, status: "delivered", cardTxn: "2026-05-03 Amazon: Aztec Secret Clay Mask", items: [
+    { name: "Aztec Secret Deep Pore Cleansing Facial & Body Mask, 1 lb", subCat: "Necessities" },
+  ]},
+  { date: "2026-05-05", orderId: "701-7726934-7160214", total: 7.33, status: "delivered", cardTxn: "2026-05-06 Amazon: Merangue Portfolio Clipboard", items: [
+    { name: "Merangue Portfolio Clipboard with Bulldog Clip, letter size, black", subCat: "Project Supplies" },
+  ]},
+  { date: "2026-05-07", orderId: "702-1275206-1724269", total: 28.20, status: "delivered", cardTxn: "2026-05-08 Amazon: Jacked Factory Creatine", items: [
+    { name: "Jacked Factory Creatine Monohydrate Powder 425g", subCat: "Necessities" },
+  ]},
+  { date: "2026-05-08", orderId: "701-5676307-7533832", total: 15.81, status: "delivered", cardTxn: "2026-05-09 Amazon: L-Theanine Capsules", items: [
+    { name: "Nutratology L-Theanine 250MG Capsules, 60 capsules", subCat: "Necessities" },
+  ]},
+  { date: "2026-05-08", orderId: "701-5340214-2869812", total: 22.58, status: "delivered", cardTxn: "2026-05-09 Amazon: GAOY Nail Polish Set", items: [
+    { name: "GAOY White Swirl Gel Nail Polish Art Liner", subCat: "Necessities" },
+    { name: "GAOY Sheer Nude Gel Nail Polish, 1301 natural pink", subCat: "Necessities" },
+  ]},
+  { date: "2026-05-09", orderId: "701-4241875-4971426", total: 11.29, status: "returned", cardTxn: "2026-05-10 charge / 2026-05-11 refund", items: [
+    { name: "GAOY White Swirl Gel Nail Polish Art Liner, thin brush", subCat: "Necessities" },
+  ]},
+  { date: "2026-05-12", orderId: "702-2231858-6479461", total: 16.49, status: "delivered", cardTxn: "2026-05-13 Amazon: IR Break Beam Sensors", items: [
+    { name: "4 Pack IR Break Beam Sensor, 5MM LEDs counting module", subCat: "Project Supplies" },
+  ]},
+  { date: "2026-05-20", orderId: "701-6819164-4809026", total: 190.93, status: "delivered", cardTxn: "2026-05-21 split charges: 10.16 + 180.77", items: [
+    { name: "Preciva 902D V soldering station 2-in-1 SMD hot air rework station", subCat: "Project Supplies" },
+    { name: "Preciva 948DQ-I solder smoke absorber remover", subCat: "Project Supplies" },
+    { name: "GAOY Jelly Nude Black Gel Nail Polish", subCat: "Necessities" },
+  ]},
+  { date: "2026-05-22", orderId: "701-93506096-3990601", total: 13.55, status: "delivered", cardTxn: "2026-05-24 Amazon: GAOY Blue Cat Eye Nail Polish", items: [
+    { name: "GAOY Blue Glassy Cat Eye Gel Nail Polish, moonlight coast", subCat: "Necessities" },
+  ]},
+  { date: "2026-05-24", orderId: "701-4609950-6499468", total: 13.55, status: "delivered", cardTxn: "2026-05-25 Amazon: GAOY Nude Cat Eye Nail Polish", items: [
+    { name: "GAOY Nude Glassy Cat Eye Gel Nail Polish, oatmeal veil", subCat: "Necessities" },
+  ]},
+  // --- June 2026 ---
+  { date: "2026-06-01", orderId: "702-8576868-9820247", total: 9.68, status: "delivered", cardTxn: "2026-06-02 Amazon: Rosin Soldering Paste Flux", items: [
+    { name: "BEEYUIHF Rosin Soldering Paste Flux for SMD PCB BGA soldering", subCat: "Project Supplies" },
+  ]},
+  { date: "2026-06-03", orderId: "701-9068193-7257861", total: 19.20, status: "delivered", cardTxn: "2026-06-05 Amazon: Water Drop Crystal Beads", items: [
+    { name: "PH PandaHall water drop crystal glass beads, 200pcs", subCat: "Project Supplies" },
+  ]},
+  { date: "2026-06-03", orderId: "701-8535283-0847444", total: 16.94, status: "returned", cardTxn: "2026-06-05 charge / 2026-07-06 refund", items: [
+    { name: "Pearl beads, 800pcs ivory loose pearls", subCat: "Project Supplies" },
+  ]},
+  { date: "2026-06-03", orderId: "701-8146322-4019428", total: 15.80, status: "delivered", cardTxn: "2026-06-05 Amazon: Gold Chain Rolls", items: [
+    { name: "Silver gold chain for jewelry making, 66 feet, 2 rolls", subCat: "Project Supplies" },
+  ]},
+  { date: "2026-06-03", orderId: "701-4845338-4566662", total: 14.23, status: "delivered", cardTxn: "2026-06-04 Amazon: Crimp Beads Kit", items: [
+    { name: "LEONTOOL 1200 pcs crimp beads kit for jewelry making", subCat: "Project Supplies" },
+  ]},
+  { date: "2026-06-10", orderId: "701-2669320-3285064", total: 15.02, status: "returned", cardTxn: "2026-06-11 charge / 2026-07-06 refund", items: [
+    { name: "Uni Alpha-Gel Kuru Toga mechanical pencil, 0.5 mm", subCat: "Project Supplies" },
+  ]},
+  { date: "2026-06-16", orderId: "701-8453232-8501820", total: 22.59, status: "returned", cardTxn: "2026-06-17 charge / 2026-07-06 refund", items: [
+    { name: "FURTALK womens winter knitted beanie hat", subCat: "Other" },
+  ]},
+  { date: "2026-06-21", orderId: "701-9126458-4505802", total: 22.59, status: "delivered", cardTxn: "credit card charge not in provided screenshots", items: [
+    { name: "FURTALK womens winter beanie hat, satin lined", subCat: "Other" },
+  ]},
+  // --- July 2026 ---
+  { date: "2026-07-05", orderId: "701-4096712-3094622", total: 21.46, status: "delivered", cardTxn: "2026-07-06 Amazon: NFC Cards", items: [
+    { name: "40 pcs NFC cards, blank NTAG215 rewritable NFC cards", subCat: "Project Supplies" },
+  ]},
+  { date: "2026-07-06", orderId: "701-2615115-3424240", total: 15.75, status: "delivered", cardTxn: "2026-07-07 Amazon: EverPure Clarifying Shampoo", items: [
+    { name: "EverPure sulfate-free clarify and restore shampoo, 200ml", subCat: "Necessities" },
+  ]},
+  { date: "2026-07-10", orderId: "701-1456401-6453069", total: 13.10, status: "delivered", cardTxn: "2026-07-11 Amazon: Potentiometers", items: [
+    { name: "uxcell Potentiometer B5K Ohm variable resistors, 10pcs", subCat: "Project Supplies" },
+  ]},
 ];
 
 const AMAZON_SUBCAT_CONFIG = {
@@ -482,6 +798,7 @@ const AMAZON_SUBCAT_CONFIG = {
 };
 
 const PROJ_SUBCAT_CONFIG = {
+  "Parts":       { icon: "🧩", color: "#f59e0b", label: "Parts" },
   "Electronics": { icon: "⚡", color: "#3b82f6", label: "Electronics" },
   "Tools":       { icon: "🔧", color: "#f97316", label: "Tools" },
   "Supplies":    { icon: "📎", color: "#10b981", label: "Supplies" },
@@ -495,6 +812,8 @@ const MONTH_LABELS = {
   "2025-11": "November 2025", "2025-12": "December 2025",
   "2026-01": "January 2026", "2026-02": "February 2026",
   "2026-03": "March 2026", "2026-04": "April 2026",
+  "2026-05": "May 2026", "2026-06": "June 2026",
+  "2026-07": "July 2026",
 };
 
 const CAT_CONFIG = {
@@ -513,11 +832,15 @@ const CAT_CONFIG = {
   "Fees & Interest": { icon: "⚠️", color: "#ef4444" },
   "Toronto Trip": { icon: "🏙️", color: "#f59e0b" },
   "Savings & Investing": { icon: "📈", color: "#10b981" },
+  "Rewards & Credits": { icon: "$", color: "#4ade80" },
 };
 
 const fmt = (n) => { const s = Math.abs(n).toLocaleString("en-CA",{minimumFractionDigits:2,maximumFractionDigits:2}); return n<0?`-$${s}`:`$${s}`; };
 const fmtDate = (d) => new Date(d+"T12:00:00").toLocaleDateString("en-CA",{month:"short",day:"numeric"});
 const getMonthKey = (d) => d.substring(0,7);
+const txnAmount = (t) => t.excludeFromTotals ? 0 : t.amount;
+const sumTxnAmounts = (txns) => txns.reduce((s,t) => s + txnAmount(t), 0);
+const countedTxns = (txns) => txns.filter(t => !t.excludeFromTotals);
 
 export default function SpendingBreakdown() {
   const months = Object.keys(MONTH_LABELS);
@@ -536,32 +859,49 @@ export default function SpendingBreakdown() {
   const [summaryWidth, setSummaryWidth] = useState(420);
   const [activeHackathon, setActiveHackathon] = useState("genai"); // "genai" or "bearhacks"
   const [expandedTripCat, setExpandedTripCat] = useState(null);
+  const [paidOffMonths, setPaidOffMonths] = useState(() => {
+    try {
+      const s = localStorage.getItem("paidOffMonths");
+      return s ? new Set(JSON.parse(s)) : new Set();
+    } catch { return new Set(); }
+  });
+  useEffect(() => {
+    try { localStorage.setItem("paidOffMonths", JSON.stringify([...paidOffMonths])); } catch { /* ignore */ }
+  }, [paidOffMonths]);
+  const togglePaidOff = (month) => setPaidOffMonths(prev => {
+    const next = new Set(prev);
+    if (next.has(month)) next.delete(month); else next.add(month);
+    return next;
+  });
 
   const filtered = activeTab === "all" ? ALL_TRANSACTIONS
-    : activeTab === "hackathons" ? (activeHackathon === "genai" ? ALL_TRANSACTIONS.filter(t => t.cat === "Toronto Trip") : [])
+    : activeTab === "hackathons" ? (activeHackathon === "genai" ? ALL_TRANSACTIONS.filter(t => t.cat === "Toronto Trip") : ALL_TRANSACTIONS.filter(t => t.hackathon === "bearhacks"))
     : ALL_TRANSACTIONS.filter(t => getMonthKey(t.date) === activeTab);
 
   const byCat = {};
   filtered.forEach(t => { if (!byCat[t.cat]) byCat[t.cat]=[]; byCat[t.cat].push(t); });
 
   const catTotals = Object.entries(byCat).map(([cat, txns]) => {
-    const calcTotal = txns.reduce((s,t)=>s+t.amount,0);
+    const calcTotal = sumTxnAmounts(txns);
     const key = `${activeTab}::${cat}`;
     const hasOverride = overrides[key] !== undefined;
-    return { cat, total: hasOverride ? overrides[key] : calcTotal, originalTotal: calcTotal, hasOverride, count: txns.length, txns };
+    return { cat, total: hasOverride ? overrides[key] : calcTotal, originalTotal: calcTotal, hasOverride, count: countedTxns(txns).length, txns };
   }).sort((a,b)=>b.total-a.total);
 
   const grandTotal = catTotals.reduce((s,c)=>s+c.total,0);
   const hasAnyOverride = Object.keys(overrides).length > 0;
-  const giftAmt = filtered.filter(t=>t.gift).reduce((s,t)=>s+t.amount,0);
+  const giftAmt = sumTxnAmounts(filtered.filter(t=>t.gift));
+  const excludedReturnCount = filtered.filter(t=>t.excludeFromTotals).length;
 
   const torontoTxns = ALL_TRANSACTIONS.filter(t=>t.cat==="Toronto Trip");
-  const torontoTotal = torontoTxns.reduce((s,t)=>s+t.amount,0);
+  const torontoTotal = sumTxnAmounts(torontoTxns);
+  const bearHacksTxns = ALL_TRANSACTIONS.filter(t=>t.hackathon==="bearhacks");
+  const bearHacksTotal = sumTxnAmounts(bearHacksTxns);
 
   const monthlyTotals = months.map(m => {
     const txns = ALL_TRANSACTIONS.filter(t=>getMonthKey(t.date)===m);
-    const gt = txns.filter(t=>t.gift).reduce((s,t)=>s+t.amount,0);
-    return { month:m, total:txns.reduce((s,t)=>s+t.amount,0), totalExGifts:txns.filter(t=>!t.gift).reduce((s,t)=>s+t.amount,0), giftTotal:gt, count:txns.length };
+    const gt = sumTxnAmounts(txns.filter(t=>t.gift));
+    return { month:m, total:sumTxnAmounts(txns), totalExGifts:sumTxnAmounts(txns.filter(t=>!t.gift)), giftTotal:gt, count:countedTxns(txns).length };
   }).filter(m=>m.count>0);
 
   // Tabs — removed Projects and Car
@@ -580,15 +920,15 @@ export default function SpendingBreakdown() {
   // ========== MONTHLY CATEGORY GRID DATA ==========
   const gridMonths = months.filter(m => ALL_TRANSACTIONS.some(t => getMonthKey(t.date) === m));
   const allCats = [...new Set(ALL_TRANSACTIONS.map(t => t.cat))].sort((a,b) => {
-    const totA = ALL_TRANSACTIONS.filter(t=>t.cat===a).reduce((s,t)=>s+t.amount,0);
-    const totB = ALL_TRANSACTIONS.filter(t=>t.cat===b).reduce((s,t)=>s+t.amount,0);
+    const totA = sumTxnAmounts(ALL_TRANSACTIONS.filter(t=>t.cat===a));
+    const totB = sumTxnAmounts(ALL_TRANSACTIONS.filter(t=>t.cat===b));
     return totB - totA;
   });
   const gridData = {};
   allCats.forEach(cat => {
     gridData[cat] = {};
     gridMonths.forEach(m => {
-      gridData[cat][m] = ALL_TRANSACTIONS.filter(t => t.cat === cat && getMonthKey(t.date) === m).reduce((s,t) => s + t.amount, 0);
+      gridData[cat][m] = sumTxnAmounts(ALL_TRANSACTIONS.filter(t => t.cat === cat && getMonthKey(t.date) === m));
     });
   });
 
@@ -621,7 +961,7 @@ export default function SpendingBreakdown() {
       {/* HEADER */}
       <div style={{maxWidth:720,margin:"0 auto 28px",display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
         <div>
-          <div style={{fontSize:11,fontFamily:"'DM Mono',monospace",color:"#6b7280",letterSpacing:2,textTransform:"uppercase",marginBottom:6}}>Nov 2025 – Apr 2026</div>
+          <div style={{fontSize:11,fontFamily:"'DM Mono',monospace",color:"#6b7280",letterSpacing:2,textTransform:"uppercase",marginBottom:6}}>Nov 2025 – Jul 2026</div>
           <h1 style={{fontSize:28,fontWeight:700,margin:0,letterSpacing:-0.5}}>Spending Breakdown</h1>
           <div style={{fontSize:13,color:"#9ca3af",marginTop:4}}>CIBC Visa + Debit · {ALL_TRANSACTIONS.length} transactions</div>
         </div>
@@ -845,7 +1185,7 @@ export default function SpendingBreakdown() {
 
       {/* ========== AMAZON PURCHASES ========== */}
       {(()=>{
-        const amazonTotal = AMAZON_ORDERS.filter(o=>o.status!=="cancelled").reduce((s,o)=>s+o.total,0);
+        const amazonTotal = AMAZON_ORDERS.filter(o=>o.status!=="cancelled"&&o.status!=="returned").reduce((s,o)=>s+o.total,0);
         const returnedTotal = AMAZON_ORDERS.filter(o=>o.status==="returned").reduce((s,o)=>s+o.total,0);
         const pendingReturnTotal = AMAZON_ORDERS.filter(o=>o.status==="return-pending").reduce((s,o)=>s+o.total,0);
         const ordersByMonth = {};
@@ -863,7 +1203,7 @@ export default function SpendingBreakdown() {
               <div style={{textAlign:"left"}}>
                 <div style={{fontSize:14,fontWeight:600}}>📦 Amazon Purchases — Itemized</div>
                 <div style={{fontSize:12,color:"#9ca3af",marginTop:2}}>
-                  {AMAZON_ORDERS.length} orders · {fmt(amazonTotal)} total · {fmt(returnedTotal)} returned · {fmt(pendingReturnTotal)} return pending
+                  {AMAZON_ORDERS.length} orders · {fmt(amazonTotal)} net total · {fmt(returnedTotal)} returned/excluded · {fmt(pendingReturnTotal)} return pending
                 </div>
               </div>
               <span style={{fontSize:12,color:"#6b7280",transform:showAmazon?"rotate(180deg)":"rotate(0)",transition:"transform 0.2s"}}>▼</span>
@@ -949,7 +1289,7 @@ export default function SpendingBreakdown() {
               {monthKeys.map((mk,mi) => {
                 const orders = ordersByMonth[mk];
                 const monthLabel = MONTH_LABELS[mk] || mk;
-                const monthTotal = orders.filter(o=>o.status!=="cancelled").reduce((s,o)=>s+o.total,0);
+                const monthTotal = orders.filter(o=>o.status!=="cancelled"&&o.status!=="returned").reduce((s,o)=>s+o.total,0);
                 return (
                   <div key={mk} style={{borderBottom:mi<monthKeys.length-1?"1px solid rgba(255,255,255,0.06)":"none"}}>
                     <div style={{padding:"14px 18px 8px",background:"rgba(255,255,255,0.02)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
@@ -971,6 +1311,7 @@ export default function SpendingBreakdown() {
                               <span style={{fontSize:13,color:statusColor}}>{statusIcon}</span>
                               <span style={{fontSize:14,fontWeight:600,color:"#d1d5db"}}>Order on {dateStr}</span>
                               {order.shipTo && <span style={{fontSize:10,padding:"2px 6px",borderRadius:4,background:"rgba(139,92,246,0.15)",color:"#a78bfa",fontWeight:600}}>→ {order.shipTo}</span>}
+                              {order.orderId && <span style={{fontSize:10,padding:"2px 6px",borderRadius:4,background:"rgba(255,255,255,0.06)",color:"#9ca3af",fontFamily:"'DM Mono',monospace"}}>{order.orderId}</span>}
                               <span style={{fontSize:10,padding:"2px 6px",borderRadius:4,background:`${statusColor}20`,color:statusColor,fontWeight:600}}>{statusLabel}</span>
                             </div>
                             <span style={{fontSize:15,fontWeight:700,fontFamily:"'DM Mono',monospace",
@@ -978,6 +1319,12 @@ export default function SpendingBreakdown() {
                               textDecoration:order.status==="returned"||order.status==="cancelled"?"line-through":"none"
                             }}>{order.total>0?fmt(order.total):"FREE"}</span>
                           </div>
+                          {order.cardTxn && (
+                            <div style={{fontSize:10,color:"#6b7280",margin:"-2px 0 6px 28px"}}>Matched to card: {order.cardTxn}</div>
+                          )}
+                          {order.status==="returned" && (
+                            <div style={{fontSize:10,color:"#4ade80",margin:"-2px 0 6px 28px"}}>Returned item - excluded from Amazon totals</div>
+                          )}
                           {order.items.map((item,ii) => {
                             const icfg = AMAZON_SUBCAT_CONFIG[item.subCat] || {icon:"•",color:"#6b7280",label:item.subCat};
                             return (
@@ -1074,16 +1421,35 @@ export default function SpendingBreakdown() {
 
       {/* MONTHLY OVERVIEW */}
       <div className="monthly-summary-grid" style={{maxWidth:720,margin:"0 auto 24px",display:"grid",gridTemplateColumns:`repeat(${Math.min(monthlyTotals.length,6)},1fr)`,gap:8}}>
-        {monthlyTotals.map(m=>(
+        {monthlyTotals.map(m=>{
+          const paid = paidOffMonths.has(m.month);
+          const displayAmt = m.giftTotal>0?m.totalExGifts:m.total;
+          return (
           <div key={m.month} onClick={()=>{setActiveTab(m.month);setExpandedCat(null);}} style={{
-            background:activeTab===m.month?"rgba(255,255,255,0.08)":"rgba(255,255,255,0.03)",borderRadius:10,padding:"12px 10px",
-            border:activeTab===m.month?"1px solid rgba(255,255,255,0.15)":"1px solid rgba(255,255,255,0.05)",cursor:"pointer",transition:"all 0.15s"}}>
-            <div style={{fontSize:10,color:"#6b7280",fontWeight:600,marginBottom:4,letterSpacing:0.5}}>{MONTH_LABELS[m.month].split(" ")[0].substring(0,3).toUpperCase()}</div>
-            <div style={{fontSize:15,fontWeight:700,fontFamily:"'DM Mono',monospace"}}>{fmt(m.giftTotal>0?m.totalExGifts:m.total)}</div>
+            position:"relative",
+            background:paid?"rgba(74,222,128,0.08)":activeTab===m.month?"rgba(255,255,255,0.08)":"rgba(255,255,255,0.03)",borderRadius:10,padding:"12px 10px",
+            border:paid?"1px solid rgba(74,222,128,0.35)":activeTab===m.month?"1px solid rgba(255,255,255,0.15)":"1px solid rgba(255,255,255,0.05)",cursor:"pointer",transition:"all 0.15s"}}>
+            <div
+              onClick={(e)=>{e.stopPropagation();togglePaidOff(m.month);}}
+              title={paid?"Paid off — click to unmark":"Mark as paid off"}
+              style={{
+                position:"absolute",top:6,right:6,
+                background:paid?"rgba(74,222,128,0.2)":"rgba(255,255,255,0.06)",
+                border:paid?"1px solid rgba(74,222,128,0.5)":"1px solid rgba(255,255,255,0.12)",
+                color:paid?"#4ade80":"#9ca3af",
+                borderRadius:6,padding:"2px 6px",fontSize:9,fontWeight:700,fontFamily:"'DM Mono',monospace",
+                letterSpacing:0.3,whiteSpace:"nowrap",cursor:"pointer",lineHeight:1.4,transition:"all 0.15s",
+              }}
+            >
+              {paid?`✓ ${fmt(displayAmt)}`:"○ mark paid"}
+            </div>
+            <div style={{fontSize:10,color:"#6b7280",fontWeight:600,marginBottom:4,letterSpacing:0.5,marginTop:14}}>{MONTH_LABELS[m.month].split(" ")[0].substring(0,3).toUpperCase()}</div>
+            <div style={{fontSize:15,fontWeight:700,fontFamily:"'DM Mono',monospace",textDecoration:paid?"line-through":"none",opacity:paid?0.7:1}}>{fmt(displayAmt)}</div>
             {m.giftTotal>0&&<div style={{fontSize:9,color:"#c9508a",marginTop:3}}>+{fmt(m.giftTotal)} gift</div>}
             <div style={{fontSize:10,color:"#6b7280",marginTop:2}}>{m.count} txns</div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* TABS */}
@@ -1119,7 +1485,7 @@ export default function SpendingBreakdown() {
                 color:activeHackathon==="bearhacks"?"#fff":"#9ca3af",textAlign:"left",transition:"all 0.15s",
               }}>
                 <div style={{fontSize:14,fontWeight:700}}>🐻 BearHacks</div>
-                <div style={{fontSize:12,color:activeHackathon==="bearhacks"?"#d1d5db":"#6b7280",marginTop:3}}>Mississauga · TBD</div>
+                <div style={{fontSize:12,color:activeHackathon==="bearhacks"?"#d1d5db":"#6b7280",marginTop:3}}>Mississauga - Apr 24-26, 2026</div>
               </button>
             </div>
 
@@ -1134,10 +1500,10 @@ export default function SpendingBreakdown() {
               };
               const subTotals = Object.entries(tripSubCats).map(([sub, cfg]) => {
                 const items = torontoTxns.filter(t => t.tripCat === sub);
-                return { sub, cfg, total: items.reduce((s,t) => s+t.amount, 0), count: items.length, items };
+                return { sub, cfg, total: sumTxnAmounts(items), count: countedTxns(items).length, items };
               }).filter(s => s.count > 0);
-              const grossTotal = torontoTxns.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
-              const kaiReimbursement = torontoTxns.filter(t=>t.amount<0).reduce((s,t)=>s+t.amount,0);
+              const grossTotal = sumTxnAmounts(torontoTxns.filter(t=>t.amount>0));
+              const kaiReimbursement = sumTxnAmounts(torontoTxns.filter(t=>t.amount<0));
               return (
                 <div style={{background:"linear-gradient(135deg,rgba(245,158,11,0.12),rgba(239,68,68,0.08))",border:"1px solid rgba(245,158,11,0.25)",borderRadius:12,padding:"18px 20px",marginBottom:16}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
@@ -1209,15 +1575,74 @@ export default function SpendingBreakdown() {
               );
             })()}
 
-            {/* BearHacks content — empty for now */}
-            {activeHackathon==="bearhacks"&&(
-              <div style={{background:"linear-gradient(135deg,rgba(139,92,246,0.08),rgba(99,102,241,0.04))",border:"1px solid rgba(139,92,246,0.2)",borderRadius:12,padding:"32px 20px",textAlign:"center",marginBottom:16}}>
-                <div style={{fontSize:32,marginBottom:8}}>🐻</div>
-                <div style={{fontSize:18,fontWeight:700,marginBottom:4}}>BearHacks — Mississauga</div>
-                <div style={{fontSize:13,color:"#9ca3af"}}>No expenses added yet</div>
-                <div style={{fontSize:11,color:"#6b7280",marginTop:8}}>Add transactions with cat: "BearHacks" to see them here</div>
-              </div>
-            )}
+            {activeHackathon==="bearhacks"&&(()=>{
+              const bearSubCats = {
+                "Food & Drinks": { icon: "FD", color: "#d4a017" },
+                "Transit": { icon: "TR", color: "#6b7280" },
+                "Shopping": { icon: "SH", color: "#8b5cf6" },
+                "Supplies": { icon: "SP", color: "#10b981" },
+                "Tools & Services": { icon: "TS", color: "#06b6d4" },
+              };
+              const subTotals = Object.entries(bearSubCats).map(([sub, cfg]) => {
+                const items = bearHacksTxns.filter(t => t.hackCat === sub);
+                return { sub, cfg, total: sumTxnAmounts(items), count: countedTxns(items).length, items };
+              }).filter(s => s.count > 0);
+              return (
+                <div style={{background:"linear-gradient(135deg,rgba(139,92,246,0.08),rgba(99,102,241,0.04))",border:"1px solid rgba(139,92,246,0.2)",borderRadius:12,padding:"18px 20px",marginBottom:16}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:16}}>
+                    <div>
+                      <div style={{fontSize:18,fontWeight:700,marginBottom:4}}>BearHacks</div>
+                      <div style={{fontSize:13,color:"#d1d5db"}}>Mississauga - April 24-26, 2026</div>
+                    </div>
+                    <div style={{textAlign:"right"}}>
+                      <div style={{fontSize:24,fontWeight:700,fontFamily:"'DM Mono',monospace",color:"#a78bfa"}}>{fmt(bearHacksTotal)}</div>
+                      <div style={{fontSize:11,color:"#9ca3af"}}>{bearHacksTxns.length} transactions</div>
+                    </div>
+                  </div>
+
+                  <div style={{marginTop:14}}>
+                    {subTotals.map(({sub, cfg, total, count, items}) => {
+                      const isOpen = expandedTripCat === sub;
+                      return (
+                        <div key={sub} style={{marginBottom:6}}>
+                          <div onClick={()=>setExpandedTripCat(isOpen?null:sub)} style={{
+                            background:isOpen?"rgba(0,0,0,0.25)":"rgba(0,0,0,0.15)",borderRadius:isOpen?"8px 8px 0 0":8,
+                            padding:"12px 14px",cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center",
+                            border:isOpen?`1px solid ${cfg.color}44`:"1px solid transparent",borderBottom:isOpen?"none":undefined,
+                            transition:"all 0.15s",
+                          }}>
+                            <div style={{display:"flex",alignItems:"center",gap:8}}>
+                              <span style={{fontSize:10,fontWeight:700,color:cfg.color,border:`1px solid ${cfg.color}55`,borderRadius:6,padding:"2px 5px",fontFamily:"'DM Mono',monospace"}}>{cfg.icon}</span>
+                              <div>
+                                <div style={{fontSize:13,fontWeight:600,color:"#e8eaed"}}>{sub}</div>
+                                <div style={{fontSize:10,color:"#6b7280"}}>{count} transaction{count>1?"s":""}</div>
+                              </div>
+                            </div>
+                            <div style={{display:"flex",alignItems:"center",gap:10}}>
+                              <span style={{fontSize:14,fontWeight:700,fontFamily:"'DM Mono',monospace",color:cfg.color}}>{fmt(total)}</span>
+                              <span style={{fontSize:10,color:"#6b7280",transform:isOpen?"rotate(180deg)":"rotate(0)",transition:"transform 0.2s"}}>v</span>
+                            </div>
+                          </div>
+                          {isOpen&&(
+                            <div style={{background:"rgba(0,0,0,0.18)",border:`1px solid ${cfg.color}44`,borderTop:"none",borderRadius:"0 0 8px 8px",padding:"4px 0"}}>
+                              {items.sort((a,b)=>a.date.localeCompare(b.date)).map((t,i)=>(
+                                <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 14px",borderBottom:i<items.length-1?"1px solid rgba(255,255,255,0.04)":"none"}}>
+                                  <div style={{minWidth:0}}>
+                                    <div style={{fontSize:12,color:"#e8eaed",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t.desc}</div>
+                                    <div style={{fontSize:10,color:"#6b7280",marginTop:2}}>{fmtDate(t.date)} - {t.src}</div>
+                                  </div>
+                                  <div style={{fontSize:13,fontWeight:600,fontFamily:"'DM Mono',monospace",color:t.amount<0?"#4ade80":"#e8eaed",whiteSpace:"nowrap",marginLeft:12}}>{fmt(t.amount)}</div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         );
       })()}
@@ -1230,7 +1655,7 @@ export default function SpendingBreakdown() {
               <div style={{fontSize:12,color:"#6b7280",fontWeight:500}}>
                 {activeTab==="all"?"TOTAL SPENDING":MONTH_LABELS[activeTab]?.toUpperCase()+" TOTAL"}{giftAmt>0?" (excl. gifts)":""}
               </div>
-              <div style={{fontSize:12,color:"#6b7280",marginTop:2}}>{filtered.length} transactions · net of refunds</div>
+              <div style={{fontSize:12,color:"#6b7280",marginTop:2}}>{countedTxns(filtered).length} counted transactions{excludedReturnCount>0?` · ${excludedReturnCount} returned excluded`:""} · net of refunds</div>
             </div>
             <div style={{display:"flex",alignItems:"center",gap:12}}>
               <div style={{fontSize:26,fontWeight:700,fontFamily:"'DM Mono',monospace"}}>{fmt(grandTotal - giftAmt)}</div>
@@ -1287,6 +1712,7 @@ export default function SpendingBreakdown() {
                           {srcBadge(t.src)}
                           {t.gift&&<span style={{fontSize:9,fontWeight:600,letterSpacing:0.5,padding:"2px 5px",borderRadius:4,marginLeft:4,background:"rgba(201,80,138,0.2)",color:"#f9a8d4",flexShrink:0}}>🎁 GIFT</span>}
                           {t.amount<0&&<span style={{fontSize:9,fontWeight:600,letterSpacing:0.5,padding:"2px 5px",borderRadius:4,marginLeft:4,background:"rgba(74,222,128,0.15)",color:"#4ade80",flexShrink:0}}>REFUND</span>}
+                          {t.excludeFromTotals&&<span style={{fontSize:9,fontWeight:600,letterSpacing:0.5,padding:"2px 5px",borderRadius:4,marginLeft:4,background:"rgba(74,222,128,0.15)",color:"#4ade80",flexShrink:0}}>RETURNED - EXCLUDED</span>}
                           {t.tripCat&&<span style={{fontSize:9,fontWeight:600,letterSpacing:0.5,padding:"2px 5px",borderRadius:4,marginLeft:4,flexShrink:0,
                             background:t.tripCat==="Parts & Supplies"?"rgba(255,153,0,0.15)":t.tripCat==="Food & Drinks"?"rgba(212,160,23,0.15)":t.tripCat==="Transit"?"rgba(107,114,128,0.15)":"rgba(139,92,246,0.15)",
                             color:t.tripCat==="Parts & Supplies"?"#ff9900":t.tripCat==="Food & Drinks"?"#d4a017":t.tripCat==="Transit"?"#9ca3af":"#a78bfa",
@@ -1301,7 +1727,7 @@ export default function SpendingBreakdown() {
                           {fmtDate(t.date)}{t.gift?" · Christmas gift":""}
                         </div>
                       </div>
-                      <div style={{fontSize:13,fontWeight:600,fontFamily:"'DM Mono',monospace",color:t.amount<0?"#4ade80":"#e8eaed",whiteSpace:"nowrap",marginLeft:12}}>{fmt(t.amount)}</div>
+                      <div style={{fontSize:13,fontWeight:600,fontFamily:"'DM Mono',monospace",color:t.excludeFromTotals?"#6b7280":t.amount<0?"#4ade80":"#e8eaed",whiteSpace:"nowrap",marginLeft:12,textDecoration:t.excludeFromTotals?"line-through":"none"}}>{fmt(t.amount)}</div>
                     </div>
                   ))}
                 </div>
@@ -1316,14 +1742,14 @@ export default function SpendingBreakdown() {
         <div style={{maxWidth:720,margin:"24px auto 0",display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
           {["Gas","Food & Dining"].map(key=>{
             const txns=ALL_TRANSACTIONS.filter(t=>t.cat===key);
-            const total=txns.reduce((s,t)=>s+t.amount,0);
-            const pos=txns.filter(t=>t.amount>0);
+            const total=sumTxnAmounts(txns);
+            const pos=txns.filter(t=>t.amount>0 && !t.excludeFromTotals);
             const cfg=CAT_CONFIG[key];
             return (
               <div key={key} style={{background:`linear-gradient(135deg,${cfg.color}18,rgba(0,0,0,0))`,border:`1px solid ${cfg.color}30`,borderRadius:12,padding:"16px 18px"}}>
                 <div style={{fontSize:12,color:"#9ca3af",fontWeight:500,marginBottom:4}}>{cfg.icon} {key.toUpperCase()} TOTAL</div>
                 <div style={{fontSize:22,fontWeight:700,fontFamily:"'DM Mono',monospace"}}>{fmt(total)}</div>
-                <div style={{fontSize:11,color:"#6b7280",marginTop:4}}>{pos.length} visits · avg {fmt(pos.reduce((s,t)=>s+t.amount,0)/pos.length)}/ea</div>
+                <div style={{fontSize:11,color:"#6b7280",marginTop:4}}>{pos.length} visits · avg {fmt(sumTxnAmounts(pos)/pos.length)}/ea</div>
               </div>
             );
           })}
@@ -1333,7 +1759,7 @@ export default function SpendingBreakdown() {
       {/* FEES CALLOUT */}
       {activeTab==="all"&&(()=>{
         const ft=ALL_TRANSACTIONS.filter(t=>t.cat==="Fees & Interest");
-        const feeTotal=ft.reduce((s,t)=>s+t.amount,0);
+        const feeTotal=sumTxnAmounts(ft);
         return feeTotal>0?(
           <div style={{maxWidth:720,margin:"12px auto 0",background:"rgba(239,68,68,0.08)",border:"1px solid rgba(239,68,68,0.2)",borderRadius:12,padding:"14px 18px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
             <div>
@@ -1351,11 +1777,11 @@ export default function SpendingBreakdown() {
 
       {/* ========== SUMMARY POPUP ========== */}
       {showSummary && (()=>{
-        const summaryLabel = activeTab === "all" ? "All Months (Nov 2025 – Apr 2026)"
+        const summaryLabel = activeTab === "all" ? "All Months (Nov 2025 – Jul 2026)"
           : activeTab === "hackathons" ? (activeHackathon === "genai" ? "GenAI Genesis Hackathon · Toronto" : "BearHacks · Mississauga")
           : MONTH_LABELS[activeTab] || activeTab;
         const summaryTotal = catTotals.reduce((s,c) => s + c.total, 0);
-        const summaryGift = filtered.filter(t => t.gift).reduce((s,t) => s + t.amount, 0);
+        const summaryGift = sumTxnAmounts(filtered.filter(t => t.gift));
         return (
           <div style={{position:"fixed",inset:0,zIndex:200,display:"flex",justifyContent:"center",alignItems:"center",padding:16}} onClick={()=>setShowSummary(false)}>
             <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.6)",backdropFilter:"blur(6px)"}}/>
