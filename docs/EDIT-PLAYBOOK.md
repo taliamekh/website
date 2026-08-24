@@ -199,6 +199,8 @@ numbers, which drift.
   (`projects.html`, `contact.html`, `portal.html`, `workspace/index.html`) only redirect into the SPA hash routes.
 - **Workspace:** the public shell calls `/workspace/session` and `/workspace/auth`; never put the Workspace password in client code.
 - **Client Portal:** the SHA-256 destination map is in `site/app.js`; plaintext client keys stay outside the repository.
+- **Cache busting:** whenever `site/styles.css` or `site/app.js` changes, update its `?v=` value in `index.html`; otherwise an
+  already-open browser can continue displaying the previous production CSS/JS after deployment.
 - **Archive guard:** the immediately previous production site is the read-only GitHub branch and tag
   `archive/pre-doll-whimsy-production-2026-08-24` at commit `ffdcc288129b28b5f37007e7243948484d228231`.
   Never edit, force-push, or delete either reference.
