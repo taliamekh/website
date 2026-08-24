@@ -1853,6 +1853,15 @@
     .lock-card { padding: 24px 20px; }
   }
 </style>
+<script>
+  if (new URLSearchParams(window.location.search).get('redesign') === '1') {
+    document.documentElement.classList.add('sr-redesign-preview');
+    const redesignTheme = document.createElement('link');
+    redesignTheme.rel = 'stylesheet';
+    redesignTheme.href = './redesign-theme.css?v=20260818a';
+    document.head.appendChild(redesignTheme);
+  }
+</script>
 </head>
 <body>
 

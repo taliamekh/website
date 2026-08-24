@@ -181,3 +181,24 @@ numbers, which drift.
 - **Verify:** test wrong/correct passwords, refresh persistence, each bubble in a new tab, direct unauthorized subroute redirects,
   standalone School Notes with no public-site menu, School Notes + Spocket functionality, and Expenses without a second login.
   Never store the Workspace password client-side.
+
+### 19 - Build or review a redesign mockup
+- **Files:** keep exploratory redesigns under `sandbox/<study-name>/`; do not edit the five production pages during mockup approval.
+- **Menu scope:** Home, Projects, Workspace, Client Portal, Contact. Keep School Notes standalone unless the user explicitly expands scope.
+- **Assets:** copy approved generated artwork into the sandbox `assets/` directory so localhost does not depend on Codex-generated-image paths.
+- **Standalone mockup flow:** keep copied project detail data inside the sandbox; do not fetch `projects.html` at runtime. Open standalone tools
+  directly in new tabs and do not add a redesign wrapper/header around them. Use query-scoped theme overrides or localhost-only build paths when
+  a standalone page needs to match the mockup without changing its production default.
+- **Verify:** run the static preview and test every design option across all five menu states, desktop and mobile navigation, image loading,
+  project/Workspace interactions, Portal form controls, and Contact actions. Visually inspect screenshots for overlap before handoff.
+
+### 20 - Edit the doll-whimsy production portfolio
+- **Files:** `index.html` is the production shell; shared portfolio CSS/JS/art live in `site/`. Direct-page compatibility files
+  (`projects.html`, `contact.html`, `portal.html`, `workspace/index.html`) only redirect into the SPA hash routes.
+- **Workspace:** the public shell calls `/workspace/session` and `/workspace/auth`; never put the Workspace password in client code.
+- **Client Portal:** the SHA-256 destination map is in `site/app.js`; plaintext client keys stay outside the repository.
+- **Archive guard:** the immediately previous production site is the read-only GitHub branch and tag
+  `archive/pre-doll-whimsy-production-2026-08-24` at commit `ffdcc288129b28b5f37007e7243948484d228231`.
+  Never edit, force-push, or delete either reference.
+- **Verify:** test all five hash routes, direct-page redirects, responsive nav, project modals/images/animation, Workspace lock and
+  quick links, Client Portal key handling, Contact copy action, and the standalone Sift/Expenses/School Notes pages.

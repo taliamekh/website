@@ -1073,7 +1073,7 @@ export default function SpendingBreakdown() {
       )}
 
       {/* MONTHLY OVERVIEW */}
-      <div style={{maxWidth:720,margin:"0 auto 24px",display:"grid",gridTemplateColumns:`repeat(${Math.min(monthlyTotals.length,6)},1fr)`,gap:8}}>
+      <div className="monthly-summary-grid" style={{maxWidth:720,margin:"0 auto 24px",display:"grid",gridTemplateColumns:`repeat(${Math.min(monthlyTotals.length,6)},1fr)`,gap:8}}>
         {monthlyTotals.map(m=>(
           <div key={m.month} onClick={()=>{setActiveTab(m.month);setExpandedCat(null);}} style={{
             background:activeTab===m.month?"rgba(255,255,255,0.08)":"rgba(255,255,255,0.03)",borderRadius:10,padding:"12px 10px",
@@ -1087,7 +1087,7 @@ export default function SpendingBreakdown() {
       </div>
 
       {/* TABS */}
-      <div style={{maxWidth:720,margin:"0 auto 20px",display:"flex",gap:6,overflowX:"auto",paddingBottom:4}}>
+      <div className="expense-tabs" style={{maxWidth:720,margin:"0 auto 20px",display:"flex",gap:6,overflowX:"auto",paddingBottom:4}}>
         {tabs.map(tab=>(
           <button key={tab.key} onClick={()=>{setActiveTab(tab.key);setExpandedCat(null);}} style={{
             background:activeTab===tab.key?(tab.key==="hackathons"?"rgba(245,158,11,0.2)":"rgba(255,255,255,0.12)"):"rgba(255,255,255,0.04)",
@@ -1250,7 +1250,7 @@ export default function SpendingBreakdown() {
 
       {/* CATEGORY BREAKDOWN */}
       <div style={{maxWidth:720,margin:"0 auto"}}>
-        {catTotals.map(({cat,total,originalTotal,hasOverride,count,txns})=>{
+        {catTotals.map(({cat,total,count,txns})=>{
           const cfg=CAT_CONFIG[cat]||{icon:"•",color:"#6b7280"};
           const isOpen=expandedCat===cat;
           const pct=grandTotal>0?Math.max(0,(total/grandTotal)*100):0;

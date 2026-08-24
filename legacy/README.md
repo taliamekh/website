@@ -1,4 +1,24 @@
-# Legacy — Pre-Aurora Site Archive
+# Legacy site archives — read only
+
+> **DO NOT EDIT OR DELETE THESE FILES.** They are historical references, never
+> production sources, and `legacy/` is excluded from every Vercel deployment.
+
+## Complete pre-doll-whimsy production archive (August 24, 2026)
+
+The exact website that was public immediately before the doll-whimsy redesign
+is permanently preserved at commit `ffdcc288129b28b5f37007e7243948484d228231` in
+two GitHub references:
+
+- Branch: `archive/pre-doll-whimsy-production-2026-08-24`
+- Annotated tag: `archive/pre-doll-whimsy-production-2026-08-24`
+
+Use that branch or tag only for comparison and recovery. Never build new work
+on it, force-push it, or delete it. Restore individual files into a new recovery
+branch when needed; do not modify the archive reference itself.
+
+---
+
+# Pre-Aurora Site Archive
 
 Snapshot of the portfolio site taken right before the Aurora Royal redesign was promoted to production. Everything here is read-only history; the live site is the new Aurora design at the project root.
 

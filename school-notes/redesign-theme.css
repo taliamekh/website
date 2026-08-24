@@ -1,0 +1,222 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=DM+Sans:wght@400;500;600&family=Petit+Formal+Script&display=swap');
+
+html.sr-redesign-preview {
+  --navy: #123252;
+  --deep: #0d2945;
+  --mid: #173b5d;
+  --panel: #173b5d;
+  --border: rgba(255, 250, 243, 0.2);
+  --border2: rgba(239, 193, 211, 0.72);
+  --blue: #efc1d3;
+  --cyan: #efc1d3;
+  --text: #fffaf3;
+  --text-muted: rgba(255, 250, 243, 0.7);
+  --white: #fffaf3;
+}
+
+html.sr-redesign-preview body {
+  background: #123252;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 400;
+}
+
+html.sr-redesign-preview body::before {
+  opacity: 0;
+}
+
+html.sr-redesign-preview main {
+  max-width: 1180px;
+  padding: clamp(38px, 6vw, 76px) clamp(20px, 5vw, 64px) 72px;
+}
+
+html.sr-redesign-preview .page-head {
+  margin-bottom: 34px;
+  text-align: center;
+}
+
+html.sr-redesign-preview .page-head-row {
+  position: relative;
+  display: block;
+}
+
+html.sr-redesign-preview .page-head-titles {
+  width: 100%;
+}
+
+html.sr-redesign-preview .section-num {
+  margin-bottom: 6px;
+  color: var(--cyan);
+  font-family: 'Petit Formal Script', cursive;
+  font-size: 16px;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+html.sr-redesign-preview .page-title {
+  position: relative;
+  display: inline-block;
+  padding: 0 28px 12px;
+  color: var(--white);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(48px, 7vw, 76px);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+html.sr-redesign-preview .page-title::after {
+  content: '';
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--cyan) 20%, var(--cyan) 80%, transparent);
+}
+
+html.sr-redesign-preview .page-sub {
+  max-width: 580px;
+  margin: 16px auto 0;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+html.sr-redesign-preview .page-head-controls {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+html.sr-redesign-preview .page-spocket-toggle,
+html.sr-redesign-preview .page-theme-toggle {
+  border-color: var(--border);
+  background: rgba(255, 250, 243, 0.06);
+  color: var(--white);
+}
+
+html.sr-redesign-preview .page-spocket-toggle:hover,
+html.sr-redesign-preview .page-theme-toggle:hover {
+  border-color: var(--cyan);
+  background: rgba(239, 193, 211, 0.12);
+}
+
+html.sr-redesign-preview .course-grid {
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 14px;
+}
+
+html.sr-redesign-preview .course-card {
+  min-height: 160px;
+  padding: 24px;
+  border-color: var(--border);
+  border-radius: 26px;
+  background: rgba(255, 250, 243, 0.045);
+  box-shadow: 0 18px 45px rgba(5, 20, 36, 0.15);
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+html.sr-redesign-preview .course-card:nth-child(even) {
+  border-radius: 32px 22px 32px 22px;
+}
+
+html.sr-redesign-preview .course-card:hover {
+  transform: translateY(-4px) rotate(-0.35deg);
+  border-color: rgba(239, 193, 211, 0.8);
+  background: rgba(255, 250, 243, 0.075);
+}
+
+html.sr-redesign-preview .course-code {
+  color: var(--cyan);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+}
+
+html.sr-redesign-preview .course-name {
+  color: var(--white);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.08;
+}
+
+html.sr-redesign-preview .course-meta {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+html.sr-redesign-preview .course-card.active {
+  border-color: var(--cyan);
+  box-shadow: inset 0 0 0 1px rgba(239, 193, 211, 0.2), 0 18px 45px rgba(5, 20, 36, 0.18);
+}
+
+html.sr-redesign-preview .ecor-panel,
+html.sr-redesign-preview .spocket-popover {
+  border-color: var(--border);
+  border-radius: 26px;
+  background: var(--deep);
+}
+
+html.sr-redesign-preview .notes-footer {
+  border-color: var(--border);
+  color: var(--text-muted);
+  font-family: 'DM Sans', sans-serif;
+}
+
+html.sr-redesign-preview .lock-overlay {
+  background: #0d2945;
+  backdrop-filter: none;
+}
+
+html.sr-redesign-preview .lock-card {
+  border-color: var(--border2);
+  border-radius: 28px;
+  background: #123252;
+}
+
+html.sr-redesign-preview .lock-card h1 {
+  font-family: 'Cormorant Garamond', serif;
+  letter-spacing: 0;
+}
+
+@media (max-width: 760px) {
+  html.sr-redesign-preview main {
+    padding: 30px 16px 54px;
+  }
+
+  html.sr-redesign-preview .page-head {
+    padding-top: 62px;
+  }
+
+  html.sr-redesign-preview .page-head-controls {
+    top: -58px;
+    left: 0;
+    right: 0;
+    justify-content: center;
+  }
+
+  html.sr-redesign-preview .course-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  html.sr-redesign-preview .course-card {
+    min-height: 142px;
+    padding: 18px;
+    border-radius: 22px;
+  }
+
+  html.sr-redesign-preview .course-name {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 460px) {
+  html.sr-redesign-preview .course-grid {
+    grid-template-columns: 1fr;
+  }
+
+  html.sr-redesign-preview .course-card {
+    min-height: 126px;
+  }
+}

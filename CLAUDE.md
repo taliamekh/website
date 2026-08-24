@@ -26,7 +26,8 @@ Do not push directly to `main` for unreviewed work. Use a feature branch (named 
 
 ## What lives where
 
-- **Production pages** at the project root: `index.html` (home), `projects.html`, `contact.html`, plus `workspace/` (private hub) and `school-notes/` (the protected Spocket-bearing notes app).
+- **Production portfolio shell:** `index.html` loads the doll-whimsy single-page portfolio from shared assets in `site/`. The old direct paths (`projects.html`, `contact.html`, `portal.html`, and `workspace/index.html`) are compatibility redirects into the matching hash route. `school-notes/` remains a standalone protected app.
+- **Pre-doll-whimsy production archive:** immutable GitHub branch and tag `archive/pre-doll-whimsy-production-2026-08-24`, both pinned to `ffdcc288129b28b5f37007e7243948484d228231`. Never edit, force-push, or delete these references; restore from them into a new branch only.
 - **`legacy/`** — pre-Aurora site snapshot + the numbered exploration mockups (`legacy/mockups-exploration/01-…` through `19-…`). Read-only history; never link to from the live site.
 - **`api/`** — Vercel serverless functions. `gemini.js` is the Spocket AI proxy; `sift-parse.mjs` is the recipe URL parser for Sift. Leave alone unless explicitly working on those integrations.
 - **`lib/`** — server-side helpers for the Vercel functions (currently the cheerio-based sift parser modules). Not served as functions itself.

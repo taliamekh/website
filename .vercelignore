@@ -53,6 +53,7 @@ scripts/check-workspace-spocket.mjs
 # them. Build-required files (package.json, package-lock.json, vercel.json) are
 # intentionally NOT listed because Vercel needs them at deploy time.
 CLAUDE.md
+AGENTS.md
 README.md
 .env.example
 .gitignore
