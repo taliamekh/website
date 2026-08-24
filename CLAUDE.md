@@ -34,7 +34,7 @@ Do not push directly to `main` for unreviewed work. Use a feature branch (named 
 - **`sift/`** — git subtree of [`taliamekh/sift`](https://github.com/taliamekh/sift). See the **Synced projects** section below before editing files here.
 - **`expenses/`** — git subtree of [`taliamekh/expenses`](https://github.com/taliamekh/expenses) (PRIVATE). Contains `spending-tracker/` (Vite + React SPA that ships to `mekh.ca/expenses`) and `statements-backup/` (personal financial PDFs/PNGs, excluded from deploy via `.vercelignore`). Password-gated by `middleware.js`. See the **Synced projects** and **Expenses gate** sections below.
 - **`fuel-economy/`** — git subtree of [`taliamekh/Fuel-Economy-Calculator`](https://github.com/taliamekh/Fuel-Economy-Calculator). Static front-end for the road-trip fuel cost planner. See the **Synced projects** section below before editing files here.
-- **`middleware.js`** — Vercel Edge middleware. Password-gates `/workspace/*` and `/expenses/*`; a valid Workspace device cookie also authorizes Expenses. Reads the matching Workspace and Expenses password/secret env vars.
+- **`middleware.js`** — Vercel Edge middleware. Password-gates `/workspace/*` and `/expenses/*`; a valid Workspace device cookie also authorizes Expenses. Dedicated Workspace env vars take priority, with the existing Expenses password/secret as a secure production fallback when they are absent.
 - **`spocket.svg`** at the root and the matching `SPOCKET_SVG` constant inside `projects.html` need to stay in sync — they're two copies of the same Spocket character render (one standalone, one inlined so the bento tile can animate her wave on hover).
 
 ## Synced projects (git subtree pattern)

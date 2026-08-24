@@ -24,10 +24,20 @@ const WORKSPACE_ROUTE = {
   cookiePath: '/',
   passwordEnv: 'WORKSPACE_PASSWORD',
   secretEnv: 'WORKSPACE_AUTH_SECRET',
+  fallbackPasswordEnv: 'EXPENSES_PASSWORD',
+  fallbackSecretEnv: 'EXPENSES_AUTH_SECRET',
   missingConfig: 'Workspace access is not configured. Set WORKSPACE_PASSWORD and WORKSPACE_AUTH_SECRET in Vercel project env vars.',
 };
 
 const encoder = new TextEncoder();
+
+function routePassword(route) {
+  return process.env[route.passwordEnv] || (route.fallbackPasswordEnv ? process.env[route.fallbackPasswordEnv] : '');
+}
+
+function routeSecret(route) {
+  return process.env[route.secretEnv] || (route.fallbackSecretEnv ? process.env[route.fallbackSecretEnv] : '');
+}
 
 async function hmacSign(secret, message) {
   const key = await crypto.subtle.importKey(
@@ -168,8 +178,8 @@ function loginPage({ route, error = '', redirectTo = route.prefix, action = rout
 
 async function authenticatePost(request, url, route) {
   if (!isSameOriginRequest(request, url)) return jsonResponse({ ok: false, error: 'Forbidden.' }, 403);
-  const password = process.env[route.passwordEnv];
-  const secret = process.env[route.secretEnv];
+  const password = routePassword(route);
+  const secret = routeSecret(route);
   const wantsJson = (request.headers.get('accept') || '').includes('application/json');
 
   if (!password || !secret) {
@@ -201,7 +211,7 @@ async function authenticatePost(request, url, route) {
 export default async function middleware(request) {
   const url = new URL(request.url);
   const pathname = url.pathname;
-  const workspaceSecret = process.env[WORKSPACE_ROUTE.secretEnv];
+  const workspaceSecret = routeSecret(WORKSPACE_ROUTE);
   const workspaceToken = readCookie(request.headers.get('cookie'), WORKSPACE_ROUTE.cookieName);
   const workspaceUnlocked = await isValidToken(workspaceToken, workspaceSecret);
 
@@ -218,7 +228,7 @@ export default async function middleware(request) {
   }
 
   if (pathname === '/workspace/session') {
-    return jsonResponse({ ok: workspaceUnlocked, configured: !!(process.env.WORKSPACE_PASSWORD && workspaceSecret) });
+    return jsonResponse({ ok: workspaceUnlocked, configured: !!(routePassword(WORKSPACE_ROUTE) && workspaceSecret) });
   }
 
   if (pathname === '/workspace/auth') {

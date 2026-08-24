@@ -178,6 +178,8 @@ numbers, which drift.
   `workspace/project-in-progress/`, `workspace/expenses/`, `middleware.js`, and `vercel.json`.
 - **Access model:** `WORKSPACE_PASSWORD` and `WORKSPACE_AUTH_SECRET` create a one-year HttpOnly, SameSite=Lax device cookie.
   Every Workspace subroute verifies it; the same cookie can authorize `/expenses/*` to avoid a second prompt.
+  If the dedicated Workspace variables are absent, production securely falls back to the existing `EXPENSES_PASSWORD` and
+  `EXPENSES_AUTH_SECRET`; dedicated Workspace values always take priority when configured.
 - **Verify:** test wrong/correct passwords, refresh persistence, each bubble in a new tab, direct unauthorized subroute redirects,
   standalone School Notes with no public-site menu, School Notes + Spocket functionality, and Expenses without a second login.
   Never store the Workspace password client-side.
