@@ -2938,3 +2938,30 @@ body[data-option="1"][data-page="projects"] .bento-grid .project-symbol-spocket 
     bottom: 7px;
   }
 }
+
+/* Preserve the generous navigation scale when the browser uses half a desktop screen. */
+@media (min-width: 641px) and (max-width: 1599px) {
+  body[data-option="1"] .site-nav {
+    width: min(1080px, calc(100% - 40px));
+    min-height: 72px;
+    padding: 0 12px 0 24px;
+  }
+  body[data-option="1"] .brand { font-size: 27px; }
+  body[data-option="1"] .nav-links { gap: 2px; }
+  body[data-option="1"] .nav-links a {
+    padding: 13px 11px;
+    font-size: 12px;
+  }
+  body[data-option="1"] .nav-links a.active::after {
+    left: 11px;
+    right: 11px;
+    bottom: 7px;
+  }
+}
+
+@media (max-width: 640px) {
+  body[data-option="1"] .site-nav { min-height: 72px; }
+  body[data-option="1"] .brand { font-size: 27px; }
+  body[data-option="1"] .menu-toggle { font-size: 11px; }
+  body[data-option="1"] .nav-links a { font-size: 12px; }
+}
