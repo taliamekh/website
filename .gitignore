@@ -16,3 +16,5 @@ expenses/spending-tracker/dist/
 
 # Stray nested copy of the site (not part of the deploy).
 website/
+.vercel
+.env*
