@@ -301,21 +301,62 @@ const RAW_TRANSACTIONS = [
   // === JULY 2026 ===
   { date: "2026-07-02", desc: "Wendy's Restaurant #6376, Ottawa", amount: 7.21, cat: "Food & Dining", src: "visa" },
   { date: "2026-07-02", desc: "Etsy monthly bill", amount: 3.70, cat: "Subscriptions", src: "visa" },
-  { date: "2026-07-05", desc: "Amazon.ca Prime Membership", amount: 5.64, cat: "Subscriptions", src: "visa" },
-  { date: "2026-07-06", desc: "Amazon: Furtalk Winter Beanie refund", amount: -22.59, cat: "Retail & Shopping", src: "visa", amazonOrder: "701-8453232-8501820", excludeFromTotals: true, returnStatus: "returned" },
+  { date: "2026-07-05", desc: "Amazon.ca Prime Membership", amount: 5.64, cat: "School/Project Expenses", src: "visa", projCat: "Other" },
+  { date: "2026-07-06", desc: "Amazon: Furtalk Winter Beanie refund", amount: -22.59, cat: "School/Project Expenses", src: "visa", projCat: "Other", amazonOrder: "701-8453232-8501820", excludeFromTotals: true, returnStatus: "returned" },
   { date: "2026-07-06", desc: "Amazon: Pearl Beads refund", amount: -16.94, cat: "School/Project Expenses", src: "visa", projCat: "Supplies", amazonOrder: "701-8535283-0847444", excludeFromTotals: true, returnStatus: "returned" },
   { date: "2026-07-06", desc: "King's YIG Richmond #8", amount: 22.99, cat: "Groceries", src: "visa" },
   { date: "2026-07-06", desc: "Amazon: NFC Cards", amount: 21.46, cat: "School/Project Expenses", src: "visa", projCat: "Electronics", amazonOrder: "701-4096712-3094622" },
   { date: "2026-07-06", desc: "Amazon: Uni Alpha-Gel Kuru Toga Pencil refund", amount: -15.02, cat: "School/Project Expenses", src: "visa", projCat: "Supplies", amazonOrder: "701-2669320-3285064", excludeFromTotals: true, returnStatus: "returned" },
-  { date: "2026-07-07", desc: "Amazon: EverPure Clarifying Shampoo", amount: 15.75, cat: "Beauty", src: "visa", amazonOrder: "701-2615115-3424240" },
+  { date: "2026-07-07", desc: "Amazon: EverPure Clarifying Shampoo", amount: 15.75, cat: "School/Project Expenses", src: "visa", projCat: "Other", amazonOrder: "701-2615115-3424240" },
   { date: "2026-07-09", desc: "MacEwen, Richmond", amount: 25.97, cat: "Gas", src: "visa" },
   { date: "2026-07-09", desc: "Kanata Honda", amount: 138.01, cat: "Car Maintenance", src: "visa" },
   { date: "2026-07-11", desc: "Canadian Tire #457, Kanata", amount: 23.91, cat: "Car Maintenance", src: "visa" },
   { date: "2026-07-11", desc: "Amazon: Potentiometers", amount: 13.10, cat: "School/Project Expenses", src: "visa", projCat: "Electronics", amazonOrder: "701-1456401-6453069" },
-  { date: "2026-07-11", desc: "Dollarama #1513, Richmond", amount: 15.04, cat: "Retail & Shopping", src: "visa" },
+  { date: "2026-07-11", desc: "Dollarama #1513, Richmond", amount: 15.04, cat: "School/Project Expenses", src: "visa", projCat: "Other" },
   { date: "2026-07-12", desc: "HTSP Ottawa - Carleton Fredericton", amount: 20.00, cat: "Transportation", src: "visa" },
   { date: "2026-07-13", desc: "Returned Payment Fee (Visa)", amount: 42.50, cat: "Fees & Interest", src: "visa" },
   { date: "2026-07-13", desc: "Rider Express Ontario", amount: 33.59, cat: "Transportation", src: "visa" },
+  // === JULY 19 - AUGUST 18, 2026 CREDIT CARD STATEMENT ===
+  { date: "2026-07-17", desc: "Dollarama #1087, Mississauga", amount: 10.74, cat: "School/Project Expenses", src: "visa", projCat: "Other" },
+  { date: "2026-07-21", desc: "Busbud, Montreal", amount: 35.36, cat: "Transportation", src: "visa" },
+  { date: "2026-07-21", desc: "Rider Express Ontario", amount: 45.00, cat: "Transportation", src: "visa" },
+  { date: "2026-07-23", desc: "Loblaws #1050, Ottawa", amount: 3.54, cat: "Groceries", src: "visa" },
+  { date: "2026-07-23", desc: "Tim Hortons #2380, Ottawa", amount: 2.93, cat: "Food & Dining", src: "visa" },
+  { date: "2026-07-23", desc: "LCBO #758, Toronto", amount: 4.50, cat: "Groceries", src: "visa" },
+  { date: "2026-07-24", desc: "Paris Baguette, Mississauga", amount: 6.54, cat: "Food & Dining", src: "visa" },
+  { date: "2026-07-24", desc: "Winners 441, Collingwood", amount: 14.68, cat: "School/Project Expenses", src: "visa", projCat: "Other" },
+  { date: "2026-07-24", desc: "Shoppers Drug Mart #07, Mississauga", amount: 29.37, cat: "Health & Pharmacy", src: "visa" },
+  { date: "2026-07-24", desc: "Dollarama #577, Mississauga", amount: 10.74, cat: "School/Project Expenses", src: "visa", projCat: "Other" },
+  { date: "2026-07-24", desc: "LCBO #784, Collingwood", amount: 11.00, cat: "Groceries", src: "visa" },
+  { date: "2026-07-25", desc: "Rider Express Ontario", amount: 45.00, cat: "Transportation", src: "visa" },
+  { date: "2026-07-25", desc: "Walmart Supercenter #1087, Wasaga Beach", amount: 15.80, cat: "Groceries", src: "visa" },
+  { date: "2026-07-27", desc: "Cineplex", amount: 42.38, cat: "Entertainment", src: "visa" },
+  { date: "2026-07-27", desc: "Sushi Shop, Toronto", amount: 22.59, cat: "Food & Dining", src: "visa" },
+  { date: "2026-07-27", desc: "Kibo Market, Toronto", amount: 3.15, cat: "Food & Dining", src: "visa" },
+  { date: "2026-07-30", desc: "Amazon Marketplace O96XR9MZ3", amount: 28.23, cat: "School/Project Expenses", src: "visa", projCat: "Other" },
+  { date: "2026-07-30", desc: "Amazon Marketplace UR1IO83R3", amount: 39.54, cat: "School/Project Expenses", src: "visa", projCat: "Other" },
+  { date: "2026-07-30", desc: "Garage, Nepean", amount: 56.44, cat: "Car Maintenance", src: "visa" },
+  { date: "2026-07-30", desc: "Presotea Bayshore", amount: 14.11, cat: "Food & Dining", src: "visa" },
+  { date: "2026-07-30", desc: "MacEwen Fallowfield, Ottawa", amount: 27.90, cat: "Gas", src: "visa" },
+  { date: "2026-07-30", desc: "Richmond IDA", amount: 110.20, cat: "Health & Pharmacy", src: "visa" },
+  { date: "2026-07-30", desc: "Walmart Supercenter #3066, Ottawa", amount: 19.65, cat: "Groceries", src: "visa" },
+  { date: "2026-07-31", desc: "PayPal Aritzia", amount: 118.99, cat: "Retail & Shopping", src: "visa" },
+  { date: "2026-08-01", desc: "Amazon Marketplace 5N1060QU0", amount: 15.24, cat: "Retail & Shopping", src: "visa" },
+  { date: "2026-08-04", desc: "Loblaws 1035, Nepean", amount: 19.00, cat: "Groceries", src: "visa" },
+  { date: "2026-08-05", desc: "Amazon.ca Prime Membership", amount: 5.64, cat: "Subscriptions", src: "visa" },
+  { date: "2026-08-06", desc: "MacEwen, Richmond", amount: 29.52, cat: "Gas", src: "visa" },
+  { date: "2026-08-07", desc: "Presotea Bayshore", amount: 12.98, cat: "Food & Dining", src: "visa" },
+  { date: "2026-08-07", desc: "Bonlook Bayshore", amount: 174.50, cat: "Health & Pharmacy", src: "visa" },
+  { date: "2026-08-12", desc: "Browns Socialhouse, Barrhaven", amount: 33.14, cat: "Food & Dining", src: "visa" },
+  { date: "2026-08-14", desc: "Metro 272, Ottawa", amount: 5.64, cat: "Groceries", src: "visa" },
+  { date: "2026-08-14", desc: "MacEwen, Richmond", amount: 31.11, cat: "Gas", src: "visa" },
+  { date: "2026-08-14", desc: "Dollarama #1513, Richmond", amount: 13.60, cat: "Retail & Shopping", src: "visa" },
+  { date: "2026-08-14", desc: "LCBO #0496, Richmond", amount: 16.25, cat: "Groceries", src: "visa" },
+  { date: "2026-08-15", desc: "Aldo refund", amount: -124.30, cat: "Retail & Shopping", src: "visa" },
+  { date: "2026-08-15", desc: "OpenAI ChatGPT Subscription", amount: 153.68, cat: "Subscriptions", src: "visa" },
+  { date: "2026-08-15", desc: "Rideau, Ottawa", amount: 40.12, cat: "Retail & Shopping", src: "visa" },
+  { date: "2026-08-15", desc: "Walmart Supercenter #5811, Smiths Falls", amount: 15.22, cat: "Groceries", src: "visa" },
+  { date: "2026-08-18", desc: "Interest - Regular Purchases", amount: 18.59, cat: "Fees & Interest", src: "visa" },
   // === DEBIT ACCOUNT ===
   { date: "2025-11-05", desc: "Apple.com/Bill", amount: 4.51, cat: "Subscriptions", src: "debit" },
   { date: "2025-12-01", desc: "CIBC Securities (investment)", amount: 25.00, cat: "Savings & Investing", src: "debit" },
@@ -362,6 +403,19 @@ const RAW_TRANSACTIONS = [
   { date: "2026-06-30", desc: "Overdraft Interest", amount: 0.12, cat: "Fees & Interest", src: "debit" },
   { date: "2026-07-06", desc: "Apple.com/Bill", amount: 4.51, cat: "Subscriptions", src: "debit" },
   { date: "2026-07-09", desc: "NSF Charge (debit acct)", amount: 10.00, cat: "Fees & Interest", src: "debit" },
+  { date: "2026-07-16", desc: "INTERAC retail purchase", amount: 7.45, cat: "Retail & Shopping", src: "debit" },
+  { date: "2026-07-23", desc: "INTERAC retail purchase", amount: 3.30, cat: "Transportation", src: "debit" },
+  { date: "2026-07-23", desc: "Amazon Mktp CA (Visa Debit)", amount: 34.97, cat: "School/Project Expenses", src: "debit", projCat: "Other" },
+  { date: "2026-07-24", desc: "INTERAC retail purchase", amount: 3.30, cat: "Transportation", src: "debit" },
+  { date: "2026-07-24", desc: "INTERAC retail purchase", amount: 3.30, cat: "Transportation", src: "debit" },
+  { date: "2026-07-24", desc: "INTERAC retail purchase", amount: 0.40, cat: "Transportation", src: "debit" },
+  { date: "2026-07-27", desc: "INTERAC retail purchase", amount: 4.97, cat: "Transportation", src: "debit" },
+  { date: "2026-07-31", desc: "Service charge", amount: 16.95, cat: "Fees & Interest", src: "debit" },
+  { date: "2026-07-31", desc: "Service charge discount", amount: -16.95, cat: "Fees & Interest", src: "debit" },
+  { date: "2026-07-31", desc: "CIBC Securities (investment)", amount: 25.00, cat: "Savings & Investing", src: "debit" },
+  { date: "2026-08-10", desc: "Apple.com/Bill", amount: 4.51, cat: "Subscriptions", src: "debit" },
+  { date: "2026-07-31", desc: "Savings account service charge", amount: 16.95, cat: "Fees & Interest", src: "debit" },
+  { date: "2026-07-31", desc: "Savings account service charge discount", amount: -16.95, cat: "Fees & Interest", src: "debit" },
 ];
 
 const CATEGORIZATION_RULES = [
@@ -488,6 +542,15 @@ const STATEMENT_LEDGER = [
       { date: "2026-07-14", desc: "Manual payment from chequing", amount: 350.00, status: "ok" },
     ],
     closeBal: null,
+  },
+  {
+    period: "Aug 2026", stmtDate: "Aug 18, 2026", openBal: 1461.16,
+    newCharges: 1284.02, otherCredits: 124.30, interest: 18.59, fees: 0,
+    payments: [
+      { date: "2026-07-20", desc: "Payment thank you", amount: 750.00, status: "ok" },
+      { date: "2026-08-14", desc: "Payment thank you", amount: 550.00, status: "ok" },
+    ],
+    closeBal: 1339.47,
   },
 ];
 
@@ -813,7 +876,7 @@ const MONTH_LABELS = {
   "2026-01": "January 2026", "2026-02": "February 2026",
   "2026-03": "March 2026", "2026-04": "April 2026",
   "2026-05": "May 2026", "2026-06": "June 2026",
-  "2026-07": "July 2026",
+  "2026-07": "July 2026", "2026-08": "August 2026",
 };
 
 const CAT_CONFIG = {
@@ -961,7 +1024,7 @@ export default function SpendingBreakdown() {
       {/* HEADER */}
       <div style={{maxWidth:720,margin:"0 auto 28px",display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
         <div>
-          <div style={{fontSize:11,fontFamily:"'DM Mono',monospace",color:"#6b7280",letterSpacing:2,textTransform:"uppercase",marginBottom:6}}>Nov 2025 – Jul 2026</div>
+          <div style={{fontSize:11,fontFamily:"'DM Mono',monospace",color:"#6b7280",letterSpacing:2,textTransform:"uppercase",marginBottom:6}}>Nov 2025 – Aug 2026</div>
           <h1 style={{fontSize:28,fontWeight:700,margin:0,letterSpacing:-0.5}}>Spending Breakdown</h1>
           <div style={{fontSize:13,color:"#9ca3af",marginTop:4}}>CIBC Visa + Debit · {ALL_TRANSACTIONS.length} transactions</div>
         </div>
