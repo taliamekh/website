@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const siteRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const port = Number(process.env.WORKSPACE_PREVIEW_PORT || 8000);
-const workspacePassword = process.env.WORKSPACE_PASSWORD || 'noteslol';
+const workspacePassword = process.env.WORKSPACE_PASSWORD || 'worklel';
 const workspaceSecret = process.env.WORKSPACE_AUTH_SECRET || 'local-preview-secret-change-me';
 const cookieName = 'workspace_auth';
 const cookieMaxAge = 60 * 60 * 24 * 365;
