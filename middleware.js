@@ -135,6 +135,14 @@ function jsonResponse(payload, status = 200, extraHeaders = {}) {
   });
 }
 
+function privateResponse() {
+  return next({ headers: {
+    'cache-control': 'private, no-store',
+    'x-robots-tag': 'noindex, nofollow',
+    'x-content-type-options': 'nosniff',
+  } });
+}
+
 function loginPage({ route, error = '', redirectTo = route.prefix, action = route.prefix } = {}) {
   const safeRedirect = sanitizeRedirect(redirectTo, route.prefix);
   const safeAction = sanitizeRedirect(action, route.prefix);
@@ -237,13 +245,13 @@ export default async function middleware(request) {
   }
 
   if (pathname === '/workspace/logout') {
-    const headers = new Headers({ location: '/workspace/' });
+    const headers = new Headers({ location: '/workspace/', 'cache-control': 'no-store' });
     headers.append('set-cookie', authCookie(WORKSPACE_ROUTE, '', url, 0));
     return new Response(null, { status: 303, headers });
   }
 
   if (pathname.startsWith('/workspace/')) {
-    if (workspaceUnlocked) return next();
+    if (workspaceUnlocked) return privateResponse();
     const target = sanitizeWorkspaceNext(pathname + url.search);
     return new Response(null, {
       status: 303,
@@ -255,7 +263,7 @@ export default async function middleware(request) {
   }
 
   if (pathname === '/school-notes' || pathname.startsWith('/school-notes/')) {
-    if (workspaceUnlocked) return next();
+    if (workspaceUnlocked) return privateResponse();
     const target = sanitizeWorkspaceNext(pathname + url.search);
     return new Response(null, {
       status: 303,
@@ -267,7 +275,7 @@ export default async function middleware(request) {
   }
 
   if (pathname === '/expenses' || pathname.startsWith('/expenses/')) {
-    if (workspaceUnlocked) return next();
+    if (workspaceUnlocked) return privateResponse();
 
     const expenseSecret = process.env[EXPENSES_ROUTE.secretEnv];
     if (!process.env[EXPENSES_ROUTE.passwordEnv] || !expenseSecret) {
@@ -280,7 +288,7 @@ export default async function middleware(request) {
     if (request.method === 'POST') return authenticatePost(request, url, EXPENSES_ROUTE);
 
     const expenseToken = readCookie(request.headers.get('cookie'), EXPENSES_ROUTE.cookieName);
-    if (await isValidToken(expenseToken, expenseSecret)) return next();
+    if (await isValidToken(expenseToken, expenseSecret)) return privateResponse();
     return loginPage({ route: EXPENSES_ROUTE, redirectTo: pathname + url.search, action: pathname });
   }
 

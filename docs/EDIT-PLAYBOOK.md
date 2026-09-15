@@ -198,6 +198,7 @@ numbers, which drift.
 - **Files:** `index.html` is the production shell; shared portfolio CSS/JS/art live in `site/`. Direct-page compatibility files
   (`projects.html`, `contact.html`, `portal.html`, `workspace/index.html`) only redirect into the SPA hash routes.
 - **Workspace:** the public shell calls `/workspace/session` and `/workspace/auth`; never put the Workspace password in client code.
+  Private quick links live in the protected `workspace/links.json`, fetched only after verification. See route 22 for the lock lifecycle.
 - **Client Portal:** the SHA-256 destination map is in `site/app.js`; plaintext client keys stay outside the repository.
 - **Cache busting:** whenever `site/styles.css` or `site/app.js` changes, update its `?v=` value in `index.html`; otherwise an
   already-open browser can continue displaying the previous production CSS/JS after deployment.
@@ -206,3 +207,19 @@ numbers, which drift.
   Never edit, force-push, or delete either reference.
 - **Verify:** test all five hash routes, direct-page redirects, responsive nav, project modals/images/animation, Workspace lock and
   quick links, Client Portal key handling, Contact copy action, and the standalone Sift/Expenses/School Notes pages.
+
+### 22 - Workspace privacy flash and stable tab navigation
+- **Files/anchors:** `site/app.js` → `initializeWorkspaceAccess`, `revealWorkspace`, `workspaceRequestIsCurrent`,
+  `concealWorkspace`, `loadWorkspaceSpocket`, `route`; `workspace/links.json`; `site/styles.css` → `scrollbar-gutter`
+  and `.workspace-auth-form .form-status`; `middleware.js` → `privateResponse`.
+- **Access:** render a hidden, empty Workspace and synchronous checking screen before any request. Fetch the protected
+  links only after a successful session/password check; abort old requests on navigation and reject stale completions.
+  Recheck restored/backgrounded pages; Spocket's logout event must clear the server cookie. No static-preview auth bypass.
+- **Assistant:** load the shared protected JSX only after unlocking so a signed-out page load cannot poison the assistant
+  request with a login redirect. Keep the existing real React assistant and School Notes source in sync.
+- **Layout:** reserve the root scrollbar gutter and status-message space; clicking the current tab must not rebuild it.
+  Bump both asset versions in `index.html` after edits.
+- **Verify:** `node scripts/check-workspace-security.mjs`, `node scripts/check-workspace-spocket.mjs`, and
+  `node scripts/check-workspace-browser.mjs` (Playwright + Edge; set `PLAYWRIGHT_MODULE` to a bundled module if needed).
+  Browser checks cover delayed/failed requests, wrong/correct login, stale responses, Spocket, fixed navigation geometry,
+  desktop/mobile layout, and remembered devices. Actual Vercel routing still needs a deployment smoke check.

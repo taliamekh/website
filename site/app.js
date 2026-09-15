@@ -25,6 +25,8 @@ let lastFocused = null;
 let lastImageFocused = null;
 let spocketReactRoot = null;
 let spocketMountGeneration = 0;
+let workspaceAccessController = null;
+let spocketSourcePromise = null;
 
 const scrapbookChoices = [
   { id: '1', label: 'Curated Keepsakes' },
@@ -527,19 +529,6 @@ function renderProjectMedia(project) {
   return '';
 }
 
-const isLocalPreview = /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname);
-const isStaticPreview = isLocalPreview && window.location.port === '8000';
-
-// Both Spocket entry points are intentional: the dedicated Study bubble belongs
-// in Workspace, while the Spocket project keeps its own School Notes action.
-const workspaceItems = [
-  { title: 'School Notes', href: '/school-notes/?redesign=1' },
-  { title: 'Expenses', href: '/expenses/' },
-  { title: 'Projects', href: '/workspace/project-in-progress/' },
-  { title: 'Road to CA', href: '/workspace/road-to-ca/' },
-  { title: 'Study with Spocket', href: '/school-notes/?spocket=study&redesign=1' }
-];
-
 const projectDestinations = {
   spocket: [
     { label: 'Open School Notes', url: '/school-notes/?from=spocket-project&redesign=1' }
@@ -621,17 +610,12 @@ const views = {
     </section>`,
 
   workspace: () => `
-    <section class="page workspace-page" aria-labelledby="workspace-title">
+    <section class="page workspace-page" aria-labelledby="workspace-title" hidden>
       <header class="page-heading workspace-heading">
         <h1 id="workspace-title">Workspace</h1>
       </header>
       <div class="workspace-layout">
-        <div class="workspace-grid">
-          ${workspaceItems.map((item, index) => `
-            <a class="workspace-card" href="${item.href}" target="_blank" rel="noopener" style="--i:${index}">
-              <span class="workspace-title">${item.title}</span>
-            </a>`).join('')}
-        </div>
+        <div class="workspace-grid"></div>
       </div>
       <div id="spocket-root" aria-label="Spocket Workspace assistant"></div>
     </section>`,
@@ -691,12 +675,14 @@ function route(option, page, focus = false) {
   const nextOption = '1';
   const nextPage = views[page] ? page : 'home';
   const nextHash = `#option-${nextOption}/${nextPage}`;
-  if (location.hash === nextHash) render(nextOption, nextPage, focus);
-  else location.hash = nextHash;
+  if (location.hash !== nextHash) location.hash = nextHash;
 }
 
 function render(option, page, focus = false) {
+  workspaceAccessController?.abort();
+  workspaceAccessController = null;
   if (modal.classList.contains('workspace-lock-modal')) closeWorkspaceLock();
+  else closeModal();
   unmountWorkspaceSpocket();
   currentOption = option;
   currentPage = page;
@@ -717,11 +703,11 @@ function render(option, page, focus = false) {
     }
   });
 
-  bindPageInteractions(page);
   mainMenu.classList.remove('open');
   menuToggle.setAttribute('aria-expanded', 'false');
+  bindPageInteractions(page);
   window.scrollTo({ top: 0, behavior: 'auto' });
-  if (focus) pageContent.focus({ preventScroll: true });
+  if (focus && !pageContent.inert) pageContent.focus({ preventScroll: true });
 }
 
 function unmountWorkspaceSpocket() {
@@ -758,6 +744,28 @@ function mountWorkspaceSpocket() {
   }
 
   mountWhenReady();
+}
+
+async function loadWorkspaceSpocket(controller) {
+  // This source is protected by the same server cookie as the notes themselves.
+  // Load it after authentication, including when this visit started signed out.
+  if (!window.SpocketApp && !spocketSourcePromise) {
+    spocketSourcePromise = (async () => {
+      const response = await fetch('/school-notes/SpocketOnboarding.jsx', { cache: 'no-store', redirect: 'error' });
+      if (!response.ok) throw new Error('Unable to load Spocket.');
+      const source = await response.text();
+      const script = document.createElement('script');
+      script.textContent = window.Babel.transform(source, { presets: ['react'], filename: 'SpocketOnboarding.jsx' }).code;
+      document.head.append(script);
+      script.remove();
+    })().catch(error => { spocketSourcePromise = null; throw error; });
+  }
+  try {
+    await spocketSourcePromise;
+    if (workspaceRequestIsCurrent(controller) && body.classList.contains('sr-auth-unlocked')) mountWorkspaceSpocket();
+  } catch (error) {
+    console.error('[Spocket]', error);
+  }
 }
 
 let projectLayoutFrame = 0;
@@ -933,12 +941,12 @@ function positionWorkspaceLock() {
 
 function workspaceNextTarget() {
   const target = new URLSearchParams(window.location.search).get('next') || '';
-  return /^(?:\/school-notes|\/expenses|\/workspace\/(?:project-in-progress|road-to-ca))(?:[/?#][\w\-./?=&%#]*)?$/.test(target)
+  return /^(?:\/school-notes|\/expenses|\/workspace\/(?:expenses|student-planner|project-in-progress|road-to-ca))(?:[/?#][\w\-./?=&%#]*)?$/.test(target)
     ? target
     : '';
 }
 
-function openWorkspaceLock(message = '') {
+function openWorkspaceLock(message = '', checking = false) {
   lastFocused = document.activeElement;
   modal.className = 'modal workspace-lock-modal';
   modalKicker.textContent = '';
@@ -947,17 +955,19 @@ function openWorkspaceLock(message = '') {
   modalActions.innerHTML = `
     <form class="workspace-auth-form" id="workspace-auth-form">
       <label class="modal-field" for="workspace-password">Password</label>
-      <input id="workspace-password" name="password" type="password" autocomplete="current-password" required>
-      <button type="submit" class="primary-action">Unlock</button>
-      <p class="form-status" role="status" aria-live="polite">${message}</p>
+      <input id="workspace-password" name="password" type="password" autocomplete="current-password" required ${checking ? 'disabled' : ''}>
+      <button type="submit" class="primary-action" ${checking ? 'disabled' : ''}>Unlock</button>
+      <p class="form-status" role="status" aria-live="polite"></p>
     </form>`;
   modal.hidden = false;
   body.classList.add('modal-open', 'workspace-locked');
   pageContent.inert = true;
   pageContent.setAttribute('aria-hidden', 'true');
   positionWorkspaceLock();
-  modal.querySelector('#workspace-password').focus();
+  modal.querySelector('.form-status').textContent = checking ? 'Checking access…' : message;
+  if (!checking) modal.querySelector('#workspace-password').focus({ preventScroll: true });
 
+  const controller = workspaceAccessController;
   modal.querySelector('#workspace-auth-form').addEventListener('submit', async event => {
     event.preventDefault();
     const form = event.currentTarget;
@@ -973,14 +983,17 @@ function openWorkspaceLock(message = '') {
         method: 'POST',
         headers: { Accept: 'application/json' },
         body: data,
-        credentials: 'same-origin'
+        credentials: 'same-origin',
+        cache: 'no-store',
+        signal: controller.signal
       });
       const result = await response.json();
       if (!response.ok || !result.ok) throw new Error(result.error || 'Unable to unlock Workspace.');
-      body.classList.add('sr-auth-unlocked');
-      closeWorkspaceLock();
-      if (nextTarget) window.location.assign(nextTarget);
+      if (!workspaceRequestIsCurrent(controller)) return;
+      form.reset();
+      await revealWorkspace(controller);
     } catch (error) {
+      if (!workspaceRequestIsCurrent(controller)) return;
       submit.disabled = false;
       status.textContent = error.message || 'Unable to unlock Workspace.';
       form.querySelector('#workspace-password').select();
@@ -988,29 +1001,69 @@ function openWorkspaceLock(message = '') {
   });
 }
 
+function workspaceRequestIsCurrent(controller) {
+  return workspaceAccessController === controller && !controller.signal.aborted && currentPage === 'workspace';
+}
+
+async function revealWorkspace(controller) {
+  // The public app contains neither the private links nor their page contents.
+  const response = await fetch('/workspace/links.json', {
+    credentials: 'same-origin', cache: 'no-store', redirect: 'error', signal: controller.signal
+  });
+  if (!response.ok) throw new Error('Please unlock Workspace again.');
+  const items = await response.json();
+  if (!workspaceRequestIsCurrent(controller)) return;
+  const grid = pageContent.querySelector('.workspace-grid');
+  grid.replaceChildren(...items.map((item, index) => {
+    const link = document.createElement('a');
+    link.className = 'workspace-card';
+    link.href = item.href;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    link.style.setProperty('--i', index);
+    const title = document.createElement('span');
+    title.className = 'workspace-title';
+    title.textContent = item.title;
+    link.append(title);
+    return link;
+  }));
+  body.classList.add('sr-auth-unlocked');
+  pageContent.querySelector('.workspace-page').hidden = false;
+  closeWorkspaceLock();
+  pageContent.focus({ preventScroll: true });
+  const nextTarget = workspaceNextTarget();
+  if (nextTarget) window.location.assign(nextTarget);
+  else loadWorkspaceSpocket(controller);
+}
+
 async function initializeWorkspaceAccess() {
-  if (isStaticPreview) {
-    body.classList.add('sr-auth-unlocked');
-    return;
-  }
+  workspaceAccessController?.abort();
+  const controller = new AbortController();
+  workspaceAccessController = controller;
+  unmountWorkspaceSpocket();
+  body.classList.remove('sr-auth-unlocked');
+  pageContent.querySelector('.workspace-page').hidden = true;
+  pageContent.querySelector('.workspace-grid').replaceChildren();
+  // Close access synchronously, before a slow or failed network request can paint.
+  openWorkspaceLock('', true);
 
   try {
     const response = await fetch('/workspace/session', {
       headers: { Accept: 'application/json' },
       credentials: 'same-origin',
-      cache: 'no-store'
+      cache: 'no-store',
+      signal: controller.signal
     });
+    if (!response.ok) throw new Error('Session check failed.');
     const session = await response.json();
-    if (currentPage !== 'workspace') return;
-    if (session.ok) {
-      body.classList.add('sr-auth-unlocked');
-      const nextTarget = workspaceNextTarget();
-      if (nextTarget) window.location.assign(nextTarget);
+    if (!workspaceRequestIsCurrent(controller)) return;
+    if (session.ok === true) {
+      await revealWorkspace(controller);
       return;
     }
     openWorkspaceLock(session.configured === false ? 'Workspace access is not configured yet.' : '');
   } catch (_) {
-    if (currentPage !== 'workspace') return;
+    if (!workspaceRequestIsCurrent(controller)) return;
     openWorkspaceLock('Workspace access could not be checked. Please try again.');
   }
 }
@@ -1075,7 +1128,6 @@ function bindPageInteractions(page) {
 
   if (page === 'workspace') {
     initializeWorkspaceAccess();
-    mountWorkspaceSpocket();
   }
 
   if (page === 'portal') {
@@ -1215,6 +1267,32 @@ window.addEventListener('resize', positionWorkspaceLock);
 window.addEventListener('hashchange', () => {
   const next = parseHash();
   render(next.option, next.page, true);
+});
+
+function concealWorkspace() {
+  if (currentPage !== 'workspace') return;
+  workspaceAccessController?.abort();
+  unmountWorkspaceSpocket();
+  body.classList.remove('sr-auth-unlocked');
+  pageContent.querySelector('.workspace-page').hidden = true;
+  pageContent.querySelector('.workspace-grid').replaceChildren();
+  if (modal.classList.contains('workspace-lock-modal')) modalActions.replaceChildren();
+}
+
+// Recheck after another tab logs out, or Back restores a browser-cached page.
+window.addEventListener('pagehide', concealWorkspace);
+window.addEventListener('pageshow', event => {
+  if (event.persisted && currentPage === 'workspace') initializeWorkspaceAccess();
+});
+document.addEventListener('visibilitychange', () => {
+  if (currentPage !== 'workspace') return;
+  if (document.hidden) concealWorkspace();
+  else initializeWorkspaceAccess();
+});
+window.addEventListener('sr-notes-lock-request', () => {
+  if (currentPage !== 'workspace') return;
+  concealWorkspace();
+  window.location.assign('/workspace/logout');
 });
 
 function startPrototype() {

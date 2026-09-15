@@ -131,7 +131,7 @@ body[data-site-font] {
 }
 
 * { box-sizing: border-box; }
-html { min-height: 100%; color-scheme: dark; background: var(--site-bg); }
+html { min-height: 100%; color-scheme: dark; background: var(--site-bg); scrollbar-gutter: stable; }
 body {
   min-height: 100vh;
   margin: 0;
@@ -1431,6 +1431,7 @@ body[data-option="5"] .contact-card { border: 0; border-radius: 0; background: v
 }
 .workspace-auth-form input:focus { border-color: var(--pink); }
 .workspace-auth-form .primary-action { width: 100%; }
+.workspace-auth-form .form-status { min-height: 3.4em; margin-bottom: 0; }
 .modal-card {
   width: min(540px, 100%);
   max-height: min(720px, calc(100vh - 40px));

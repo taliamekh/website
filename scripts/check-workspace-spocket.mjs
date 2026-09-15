@@ -2,15 +2,16 @@ import { readFile } from 'node:fs/promises';
 
 const shell = await readFile(new URL('../index.html', import.meta.url), 'utf8');
 const siteApp = await readFile(new URL('../site/app.js', import.meta.url), 'utf8');
+const workspaceLinks = JSON.parse(await readFile(new URL('../workspace/links.json', import.meta.url), 'utf8'));
 const schoolNotes = await readFile(new URL('../school-notes/index.html', import.meta.url), 'utf8');
 const assistant = await readFile(new URL('../school-notes/SpocketOnboarding.jsx', import.meta.url), 'utf8');
 const mount = await readFile(new URL('../workspace/spocket-mount.js', import.meta.url), 'utf8');
 
 const checks = [
   ['Workspace has the real Spocket mount', siteApp.includes('id="spocket-root"')],
-  ['Production shell loads the shared assistant', shell.includes('/school-notes/SpocketOnboarding.jsx')],
-  ['School Notes is a top-level quick link', siteApp.includes("title: 'School Notes', href: '/school-notes/?redesign=1'")],
-  ['Workspace has a Study with Spocket quick link', siteApp.includes("title: 'Study with Spocket', href: '/school-notes/?spocket=study&redesign=1'")],
+  ['Shared assistant loads after authentication', !shell.includes('/school-notes/SpocketOnboarding.jsx') && siteApp.includes("fetch('/school-notes/SpocketOnboarding.jsx'")],
+  ['School Notes is a protected quick link', workspaceLinks.some(item => item.title === 'School Notes' && item.href === '/school-notes/?redesign=1')],
+  ['Workspace has a protected Study with Spocket quick link', workspaceLinks.some(item => item.title === 'Study with Spocket' && item.href === '/school-notes/?spocket=study&redesign=1')],
   ['Workspace checks the server session before revealing private links', siteApp.includes("fetch('/workspace/session'") && siteApp.includes("fetch('/workspace/auth'")],
   ['School Notes loads the guarded shared mount', schoolNotes.includes('../workspace/spocket-mount.js')],
   ['School Notes is standalone without the public-site menu', !schoolNotes.includes('<nav>') && !schoolNotes.includes('class="nav-links"')],
