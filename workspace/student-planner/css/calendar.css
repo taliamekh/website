@@ -1,0 +1,39 @@
+/* Exact time geometry: padding/text must never enlarge an event interval. */
+.week-schedule-block-grid { display:block; position:relative; padding:0; gap:0; min-height:340px; }
+.week-schedule-block, .minute-event { position:absolute; box-sizing:border-box; min-height:0; margin:0; padding:0; border:0; border-left:3px solid var(--schedule-color); border-radius:4px; background:var(--schedule-tint); color:var(--ink); text-align:left; overflow:hidden; font:inherit; line-height:1.15; box-shadow:none; cursor:pointer; }
+.week-schedule-block:hover, .minute-event:hover { filter:brightness(.96); }
+.week-schedule-block:focus-visible, .minute-event:focus-visible { outline:2px solid var(--ink); outline-offset:1px; z-index:4; }
+.minute-event-time { display:block; white-space:nowrap; font-size:9px; margin:3px 4px 0; }
+.minute-event strong, .minute-event small, .week-schedule-block strong, .week-schedule-block small { margin-left:4px; margin-right:4px; }
+.minute-event strong, .minute-event small { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.minute-event strong { font-size:11px; margin-top:2px; }
+.minute-event small { font-size:9px; opacity:.8; margin-top:2px; }
+.week-schedule-block .minute-event-time { font-size:8px; }
+.week-schedule-open { position:absolute; top:35%; left:2px; right:2px; }
+.precise-schedule { overflow-x:auto; padding-bottom:16px; }
+.precise-week-inner { min-width:0; }
+.precise-week-head, .precise-week-body { display:grid; grid-template-columns:56px repeat(7,minmax(0,1fr)); }
+.precise-week-head { min-height:42px; align-items:center; text-align:center; font-size:11px; font-weight:700; }
+.precise-week-body { height:1020px; }
+.minute-axis { position:relative; font-size:10px; color:var(--ink-mute); }
+.minute-axis span { position:absolute; right:7px; transform:translateY(-50%); white-space:nowrap; }
+.minute-axis span:first-child { transform:none; }
+.precise-day-column { position:relative; min-width:0; background:repeating-linear-gradient(to bottom,transparent 0,transparent calc(100% / var(--hour-count,17) - 1px),var(--border) calc(100% / var(--hour-count,17) - 1px),var(--border) calc(100% / var(--hour-count,17))); border-left:1px solid var(--border); }
+.minute-slot { position:absolute; left:0; right:0; border:0; background:transparent; cursor:crosshair; padding:0; }
+.minute-slot:hover { background:rgba(255,244,214,.3); }
+.precise-single-day { display:grid; grid-template-columns:50px minmax(0,1fr); height:calc(var(--hour-count,17) * 60px); margin:10px 10px 18px 0; }
+.precise-single-day.compact-day { height:calc(var(--hour-count,17) * 40px); grid-template-columns:38px minmax(0,1fr); }
+.schedule-navigation { display:flex; align-items:center; flex-wrap:wrap; gap:8px; font-size:13px; }
+.calendar-all-day { display:flex; gap:8px; flex-wrap:wrap; padding:12px; }
+.google-sync-bar { display:flex; gap:10px; flex-wrap:wrap; align-items:center; padding:12px 15px; margin-bottom:16px; border:1px solid var(--border); border-radius:12px; background:rgba(255,255,255,.5); font-size:12px; }
+.google-sync-bar span { flex:1; min-width:160px; }
+.google-event-form { display:grid; gap:12px; }
+.google-event-form label { display:grid; gap:4px; font-size:12px; }
+.google-event-times { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.google-event-form [role=status] { font-size:12px; min-height:18px; }
+@media (max-width:650px) {
+  .precise-week-inner { min-width:700px; }
+  .week-schedule-block-grid { min-height:340px; }
+  .week-schedule-day { min-height:376px; }
+  .google-event-times { grid-template-columns:1fr; }
+}

@@ -3,11 +3,13 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 import { readFile, stat } from 'node:fs/promises';
 import { dirname, extname, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import googleCalendarHandler from '../api/google-calendar.mjs';
 
 const siteRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const port = Number(process.env.WORKSPACE_PREVIEW_PORT || 8000);
 const workspacePassword = process.env.WORKSPACE_PASSWORD || 'worklel';
 const workspaceSecret = process.env.WORKSPACE_AUTH_SECRET || 'local-preview-secret-change-me';
+process.env.WORKSPACE_AUTH_SECRET ||= workspaceSecret;
 const cookieName = 'workspace_auth';
 const cookieMaxAge = 60 * 60 * 24 * 365;
 
@@ -73,7 +75,7 @@ function sendJson(response, status, payload, headers = {}) {
 }
 
 function safeWorkspaceNext(value) {
-  return /^(?:\/school-notes|\/workspace\/(?:expenses|project-in-progress|road-to-ca))(?:[/?#][\w\-./?=&%#]*)?$/.test(value)
+  return /^(?:\/school-notes|\/workspace\/(?:expenses|student-planner|project-in-progress|road-to-ca))(?:[/?#][\w\-./?=&%#]*)?$/.test(value)
     ? value
     : '/workspace/';
 }
@@ -137,6 +139,8 @@ const server = createServer(async (request, response) => {
     const url = new URL(request.url || '/', `http://${request.headers.host || `localhost:${port}`}`);
     const pathname = url.pathname;
     const workspaceUnlocked = validToken(readCookie(request.headers.cookie, cookieName));
+
+    if (pathname === '/api/google-calendar') return googleCalendarHandler(request, response);
 
     if (pathname === '/notes' || pathname === '/notes/') {
       return send(response, 308, '', { location: '/school-notes/' });

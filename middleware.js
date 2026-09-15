@@ -109,7 +109,7 @@ function sanitizeRedirect(raw, prefix) {
 
 function sanitizeWorkspaceNext(raw) {
   const value = String(raw == null ? '' : raw);
-  return /^(?:\/school-notes|\/workspace\/(?:expenses|project-in-progress|road-to-ca))(?:[/?#][\w\-./?=&%#]*)?$/.test(value)
+  return /^(?:\/school-notes|\/workspace\/(?:expenses|student-planner|project-in-progress|road-to-ca))(?:[/?#][\w\-./?=&%#]*)?$/.test(value)
     ? value
     : '/workspace/';
 }

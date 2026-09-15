@@ -444,6 +444,24 @@ const applyCategorizationRules = (txn) => {
 
 const ALL_TRANSACTIONS = RAW_TRANSACTIONS.map(applyCategorizationRules);
 
+// The protected Student Planner reads this same-origin snapshot to keep its
+// budget widgets tied to the real Expenses data instead of a second demo list.
+const EXPENSE_SYNC_KEY = "tm_expenses_sync_v1";
+const publishExpenseSync = () => {
+  try {
+    localStorage.setItem(EXPENSE_SYNC_KEY, JSON.stringify({
+      version: 1,
+      source: "Expenses",
+      updatedAt: new Date().toISOString(),
+      transactions: ALL_TRANSACTIONS.map(({ date, desc, amount, cat, src, gift, excludeFromTotals, projCat, tripCat, hackathon }) => ({
+        date, desc, amount, cat, src, gift: !!gift, excludeFromTotals: !!excludeFromTotals, projCat, tripCat, hackathon,
+      })),
+      income: MONEY_RECEIVED.map(({ date, from, amount, type }) => ({ date, from, amount, type })),
+      outgoing: MONEY_SENT_OUT.map(({ date, to, amount }) => ({ date, to, amount })),
+    }));
+  } catch { /* localStorage can be unavailable in a blocked/private context */ }
+};
+
 // ========== PAYMENT TRACKER (statement-based running balance) ==========
 const STATEMENT_LEDGER = [
   {
@@ -931,6 +949,9 @@ export default function SpendingBreakdown() {
   useEffect(() => {
     try { localStorage.setItem("paidOffMonths", JSON.stringify([...paidOffMonths])); } catch { /* ignore */ }
   }, [paidOffMonths]);
+  useEffect(() => {
+    publishExpenseSync();
+  }, []);
   const togglePaidOff = (month) => setPaidOffMonths(prev => {
     const next = new Set(prev);
     if (next.has(month)) next.delete(month); else next.add(month);

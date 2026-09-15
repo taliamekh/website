@@ -2,6 +2,9 @@
   "buildCommand": "npm install --prefix expenses/spending-tracker && VITE_BASE=/expenses/ npm run build --prefix expenses/spending-tracker",
   "outputDirectory": ".",
   "functions": {
+    "api/google-calendar.mjs": {
+      "maxDuration": 60
+    },
     "api/gemini.js": {
       "maxDuration": 30
     },

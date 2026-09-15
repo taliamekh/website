@@ -1,22 +1,8 @@
 [
-  {
-    "title": "School Notes",
-    "href": "/school-notes/?redesign=1"
-  },
-  {
-    "title": "Expenses",
-    "href": "/expenses/"
-  },
-  {
-    "title": "Projects",
-    "href": "/workspace/project-in-progress/"
-  },
-  {
-    "title": "Road to CA",
-    "href": "/workspace/road-to-ca/"
-  },
-  {
-    "title": "Study with Spocket",
-    "href": "/school-notes/?spocket=study&redesign=1"
-  }
+  { "title": "School Notes", "href": "/school-notes/?redesign=1" },
+  { "title": "Expenses", "href": "/expenses/" },
+  { "title": "Student Planner", "href": "/workspace/student-planner/" },
+  { "title": "Projects", "href": "/workspace/project-in-progress/" },
+  { "title": "Road to CA", "href": "/workspace/road-to-ca/" },
+  { "title": "Study with Spocket", "href": "/school-notes/?spocket=study&redesign=1" }
 ]

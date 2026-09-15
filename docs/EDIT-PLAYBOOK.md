@@ -208,6 +208,20 @@ numbers, which drift.
 - **Verify:** test all five hash routes, direct-page redirects, responsive nav, project modals/images/animation, Workspace lock and
   quick links, Client Portal key handling, Contact copy action, and the standalone Sift/Expenses/School Notes pages.
 
+### 21 - Add the Student Planner to Workspace
+- **Files:** `workspace/links.json` → Student Planner entry; `workspace/student-planner/` (copied standalone planner assets);
+  `middleware.js` and `scripts/workspace-preview.mjs` → `sanitizeWorkspaceNext`; and `expenses/spending-tracker/src/App.jsx`
+  for the shared Expenses snapshot.
+- **Route:** `/workspace/student-planner/`, opened from the protected Workspace hub as a normal bubble. Keep the planner's
+  responsive dashboard, collapsible sidebar, school/daily/career/personal tools, import/export, and Next Class widget intact.
+- **Fresh state:** use the planner's own storage key and seed only verified user data; clear demo assignments, tests, todos,
+  goals, hackathons, and other sample records. Do not reuse the old demo storage key.
+- **Expenses sync:** Expenses publishes a same-origin `tm_expenses_sync_v1` snapshot; the planner reads it on load, refresh,
+  and `storage` events to populate Budget totals/history. Keep financial source data behind the existing Workspace/Expenses gate.
+- **Verify:** `node --check` both changed JavaScript files, build the Expenses app, run the static preview, unlock Workspace,
+  open the Student Planner bubble, confirm the seeded Fall 2026 classes and weekly blocks, open Expenses and confirm Budget
+  updates, then visually inspect dashboard/schedule/Budget on desktop and narrow mobile widths.
+
 ### 22 - Workspace privacy flash and stable tab navigation
 - **Files/anchors:** `site/app.js` → `initializeWorkspaceAccess`, `revealWorkspace`, `workspaceRequestIsCurrent`,
   `concealWorkspace`, `loadWorkspaceSpocket`, `route`; `workspace/links.json`; `site/styles.css` → `scrollbar-gutter`
@@ -223,3 +237,24 @@ numbers, which drift.
   `node scripts/check-workspace-browser.mjs` (Playwright + Edge; set `PLAYWRIGHT_MODULE` to a bundled module if needed).
   Browser checks cover delayed/failed requests, wrong/correct login, stale responses, Spocket, fixed navigation geometry,
   desktop/mobile layout, and remembered devices. Actual Vercel routing still needs a deployment smoke check.
+
+### 23 - Student Planner calendar spacing and Google connection
+
+- **Files/anchors:** `workspace/student-planner/js/calendar-core.js` → `layout`, `schoolEvents`, `googleEvents`;
+  `js/calendar-views.js` → `blocks`, `weekWidget`, `schedule`, `day`, `dayWidget`, `nextClass`;
+  `css/calendar.css`; `js/app.js` → `buildCalendarEvents`, `courseRow`, `today`, `formatTime12`;
+  `js/google-calendar.js` → `GoogleCalendarSync`; and the planner `index.html` asset versions.
+- **Geometry:** use exact minute offsets and durations, never floor/ceil hours or minimum block heights.
+  Only intersecting half-open intervals share lanes. Keep 7 am–midnight in the dashboard/full timetable.
+- **Backend:** `api/google-calendar.mjs`, `.env.example`, `vercel.json`, `scripts/workspace-preview.mjs`.
+  Read `docs/STUDENT-PLANNER-CALENDAR.md` before connection changes. OAuth credentials are server-only;
+  retain Workspace auth, encrypted HttpOnly tokens, same-origin mutations, stable IDs and ETag guards.
+- **Google source:** selected calendar occurrences replace local timetable events inside the cache window;
+  don't upload seeds or resurrect cancellations. Preserve course metadata and unrelated planner content.
+  Poll while open/on return; edits target individual Google occurrences. File transfer isn't synchronization.
+- **Activation:** requires the user's chosen Google Cloud project/client, server env configuration, consent,
+  calendar selection, and an authorized deployment. Don't claim a live connection from fixture results.
+- **Verify:** `node scripts/check-planner-calendars.mjs`, `node scripts/check-workspace-security.mjs`, syntax
+  checks for changed scripts, and desktop/mobile browser checks. The isolated fixture lives in
+  `scripts/preview-planner-calendar-fixture.mjs`; keep it excluded from Vercel. Inspect 0/10/15/20-minute
+  gaps, real conflicts, multiple events in one hour, midnight, incoming edits, and concurrent-edit protection.
